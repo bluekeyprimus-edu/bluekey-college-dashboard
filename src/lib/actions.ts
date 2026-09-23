@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { ApplicationChecklist, CollegeCategory } from "./types";
+import { ApplicationChecklist, CollegeCategory, TaskStatus } from "./types";
 
 function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -342,4 +342,67 @@ export async function deleteAward(studentId: string, awardId: string) {
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/activities`);
   revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Tasks (Section 10) — cross-student board
+// ============================================================
+export async function addTask(formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: str(formData, "student_id"),
+    task: str(formData, "task"),
+    assigned_to: str(formData, "assigned_to"),
+    deadline: str(formData, "deadline"),
+    priority: str(formData, "priority") ?? "Medium",
+    status: str(formData, "status") ?? "Not Started",
+    notes: str(formData, "notes"),
+  };
+  if (!payload.student_id || !payload.task) {
+    throw new Error("학생과 할일 내용은 필수예요.");
+  }
+
+  const { error } = await supabase!.from("tasks").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath("/tasks");
+  revalidatePath(`/students/${payload.student_id}`);
+}
+
+export async function updateTask(taskId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: str(formData, "student_id"),
+    task: str(formData, "task"),
+    assigned_to: str(formData, "assigned_to"),
+    deadline: str(formData, "deadline"),
+    priority: str(formData, "priority") ?? "Medium",
+    status: str(formData, "status") ?? "Not Started",
+    notes: str(formData, "notes"),
+  };
+  if (!payload.student_id || !payload.task) {
+    throw new Error("학생과 할일 내용은 필수예요.");
+  }
+
+  const { error } = await supabase!.from("tasks").update(payload).eq("id", taskId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath("/tasks");
+  revalidatePath(`/students/${payload.student_id}`);
+}
+
+export async function updateTaskStatus(taskId: string, status: TaskStatus) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("tasks").update({ status }).eq("id", taskId);
+  if (error) throw new Error(`업데이트 실패: ${error.message}`);
+  revalidatePath("/tasks");
+}
+
+export async function deleteTask(taskId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("tasks").delete().eq("id", taskId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath("/tasks");
 }
