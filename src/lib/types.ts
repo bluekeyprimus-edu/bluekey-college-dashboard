@@ -190,6 +190,29 @@ export interface Award {
   major_relevance: string | null;
 }
 
+export interface PersonalStatement {
+  student_id: string;
+  status: EssayStatus;
+  topic: string | null;
+  draft_link: string | null;
+  last_updated: string;
+}
+
+export interface SupplementalEssay {
+  id: string;
+  student_id: string;
+  college_list_id: string | null;
+  university_name: string | null;
+  prompt: string | null;
+  word_limit: number | null;
+  status: EssayStatus;
+  draft_link: string | null;
+  counselor: string | null;
+  editor: string | null;
+  counselor_comments: string | null;
+  last_updated: string;
+}
+
 export interface CollegeListEntry {
   id: string;
   student_id: string;

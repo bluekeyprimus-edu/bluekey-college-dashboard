@@ -406,3 +406,70 @@ export async function deleteTask(taskId: string) {
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath("/tasks");
 }
+
+// ============================================================
+// Essay Management (Section 9)
+// ============================================================
+export async function upsertPersonalStatement(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: studentId,
+    status: str(formData, "status") ?? "Brainstorming",
+    topic: str(formData, "topic"),
+    draft_link: str(formData, "draft_link"),
+    last_updated: new Date().toISOString(),
+  };
+
+  const { error } = await supabase!.from("personal_statement").upsert(payload, { onConflict: "student_id" });
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/essays`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+function supplementalEssayPayload(formData: FormData) {
+  return {
+    university_name: str(formData, "university_name"),
+    prompt: str(formData, "prompt"),
+    word_limit: num(formData, "word_limit"),
+    status: str(formData, "status") ?? "Brainstorming",
+    draft_link: str(formData, "draft_link"),
+    counselor: str(formData, "counselor"),
+    editor: str(formData, "editor"),
+    counselor_comments: str(formData, "counselor_comments"),
+    last_updated: new Date().toISOString(),
+  };
+}
+
+export async function addSupplementalEssay(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = supplementalEssayPayload(formData);
+  if (!payload.university_name) throw new Error("대학명은 필수예요.");
+
+  const { error } = await supabase!.from("supplemental_essays").insert({ student_id: studentId, ...payload });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/essays`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateSupplementalEssay(studentId: string, essayId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = supplementalEssayPayload(formData);
+  if (!payload.university_name) throw new Error("대학명은 필수예요.");
+
+  const { error } = await supabase!.from("supplemental_essays").update(payload).eq("id", essayId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/essays`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteSupplementalEssay(studentId: string, essayId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("supplemental_essays").delete().eq("id", essayId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/essays`);
+  revalidatePath(`/students/${studentId}`);
+}

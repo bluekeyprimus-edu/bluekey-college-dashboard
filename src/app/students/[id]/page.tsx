@@ -9,10 +9,12 @@ import {
   getAwards,
   getCollegeList,
   getTasks,
+  getPersonalStatement,
+  getSupplementalEssays,
 } from "@/lib/data";
 import { overallProgress } from "@/lib/progress";
 import { PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
-import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL } from "@/lib/labels";
+import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
@@ -33,7 +35,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const student = await getStudent(id);
   if (!student) notFound();
 
-  const [progress, academic, sat, ecs, awards, colleges, tasks] = await Promise.all([
+  const [progress, academic, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays] = await Promise.all([
     getProgress(id),
     getAcademicOverview(id),
     getSatScores(id),
@@ -41,6 +43,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     getAwards(id),
     getCollegeList(id),
     getTasks(id),
+    getPersonalStatement(id),
+    getSupplementalEssays(id),
   ]);
 
   const overall = progress ? overallProgress(progress) : 0;
@@ -145,7 +149,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <Card>
           <CardHeader><CardTitle>과외활동</CardTitle></CardHeader>
           <CardBody className="space-y-3">
@@ -192,6 +196,24 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               </div>
             ))}
             <Link href="/tasks" className="text-xs font-medium text-gold-600 hover:text-gold-700">전체 할일 보기 →</Link>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>에세이</CardTitle></CardHeader>
+          <CardBody className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-navy-900">자기소개서</span>
+              <Pill tone="gold">{personalStatement ? ESSAY_STATUS_LABEL[personalStatement.status] : "미작성"}</Pill>
+            </div>
+            {supplementalEssays.length === 0 && <p className="text-sm text-navy-400">등록된 추가 에세이가 아직 없어요.</p>}
+            {supplementalEssays.slice(0, 3).map((e) => (
+              <div key={e.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
+                <div className="text-sm font-medium text-navy-900">{e.university_name}</div>
+                <div className="text-xs text-navy-400">{ESSAY_STATUS_LABEL[e.status] ?? e.status}</div>
+              </div>
+            ))}
+            <Link href={`/students/${student.id}/essays`} className="text-xs font-medium text-gold-600 hover:text-gold-700">에세이 관리 →</Link>
           </CardBody>
         </Card>
       </div>

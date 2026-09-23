@@ -13,6 +13,8 @@ import {
   Award,
   CollegeListEntry,
   ApplicationChecklist,
+  PersonalStatement,
+  SupplementalEssay,
   TaskItem,
   TrackStatus,
 } from "./types";
@@ -96,6 +98,22 @@ export async function getAwards(studentId: string): Promise<Award[]> {
   if (!isSupabaseConfigured) return mock.mockAwards.filter((a) => a.student_id === studentId);
   const { data } = await supabase!.from("awards").select("*").eq("student_id", studentId);
   return (data as Award[]) ?? [];
+}
+
+export async function getPersonalStatement(studentId: string): Promise<PersonalStatement | null> {
+  if (!isSupabaseConfigured) return mock.mockPersonalStatements[studentId] ?? null;
+  const { data } = await supabase!.from("personal_statement").select("*").eq("student_id", studentId).maybeSingle();
+  return (data as PersonalStatement) ?? null;
+}
+
+export async function getSupplementalEssays(studentId: string): Promise<SupplementalEssay[]> {
+  if (!isSupabaseConfigured) return mock.mockSupplementalEssays.filter((e) => e.student_id === studentId);
+  const { data } = await supabase!
+    .from("supplemental_essays")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("last_updated", { ascending: false });
+  return (data as SupplementalEssay[]) ?? [];
 }
 
 export async function getCollegeList(studentId: string): Promise<CollegeListEntry[]> {

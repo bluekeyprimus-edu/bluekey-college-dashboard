@@ -135,3 +135,14 @@ export const EC_STATUS_OPTIONS = [
 ] as const;
 
 export const AWARD_LEVEL_OPTIONS = ["School", "Regional", "State", "National", "International"] as const;
+
+export const ESSAY_STATUS_OPTIONS = [
+  "Brainstorming",
+  "Topic Selected",
+  "Outline",
+  "First Draft",
+  "Revision 1",
+  "Revision 2",
+  "Final Review",
+  "Completed",
+] as const;
