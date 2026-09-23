@@ -230,3 +230,116 @@ export async function updateCollegeStatus(studentId: string, collegeId: string, 
   revalidatePath(`/students/${studentId}/college-list`);
   revalidatePath(`/students/${studentId}`);
 }
+
+// ============================================================
+// Extracurricular Activities (Section 4)
+// Rating fields (rating_*) are counselor-only — never surface these on
+// any student/parent-facing view or API response.
+// ============================================================
+function extracurricularPayload(formData: FormData) {
+  return {
+    activity_name: str(formData, "activity_name"),
+    category: str(formData, "category"),
+    organization: str(formData, "organization"),
+    position_role: str(formData, "position_role"),
+    grades_participated: str(formData, "grades_participated"),
+    start_date: str(formData, "start_date"),
+    end_date: str(formData, "end_date"),
+    hours_per_week: num(formData, "hours_per_week"),
+    weeks_per_year: num(formData, "weeks_per_year"),
+    description: str(formData, "description"),
+    achievements: str(formData, "achievements"),
+    quantifiable_impact: str(formData, "quantifiable_impact"),
+    leadership: str(formData, "leadership"),
+    major_relevance: str(formData, "major_relevance"),
+    common_app_activity: formData.get("common_app_activity") === "on",
+    status: str(formData, "status") ?? "Idea",
+    rating_strength: num(formData, "rating_strength"),
+    rating_leadership: num(formData, "rating_leadership"),
+    rating_impact: num(formData, "rating_impact"),
+    rating_uniqueness: num(formData, "rating_uniqueness"),
+    rating_major_relevance: num(formData, "rating_major_relevance"),
+  };
+}
+
+export async function addExtracurricular(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = extracurricularPayload(formData);
+  if (!payload.activity_name) throw new Error("활동명은 필수예요.");
+
+  const { error } = await supabase!.from("extracurriculars").insert({ student_id: studentId, ...payload });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateExtracurricular(studentId: string, ecId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = extracurricularPayload(formData);
+  if (!payload.activity_name) throw new Error("활동명은 필수예요.");
+
+  const { error } = await supabase!.from("extracurriculars").update(payload).eq("id", ecId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteExtracurricular(studentId: string, ecId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("extracurriculars").delete().eq("id", ecId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Awards & Honors (Section 5)
+// ============================================================
+function awardPayload(formData: FormData) {
+  return {
+    award_name: str(formData, "award_name"),
+    organization: str(formData, "organization"),
+    grade_level: num(formData, "grade_level"),
+    award_level: str(formData, "award_level") ?? "School",
+    placement: str(formData, "placement"),
+    num_participants: num(formData, "num_participants"),
+    selectivity: str(formData, "selectivity"),
+    description: str(formData, "description"),
+    academic_area: str(formData, "academic_area"),
+    major_relevance: str(formData, "major_relevance"),
+  };
+}
+
+export async function addAward(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = awardPayload(formData);
+  if (!payload.award_name) throw new Error("수상명은 필수예요.");
+
+  const { error } = await supabase!.from("awards").insert({ student_id: studentId, ...payload });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateAward(studentId: string, awardId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = awardPayload(formData);
+  if (!payload.award_name) throw new Error("수상명은 필수예요.");
+
+  const { error } = await supabase!.from("awards").update(payload).eq("id", awardId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteAward(studentId: string, awardId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("awards").delete().eq("id", awardId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/activities`);
+  revalidatePath(`/students/${studentId}`);
+}

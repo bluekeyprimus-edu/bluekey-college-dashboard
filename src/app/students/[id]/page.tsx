@@ -156,7 +156,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                 <div className="text-xs text-navy-400">{e.position_role} · {EC_STATUS_LABEL[e.status] ?? e.status}</div>
               </div>
             ))}
-            <Link href="/activities" className="text-xs font-medium text-gold-600 hover:text-gold-700">활동 관리 →</Link>
+            <Link href={`/students/${student.id}/activities`} className="text-xs font-medium text-gold-600 hover:text-gold-700">활동 관리 →</Link>
           </CardBody>
         </Card>
 
@@ -170,6 +170,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                 <div className="text-xs text-navy-400">{a.award_level} · {a.placement}</div>
               </div>
             ))}
+            <Link href={`/students/${student.id}/activities`} className="text-xs font-medium text-gold-600 hover:text-gold-700">수상 경력 관리 →</Link>
           </CardBody>
         </Card>
 

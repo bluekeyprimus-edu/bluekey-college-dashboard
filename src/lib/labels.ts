@@ -115,3 +115,23 @@ export const APPLICATION_STATUS_LABEL: Record<string, string> = {
   Deferred: "보류",
   Rejected: "불합격",
 };
+
+export const AWARD_LEVEL_LABEL: Record<string, string> = {
+  School: "교내",
+  Regional: "지역",
+  State: "주(State)",
+  National: "전국",
+  International: "국제",
+};
+
+export const EC_STATUS_OPTIONS = [
+  "Idea",
+  "Planning",
+  "Started",
+  "Developing",
+  "Impact Created",
+  "Completed",
+  "Common App Ready",
+] as const;
+
+export const AWARD_LEVEL_OPTIONS = ["School", "Regional", "State", "National", "International"] as const;

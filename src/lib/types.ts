@@ -156,6 +156,8 @@ export interface Extracurricular {
   organization: string | null;
   position_role: string | null;
   grades_participated: string | null;
+  start_date: string | null;
+  end_date: string | null;
   hours_per_week: number | null;
   weeks_per_year: number | null;
   description: string | null;
@@ -183,6 +185,7 @@ export interface Award {
   placement: string | null;
   num_participants: number | null;
   selectivity: string | null;
+  description: string | null;
   academic_area: string | null;
   major_relevance: string | null;
 }
