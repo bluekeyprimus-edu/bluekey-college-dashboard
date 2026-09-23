@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { ApplicationChecklist, CollegeCategory } from "./types";
 
 function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -148,4 +149,84 @@ export async function deleteCourse(studentId: string, courseId: string) {
   const { error } = await supabase!.from("courses").delete().eq("id", courseId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/academics`);
+}
+
+export async function addCollegeToList(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: studentId,
+    category: str(formData, "category"),
+    university_name: str(formData, "university_name"),
+    intended_major: str(formData, "intended_major"),
+    application_round: str(formData, "application_round"),
+    application_deadline: str(formData, "application_deadline"),
+    student_preference_level: num(formData, "student_preference_level"),
+    parent_preference_level: num(formData, "parent_preference_level"),
+    counselor_recommendation: str(formData, "counselor_recommendation"),
+    notes: str(formData, "notes"),
+  };
+  if (!payload.category || !payload.university_name) {
+    throw new Error("분류와 대학명은 필수예요.");
+  }
+
+  const { data, error } = await supabase!.from("college_list").insert(payload).select("id").single();
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  const { error: checklistError } = await supabase!
+    .from("application_checklist")
+    .insert({ college_list_id: data.id });
+  if (checklistError) throw new Error(`체크리스트 생성 실패: ${checklistError.message}`);
+
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteCollegeFromList(studentId: string, collegeId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("college_list").delete().eq("id", collegeId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateCollegeCategory(studentId: string, collegeId: string, category: CollegeCategory) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("college_list").update({ category }).eq("id", collegeId);
+  if (error) throw new Error(`업데이트 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function toggleChecklistItem(
+  studentId: string,
+  collegeId: string,
+  field: keyof Omit<ApplicationChecklist, "college_list_id">,
+  value: boolean
+) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!
+    .from("application_checklist")
+    .update({ [field]: value })
+    .eq("college_list_id", collegeId);
+  if (error) throw new Error(`업데이트 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateCollegeStatus(studentId: string, collegeId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    application_round: str(formData, "application_round"),
+    application_deadline: str(formData, "application_deadline"),
+    application_status: str(formData, "application_status") ?? "Not Started",
+    student_preference_level: num(formData, "student_preference_level"),
+    parent_preference_level: num(formData, "parent_preference_level"),
+    counselor_recommendation: str(formData, "counselor_recommendation"),
+    notes: str(formData, "notes"),
+  };
+  const { error } = await supabase!.from("college_list").update(payload).eq("id", collegeId);
+  if (error) throw new Error(`업데이트 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
 }

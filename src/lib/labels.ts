@@ -70,3 +70,48 @@ export const COURSE_LEVEL_OPTIONS = [
   "Dual Enrollment",
   "College Level",
 ] as const;
+
+export const CHECKLIST_ITEM_LABEL: Record<string, string> = {
+  college_added: "대학 등록",
+  major_selected: "전공 선택",
+  common_app_profile: "Common App 프로필",
+  activities: "활동 입력",
+  honors: "수상 입력",
+  personal_statement: "자기소개서",
+  supplemental_essays: "추가 에세이",
+  counselor_recommendation: "카운슬러 추천서",
+  teacher_recommendation_1: "교사 추천서 1",
+  teacher_recommendation_2: "교사 추천서 2",
+  transcript: "성적증명서",
+  test_scores_submission: "시험 성적 제출",
+  financial_aid: "재정보조 서류",
+  application_submitted: "지원서 제출 완료",
+};
+
+export const COLLEGE_CATEGORY_LABEL: Record<string, string> = {
+  Reach: "Reach",
+  "High Target": "High Target",
+  Target: "Target",
+  Likely: "Likely",
+  Safety: "Safety",
+};
+
+export const APPLICATION_STATUS_OPTIONS = [
+  "Not Started",
+  "In Progress",
+  "Submitted",
+  "Accepted",
+  "Waitlisted",
+  "Deferred",
+  "Rejected",
+] as const;
+
+export const APPLICATION_STATUS_LABEL: Record<string, string> = {
+  "Not Started": "시작 전",
+  "In Progress": "진행 중",
+  Submitted: "제출 완료",
+  Accepted: "합격",
+  Waitlisted: "대기",
+  Deferred: "보류",
+  Rejected: "불합격",
+};
