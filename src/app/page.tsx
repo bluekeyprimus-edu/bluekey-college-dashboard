@@ -5,6 +5,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { Pill } from "@/components/ui/Pill";
 
+export const dynamic = "force-dynamic";
+
 function StatCard({ label, value, tone }: { label: string; value: number | string; tone?: "gold" | "green" | "amber" | "red" }) {
   const toneClass =
     tone === "gold" ? "text-gold-600" : tone === "green" ? "text-emerald-600" : tone === "amber" ? "text-amber-600" : tone === "red" ? "text-rose-600" : "text-navy-900";

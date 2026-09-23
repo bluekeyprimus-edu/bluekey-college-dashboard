@@ -16,6 +16,8 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
 
+export const dynamic = "force-dynamic";
+
 function ProfileField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>

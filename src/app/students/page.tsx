@@ -1,6 +1,8 @@
 import { getRosterRows } from "@/lib/data";
 import { StudentsTable } from "@/components/students/StudentsTable";
 
+export const dynamic = "force-dynamic";
+
 export default async function StudentsPage() {
   const rows = await getRosterRows();
   return (
