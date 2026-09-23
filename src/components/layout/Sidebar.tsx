@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -33,9 +34,13 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col bg-navy-950 text-navy-100">
       <div className="flex items-center gap-2.5 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-gold-400 font-serif text-sm font-bold text-navy-950">
-          BK
-        </div>
+        <Image
+          src="/logo.png"
+          alt="BlueKey"
+          width={36}
+          height={36}
+          className="h-9 w-9 rounded-md object-cover"
+        />
         <div>
           <div className="font-serif text-[15px] font-semibold leading-tight text-white">BlueKey</div>
           <div className="text-[11px] tracking-wide text-navy-300">College Consulting</div>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Card, CardBody } from "@/components/ui/Card";
 
 export function ComingSoon({ title, description }: { title: string; description: string }) {
@@ -9,9 +10,7 @@ export function ComingSoon({ title, description }: { title: string; description:
       </div>
       <Card>
         <CardBody className="py-16 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gold-50 font-serif text-lg text-gold-600">
-            BK
-          </div>
+          <Image src="/logo.png" alt="BlueKey" width={48} height={48} className="mx-auto mb-3 h-12 w-12 rounded-full object-cover" />
           <p className="text-sm font-medium text-navy-600">This module is being built next.</p>
           <p className="mt-1 text-xs text-navy-400">The data structure already supports it — the UI is coming in the next pass.</p>
         </CardBody>
