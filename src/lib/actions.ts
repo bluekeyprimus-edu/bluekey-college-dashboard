@@ -537,3 +537,52 @@ export async function deleteParentAccount(studentId: string, parentAccountId: st
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}`);
 }
+
+// ============================================================
+// BlueKey Historical Admissions Database (Section 12)
+// ============================================================
+function historicalAdmissionPayload(formData: FormData) {
+  return {
+    graduation_year: num(formData, "graduation_year"),
+    high_school: str(formData, "high_school"),
+    gpa: num(formData, "gpa"),
+    sat_score: num(formData, "sat_score"),
+    act_score: num(formData, "act_score"),
+    curriculum: str(formData, "curriculum"),
+    intended_major: str(formData, "intended_major"),
+    ec_strength: num(formData, "ec_strength"),
+    awards_strength: num(formData, "awards_strength"),
+    application_round: str(formData, "application_round"),
+    university_name: str(formData, "university_name"),
+    admission_result: str(formData, "admission_result") ?? "Accepted",
+  };
+}
+
+export async function addHistoricalAdmission(formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = historicalAdmissionPayload(formData);
+  if (!payload.university_name) throw new Error("대학명은 필수예요.");
+
+  const { error } = await supabase!.from("historical_admissions").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath("/admissions-data");
+}
+
+export async function updateHistoricalAdmission(recordId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = historicalAdmissionPayload(formData);
+  if (!payload.university_name) throw new Error("대학명은 필수예요.");
+
+  const { error } = await supabase!.from("historical_admissions").update(payload).eq("id", recordId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath("/admissions-data");
+}
+
+export async function deleteHistoricalAdmission(recordId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("historical_admissions").delete().eq("id", recordId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath("/admissions-data");
+}

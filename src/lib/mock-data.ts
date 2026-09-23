@@ -12,6 +12,7 @@ import {
   CollegeListEntry,
   PersonalStatement,
   SupplementalEssay,
+  HistoricalAdmission,
   TaskItem,
   Counselor,
 } from "./types";
@@ -416,4 +417,14 @@ export const mockTasks: TaskItem[] = [
   { id: "t2", student_id: "s1", task: "Request teacher recommendation #2", assigned_to: "Jacob Chung", deadline: "2026-10-05", priority: "High", status: "Not Started", notes: "Ask AP CS teacher" },
   { id: "t3", student_id: "s2", task: "Book SAT retake", assigned_to: "Ethan", deadline: "2026-12-01", priority: "Medium", status: "Not Started", notes: null },
   { id: "t4", student_id: "s4", task: "Draft initial college list", assigned_to: "David Park", deadline: "2026-10-20", priority: "Medium", status: "Waiting", notes: null },
+];
+
+export const mockHistoricalAdmissions: HistoricalAdmission[] = [
+  { id: "ha1", graduation_year: 2025, high_school: "Seoul International School", gpa: 3.95, sat_score: 1540, act_score: null, curriculum: "AP", intended_major: "Computer Science", ec_strength: 5, awards_strength: 4, application_round: "ED", university_name: "Cornell University", admission_result: "Accepted" },
+  { id: "ha2", graduation_year: 2025, high_school: "Korea International School", gpa: 3.8, sat_score: 1490, act_score: null, curriculum: "IB", intended_major: "Computer Science", ec_strength: 4, awards_strength: 3, application_round: "RD", university_name: "Cornell University", admission_result: "Waitlisted" },
+  { id: "ha3", graduation_year: 2024, high_school: "Seoul International School", gpa: 3.7, sat_score: 1450, act_score: null, curriculum: "AP", intended_major: "Economics", ec_strength: 3, awards_strength: 3, application_round: "RD", university_name: "Cornell University", admission_result: "Rejected" },
+  { id: "ha4", graduation_year: 2025, high_school: "Chadwick International", gpa: 3.9, sat_score: 1520, act_score: null, curriculum: "AP", intended_major: "Business", ec_strength: 5, awards_strength: 5, application_round: "ED", university_name: "University of Pennsylvania", admission_result: "Accepted" },
+  { id: "ha5", graduation_year: 2024, high_school: "Seoul International School", gpa: 3.75, sat_score: 1470, act_score: null, curriculum: "AP", intended_major: "Business", ec_strength: 3, awards_strength: 3, application_round: "RD", university_name: "University of Pennsylvania", admission_result: "Rejected" },
+  { id: "ha6", graduation_year: 2025, high_school: "Korea International School", gpa: 3.6, sat_score: 1380, act_score: null, curriculum: "IB", intended_major: "Psychology", ec_strength: 4, awards_strength: 2, application_round: "RD", university_name: "University of Michigan", admission_result: "Accepted" },
+  { id: "ha7", graduation_year: 2024, high_school: "Seoul International School", gpa: 3.5, sat_score: 1340, act_score: null, curriculum: "AP", intended_major: "Psychology", ec_strength: 3, awards_strength: 2, application_round: "RD", university_name: "University of Michigan", admission_result: "Accepted" },
 ];

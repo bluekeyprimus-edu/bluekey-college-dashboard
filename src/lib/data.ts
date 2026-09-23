@@ -15,6 +15,7 @@ import {
   ApplicationChecklist,
   PersonalStatement,
   SupplementalEssay,
+  HistoricalAdmission,
   TaskItem,
   TrackStatus,
 } from "./types";
@@ -167,6 +168,18 @@ export async function getRosterRows(): Promise<RosterRow[]> {
     });
   }
   return rows;
+}
+
+export async function getHistoricalAdmissions(): Promise<HistoricalAdmission[]> {
+  if (!isSupabaseConfigured) return mock.mockHistoricalAdmissions;
+  const { data } = await supabase!.from("historical_admissions").select("*").order("university_name");
+  return (data as HistoricalAdmission[]) ?? [];
+}
+
+export async function getHistoricalAdmissionsByUniversity(universityName: string): Promise<HistoricalAdmission[]> {
+  const all = await getHistoricalAdmissions();
+  const needle = universityName.trim().toLowerCase();
+  return all.filter((r) => r.university_name.trim().toLowerCase() === needle);
 }
 
 export async function getCounselors() {

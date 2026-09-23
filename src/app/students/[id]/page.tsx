@@ -225,7 +225,10 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       <Card>
         <CardHeader className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>컬리지 리스트</CardTitle>
-          <Link href={`/students/${student.id}/college-list`} className="text-xs font-medium text-gold-600 hover:text-gold-700">컬리지 리스트 관리 →</Link>
+          <div className="flex items-center gap-3">
+            <Link href={`/students/${student.id}/recommendations`} className="text-xs font-medium text-gold-600 hover:text-gold-700">Admissions Positioning 보기 →</Link>
+            <Link href={`/students/${student.id}/college-list`} className="text-xs font-medium text-gold-600 hover:text-gold-700">컬리지 리스트 관리 →</Link>
+          </div>
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">

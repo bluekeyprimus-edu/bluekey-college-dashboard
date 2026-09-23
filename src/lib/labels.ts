@@ -146,3 +146,12 @@ export const ESSAY_STATUS_OPTIONS = [
   "Final Review",
   "Completed",
 ] as const;
+
+export const ADMISSION_RESULT_OPTIONS = ["Accepted", "Waitlisted", "Deferred", "Rejected"] as const;
+
+export const ADMISSION_RESULT_LABEL: Record<string, string> = {
+  Accepted: "합격",
+  Waitlisted: "대기",
+  Deferred: "보류",
+  Rejected: "불합격",
+};

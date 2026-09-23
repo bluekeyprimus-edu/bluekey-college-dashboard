@@ -18,6 +18,7 @@ export type ECStatus =
   | "Impact Created"
   | "Completed"
   | "Common App Ready";
+export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";
 export type AwardLevel = "School" | "Regional" | "State" | "National" | "International";
 export type CollegeCategory = "Reach" | "High Target" | "Target" | "Likely" | "Safety";
 export type ApplicationRound = "ED" | "ED2" | "EA" | "REA" | "RD";
@@ -32,7 +33,6 @@ export type EssayStatus =
   | "Completed";
 export type TaskPriority = "High" | "Medium" | "Low";
 export type TaskStatus = "Not Started" | "In Progress" | "Waiting" | "Completed";
-export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";
 
 export interface Counselor {
   id: string;
@@ -188,6 +188,22 @@ export interface Award {
   description: string | null;
   academic_area: string | null;
   major_relevance: string | null;
+}
+
+export interface HistoricalAdmission {
+  id: string;
+  graduation_year: number | null;
+  high_school: string | null;
+  gpa: number | null;
+  sat_score: number | null;
+  act_score: number | null;
+  curriculum: string | null;
+  intended_major: string | null;
+  ec_strength: number | null;
+  awards_strength: number | null;
+  application_round: string | null;
+  university_name: string;
+  admission_result: AdmissionResult;
 }
 
 export interface ParentAccount {
