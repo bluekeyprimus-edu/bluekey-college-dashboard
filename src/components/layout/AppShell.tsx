@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // The parent portal (and its login page) has no counselor sidebar/nav —
+  // it's a separate, read-only surface for parents.
+  const isParentSurface = pathname === "/login" || pathname?.startsWith("/parent");
+  if (isParentSurface) {
+    return <div className="min-h-screen bg-background">{children}</div>;
+  }
 
   return (
     <div className="flex min-h-screen">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { ApplicationChecklist, CollegeCategory, TaskStatus } from "./types";
+import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 
 function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -471,5 +472,62 @@ export async function deleteSupplementalEssay(studentId: string, essayId: string
   const { error } = await supabase!.from("supplemental_essays").delete().eq("id", essayId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/essays`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Parent portal accounts — counselor-side create/remove.
+// Uses the service-role client (supabase-admin.ts) because creating a
+// confirmed Supabase Auth user requires admin privileges; the public anon
+// key cannot do this.
+// ============================================================
+export async function createParentAccount(studentId: string, formData: FormData) {
+  if (!isAdminConfigured) {
+    throw new Error("Service Role Key가 아직 설정되지 않았어요. .env.local에 SUPABASE_SERVICE_ROLE_KEY를 추가해주세요.");
+  }
+
+  const email = str(formData, "email");
+  const password = str(formData, "password");
+  const parentName = str(formData, "parent_name");
+  if (!email || !password) throw new Error("이메일과 비밀번호는 필수예요.");
+  if (password.length < 6) throw new Error("비밀번호는 6자 이상이어야 해요.");
+
+  let authUserId: string;
+
+  const { data: created, error: createError } = await supabaseAdmin!.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role: "parent" },
+  });
+
+  if (createError || !created.user) {
+    // Most likely this email already has an account (a sibling's parent
+    // account) — look it up and link this student to the existing user
+    // instead of failing.
+    const { data: existing, error: listError } = await supabaseAdmin!.auth.admin.listUsers({ perPage: 1000 });
+    const match = listError ? undefined : existing.users.find((u) => u.email === email);
+    if (!match) {
+      throw new Error(`계정 생성 실패: ${createError?.message ?? "알 수 없는 오류"}`);
+    }
+    authUserId = match.id;
+  } else {
+    authUserId = created.user.id;
+  }
+
+  const { error: linkError } = await supabaseAdmin!
+    .from("parent_accounts")
+    .insert({ auth_user_id: authUserId, student_id: studentId, parent_name: parentName, email });
+  if (linkError) throw new Error(`연결 실패: ${linkError.message}`);
+
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteParentAccount(studentId: string, parentAccountId: string) {
+  if (!isAdminConfigured) {
+    throw new Error("Service Role Key가 아직 설정되지 않았어요.");
+  }
+  const { error } = await supabaseAdmin!.from("parent_accounts").delete().eq("id", parentAccountId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}`);
 }

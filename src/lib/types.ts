@@ -190,6 +190,15 @@ export interface Award {
   major_relevance: string | null;
 }
 
+export interface ParentAccount {
+  id: string;
+  auth_user_id: string;
+  student_id: string;
+  parent_name: string | null;
+  email: string;
+  created_at: string;
+}
+
 export interface PersonalStatement {
   student_id: string;
   status: EssayStatus;

@@ -339,6 +339,25 @@ create index if not exists idx_historical_major on historical_admissions(intende
 create index if not exists idx_historical_university on historical_admissions(university_name);
 
 -- ============================================================
+-- Parent portal accounts (Section: parent login)
+-- Links a Supabase Auth user (parent) to one or more students. One auth
+-- user can link to multiple students (siblings sharing a parent login).
+-- Created/managed by counselors from the student profile page, using the
+-- service-role key server-side — parents never sign themselves up.
+-- ============================================================
+create table if not exists parent_accounts (
+  id uuid primary key default gen_random_uuid(),
+  auth_user_id uuid not null,
+  student_id uuid not null references students(id) on delete cascade,
+  parent_name text,
+  email text not null,
+  created_at timestamptz default now(),
+  unique (auth_user_id, student_id)
+);
+create index if not exists idx_parent_accounts_student on parent_accounts(student_id);
+create index if not exists idx_parent_accounts_auth_user on parent_accounts(auth_user_id);
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================
