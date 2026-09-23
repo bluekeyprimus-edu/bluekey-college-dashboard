@@ -5,7 +5,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "BlueKey College Consulting Dashboard",
-  description: "Counselor dashboard for tracking student college admissions progress.",
+  description: "학생 대입 준비 현황을 관리하는 카운슬러 대시보드",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon-32.png",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "BlueKey Dashboard",
+    title: "블루키 대시보드",
   },
 };
 

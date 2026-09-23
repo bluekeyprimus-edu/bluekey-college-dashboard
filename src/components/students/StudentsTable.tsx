@@ -88,7 +88,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, school, or major…"
+          placeholder="이름, 학교, 전공으로 검색…"
           className="w-72 rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 placeholder:text-navy-400 focus:border-gold-400 focus:outline-none"
         />
         <select
@@ -96,7 +96,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
           onChange={(e) => setCounselor(e.target.value)}
           className="rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-700 focus:border-gold-400 focus:outline-none"
         >
-          <option value="all">All Counselors</option>
+          <option value="all">전체 카운슬러</option>
           {counselors.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
@@ -106,27 +106,27 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
           onChange={(e) => setGradeFilter(e.target.value)}
           className="rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-700 focus:border-gold-400 focus:outline-none"
         >
-          <option value="all">All Grades</option>
+          <option value="all">전체 학년</option>
           {grades.map((g) => (
-            <option key={g} value={g}>Grade {g}</option>
+            <option key={g} value={g}>{g}학년</option>
           ))}
         </select>
-        <span className="text-xs text-navy-400">{sorted.length} of {rows.length} students</span>
+        <span className="text-xs text-navy-400">전체 {rows.length}명 중 {sorted.length}명</span>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-navy-100 bg-white">
         <table className="w-full border-collapse">
           <thead className="border-b border-navy-100 bg-navy-50/60">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">Status</th>
-              {th("name", "Student")}
-              {th("school", "School")}
-              {th("grade", "Grade / Class")}
-              {th("major", "Intended Major")}
-              {th("counselor", "Counselor")}
-              {th("progress", "Progress")}
-              {th("deadline", "Next Deadline")}
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">Tasks</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">상태</th>
+              {th("name", "학생")}
+              {th("school", "학교")}
+              {th("grade", "학년 / 졸업연도")}
+              {th("major", "희망 전공")}
+              {th("counselor", "담당 카운슬러")}
+              {th("progress", "진행률")}
+              {th("deadline", "다음 마감일")}
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">할일</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-navy-100">
@@ -141,7 +141,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
                 </td>
                 <td className="px-4 py-3 text-sm text-navy-600">{row.student.high_school}</td>
                 <td className="px-4 py-3 text-sm text-navy-600">
-                  Grade {row.student.current_grade} · Class of {row.student.graduation_year}
+                  {row.student.current_grade}학년 · {row.student.graduation_year}년 졸업
                 </td>
                 <td className="px-4 py-3 text-sm text-navy-600">{row.student.intended_major ?? "—"}</td>
                 <td className="px-4 py-3 text-sm text-navy-600">{row.student.counselor_name ?? "—"}</td>
@@ -153,7 +153,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
                 <td className="px-4 py-3 text-sm">
                   {row.nextDeadline ? (
                     <span className={cn("font-medium", row.nextDeadline.days < 14 ? "text-rose-600" : "text-navy-700")}>
-                      {row.nextDeadline.name} · {row.nextDeadline.days}d
+                      {row.nextDeadline.name} · {row.nextDeadline.days}일
                     </span>
                   ) : (
                     <span className="text-navy-400">—</span>

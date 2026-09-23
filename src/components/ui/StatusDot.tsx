@@ -8,9 +8,9 @@ const TONE: Record<TrackStatus, string> = {
 };
 
 const LABEL: Record<TrackStatus, string> = {
-  green: "On Track",
-  yellow: "Needs Attention",
-  red: "Urgent",
+  green: "정상 진행",
+  yellow: "주의 필요",
+  red: "긴급",
 };
 
 export function StatusDot({ status, showLabel = false }: { status: TrackStatus; showLabel?: boolean }) {

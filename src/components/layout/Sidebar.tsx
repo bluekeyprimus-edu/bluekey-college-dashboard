@@ -17,15 +17,15 @@ import {
 import { cn } from "@/lib/cn";
 
 const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/students", label: "Students", icon: Users },
-  { href: "/academics", label: "Academics", icon: GraduationCap },
-  { href: "/activities", label: "Activities", icon: Trophy },
-  { href: "/college-list", label: "College List", icon: ListChecks },
-  { href: "/applications", label: "Applications", icon: FileText },
-  { href: "/essays", label: "Essays", icon: PenLine },
-  { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/admissions-data", label: "Admissions Data", icon: Database },
+  { href: "/", label: "대시보드", icon: LayoutDashboard },
+  { href: "/students", label: "학생", icon: Users },
+  { href: "/academics", label: "학업", icon: GraduationCap },
+  { href: "/activities", label: "활동", icon: Trophy },
+  { href: "/college-list", label: "컬리지 리스트", icon: ListChecks },
+  { href: "/applications", label: "지원 현황", icon: FileText },
+  { href: "/essays", label: "에세이", icon: PenLine },
+  { href: "/tasks", label: "할일", icon: CheckSquare },
+  { href: "/admissions-data", label: "입시 데이터", icon: Database },
 ];
 
 export function Sidebar() {
@@ -43,7 +43,7 @@ export function Sidebar() {
         />
         <div>
           <div className="font-serif text-[15px] font-semibold leading-tight text-white">BlueKey</div>
-          <div className="text-[11px] tracking-wide text-navy-300">College Consulting</div>
+          <div className="text-[11px] tracking-wide text-navy-300">대학 입시 컨설팅</div>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-navy-800 px-6 py-4 text-[11px] text-navy-400">
-        BlueKey Consulting · Gangnam
+        블루키 컨설팅 · 강남
       </div>
     </aside>
   );

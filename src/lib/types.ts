@@ -77,17 +77,17 @@ export interface StudentProgress {
 }
 
 export const PROGRESS_CATEGORY_LABELS: Record<keyof Omit<StudentProgress, "student_id">, string> = {
-  academic_profile: "Academic Profile",
-  testing: "Testing",
-  extracurricular_activities: "Extracurricular Activities",
-  awards: "Awards",
-  college_list: "College List",
-  common_application: "Common Application",
-  personal_statement: "Personal Statement",
-  supplemental_essays: "Supplemental Essays",
-  recommendation_letters: "Recommendation Letters",
-  school_documents: "School Documents",
-  financial_aid: "Financial Aid",
+  academic_profile: "학업 프로필",
+  testing: "시험",
+  extracurricular_activities: "과외활동",
+  awards: "수상",
+  college_list: "컬리지 리스트",
+  common_application: "커먼앱",
+  personal_statement: "자기소개서",
+  supplemental_essays: "추가 에세이",
+  recommendation_letters: "추천서",
+  school_documents: "학교 서류",
+  financial_aid: "재정 지원",
 };
 
 export interface AcademicOverview {

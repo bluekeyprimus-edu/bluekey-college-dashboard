@@ -12,6 +12,7 @@ import {
 } from "@/lib/data";
 import { overallProgress } from "@/lib/progress";
 import { PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
+import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
@@ -55,16 +56,16 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <Link href="/students" className="text-xs font-medium text-navy-400 hover:text-navy-600">← All Students</Link>
+          <Link href="/students" className="text-xs font-medium text-navy-400 hover:text-navy-600">← 전체 학생</Link>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-navy-900">
             {student.english_name ?? student.student_name}
           </h1>
           <p className="text-sm text-navy-500">
             {student.student_name !== student.english_name && `${student.student_name} · `}
-            {student.high_school} · Class of {student.graduation_year}
+            {student.high_school} · {student.graduation_year}년 졸업
           </p>
         </div>
-        <Pill tone="gold">Counselor: {student.counselor_name ?? "Unassigned"}</Pill>
+        <Pill tone="gold">담당 카운슬러: {student.counselor_name ?? "미배정"}</Pill>
       </div>
 
       {/* Overall progress */}
@@ -72,7 +73,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         <CardBody>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-navy-400">Overall Application Progress</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-navy-400">전체 지원 진행률</div>
               <div className="font-serif text-4xl font-semibold text-navy-900">{overall}%</div>
             </div>
             <div className="w-1/2">
@@ -97,39 +98,39 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Profile */}
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Student Profile</CardTitle></CardHeader>
+          <CardHeader><CardTitle>학생 프로필</CardTitle></CardHeader>
           <CardBody className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-            <ProfileField label="Student Name" value={student.student_name} />
-            <ProfileField label="English Name" value={student.english_name} />
-            <ProfileField label="Current Grade" value={`Grade ${student.current_grade}`} />
-            <ProfileField label="Graduation Year" value={`Class of ${student.graduation_year}`} />
-            <ProfileField label="High School" value={student.high_school} />
-            <ProfileField label="School Country / Location" value={student.school_country} />
-            <ProfileField label="School Type" value={student.school_type} />
-            <ProfileField label="Curriculum" value={student.curriculum} />
-            <ProfileField label="Citizenship" value={student.citizenship} />
-            <ProfileField label="U.S. Permanent Resident" value={student.us_permanent_resident ? "Yes" : "No"} />
-            <ProfileField label="Intended Major" value={student.intended_major} />
-            <ProfileField label="Secondary Major Interest" value={student.secondary_major_interest} />
-            <ProfileField label="Career Interest" value={student.career_interest} />
-            <ProfileField label="Assigned Counselor" value={student.counselor_name} />
+            <ProfileField label="학생 이름" value={student.student_name} />
+            <ProfileField label="영문 이름" value={student.english_name} />
+            <ProfileField label="현재 학년" value={`${student.current_grade}학년`} />
+            <ProfileField label="졸업연도" value={`${student.graduation_year}년 졸업`} />
+            <ProfileField label="고등학교" value={student.high_school} />
+            <ProfileField label="학교 소재국가/지역" value={student.school_country} />
+            <ProfileField label="학교 유형" value={student.school_type} />
+            <ProfileField label="커리큘럼" value={student.curriculum} />
+            <ProfileField label="국적" value={student.citizenship} />
+            <ProfileField label="미국 영주권" value={student.us_permanent_resident ? "있음" : "없음"} />
+            <ProfileField label="희망 전공" value={student.intended_major} />
+            <ProfileField label="관심 부전공" value={student.secondary_major_interest} />
+            <ProfileField label="희망 진로" value={student.career_interest} />
+            <ProfileField label="담당 카운슬러" value={student.counselor_name} />
           </CardBody>
         </Card>
 
         {/* Quick stats */}
         <Card>
-          <CardHeader><CardTitle>Academic & Testing Snapshot</CardTitle></CardHeader>
+          <CardHeader><CardTitle>학업·시험 요약</CardTitle></CardHeader>
           <CardBody className="space-y-3">
-            <ProfileField label="Unweighted GPA" value={academic?.unweighted_gpa ?? "—"} />
-            <ProfileField label="Weighted GPA" value={academic?.weighted_gpa ?? "—"} />
+            <ProfileField label="비가중 GPA" value={academic?.unweighted_gpa ?? "—"} />
+            <ProfileField label="가중 GPA" value={academic?.weighted_gpa ?? "—"} />
             <ProfileField
-              label="Class Rank"
-              value={academic?.school_does_not_rank ? "School does not rank" : academic?.class_rank ? `${academic.class_rank} / ${academic.class_size}` : "—"}
+              label="석차"
+              value={academic?.school_does_not_rank ? "석차 미산정 학교" : academic?.class_rank ? `${academic.class_rank} / ${academic.class_size}` : "—"}
             />
-            <ProfileField label="Best SAT (Superscore)" value={bestSat} />
+            <ProfileField label="최고 SAT (슈퍼스코어)" value={bestSat} />
             <div className="pt-2">
               <Link href="/academics" className="text-xs font-medium text-gold-600 hover:text-gold-700">
-                View full academic profile →
+                학업 프로필 전체 보기 →
               </Link>
             </div>
           </CardBody>
@@ -138,23 +139,23 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card>
-          <CardHeader><CardTitle>Extracurriculars</CardTitle></CardHeader>
+          <CardHeader><CardTitle>과외활동</CardTitle></CardHeader>
           <CardBody className="space-y-3">
-            {ecs.length === 0 && <p className="text-sm text-navy-400">No activities recorded yet.</p>}
+            {ecs.length === 0 && <p className="text-sm text-navy-400">등록된 활동이 아직 없어요.</p>}
             {ecs.map((e) => (
               <div key={e.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
                 <div className="text-sm font-medium text-navy-900">{e.activity_name}</div>
-                <div className="text-xs text-navy-400">{e.position_role} · {e.status}</div>
+                <div className="text-xs text-navy-400">{e.position_role} · {EC_STATUS_LABEL[e.status] ?? e.status}</div>
               </div>
             ))}
-            <Link href="/activities" className="text-xs font-medium text-gold-600 hover:text-gold-700">Manage activities →</Link>
+            <Link href="/activities" className="text-xs font-medium text-gold-600 hover:text-gold-700">활동 관리 →</Link>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Awards & Honors</CardTitle></CardHeader>
+          <CardHeader><CardTitle>수상 경력</CardTitle></CardHeader>
           <CardBody className="space-y-3">
-            {awards.length === 0 && <p className="text-sm text-navy-400">No awards recorded yet.</p>}
+            {awards.length === 0 && <p className="text-sm text-navy-400">등록된 수상 내역이 아직 없어요.</p>}
             {awards.map((a) => (
               <div key={a.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
                 <div className="text-sm font-medium text-navy-900">{a.award_name}</div>
@@ -165,27 +166,31 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Open Tasks</CardTitle></CardHeader>
+          <CardHeader><CardTitle>진행 중인 할일</CardTitle></CardHeader>
           <CardBody className="space-y-3">
-            {tasks.length === 0 && <p className="text-sm text-navy-400">No tasks yet.</p>}
+            {tasks.length === 0 && <p className="text-sm text-navy-400">등록된 할일이 아직 없어요.</p>}
             {tasks.map((t) => (
               <div key={t.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-navy-900">{t.task}</span>
-                  <Pill tone={t.priority === "High" ? "red" : t.priority === "Medium" ? "amber" : "neutral"}>{t.priority}</Pill>
+                  <Pill tone={t.priority === "High" ? "red" : t.priority === "Medium" ? "amber" : "neutral"}>
+                    {TASK_PRIORITY_LABEL[t.priority] ?? t.priority}
+                  </Pill>
                 </div>
-                <div className="text-xs text-navy-400">{t.status} {t.deadline && `· due ${t.deadline}`}</div>
+                <div className="text-xs text-navy-400">
+                  {TASK_STATUS_LABEL[t.status] ?? t.status} {t.deadline && `· 마감 ${t.deadline}`}
+                </div>
               </div>
             ))}
-            <Link href="/tasks" className="text-xs font-medium text-gold-600 hover:text-gold-700">View all tasks →</Link>
+            <Link href="/tasks" className="text-xs font-medium text-gold-600 hover:text-gold-700">전체 할일 보기 →</Link>
           </CardBody>
         </Card>
       </div>
 
       <Card>
         <CardHeader className="flex items-center justify-between">
-          <CardTitle>College List</CardTitle>
-          <Link href="/college-list" className="text-xs font-medium text-gold-600 hover:text-gold-700">Manage college list →</Link>
+          <CardTitle>컬리지 리스트</CardTitle>
+          <Link href="/college-list" className="text-xs font-medium text-gold-600 hover:text-gold-700">컬리지 리스트 관리 →</Link>
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -196,11 +201,11 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                   {(categoriesByCollege[cat] ?? []).map((c) => (
                     <div key={c.id} className="rounded-lg border border-navy-100 px-3 py-2">
                       <div className="text-sm font-medium text-navy-900">{c.university_name}</div>
-                      <div className="text-xs text-navy-400">{c.application_round ?? "Round TBD"}</div>
+                      <div className="text-xs text-navy-400">{c.application_round ?? "라운드 미정"}</div>
                     </div>
                   ))}
                   {(categoriesByCollege[cat] ?? []).length === 0 && (
-                    <div className="rounded-lg border border-dashed border-navy-200 px-3 py-2 text-xs text-navy-300">Empty</div>
+                    <div className="rounded-lg border border-dashed border-navy-200 px-3 py-2 text-xs text-navy-300">없음</div>
                   )}
                 </div>
               </div>
