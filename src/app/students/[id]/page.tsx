@@ -58,7 +58,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/students" className="text-xs font-medium text-navy-400 hover:text-navy-600">← 전체 학생</Link>
           <h1 className="mt-1 font-serif text-3xl font-semibold text-navy-900">
@@ -69,7 +69,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
             {student.high_school} · {student.graduation_year}년 졸업
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Pill tone="gold">담당 카운슬러: {student.counselor_name ?? "미배정"}</Pill>
           <Link
             href={`/students/${student.id}/edit`}
@@ -83,12 +83,12 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       {/* Overall progress */}
       <Card>
         <CardBody>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs font-medium uppercase tracking-wide text-navy-400">전체 지원 진행률</div>
               <div className="font-serif text-4xl font-semibold text-navy-900">{overall}%</div>
             </div>
-            <div className="w-1/2">
+            <div className="w-full sm:w-1/2">
               <ProgressBar value={overall} size="lg" />
             </div>
           </div>
@@ -219,7 +219,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       </div>
 
       <Card>
-        <CardHeader className="flex items-center justify-between">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>컬리지 리스트</CardTitle>
           <Link href={`/students/${student.id}/college-list`} className="text-xs font-medium text-gold-600 hover:text-gold-700">컬리지 리스트 관리 →</Link>
         </CardHeader>

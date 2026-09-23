@@ -89,7 +89,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="이름, 학교, 전공으로 검색…"
-          className="w-72 rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 placeholder:text-navy-400 focus:border-gold-400 focus:outline-none"
+          className="w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 placeholder:text-navy-400 focus:border-gold-400 focus:outline-none sm:w-72"
         />
         <select
           value={counselor}
@@ -114,8 +114,8 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
         <span className="text-xs text-navy-400">전체 {rows.length}명 중 {sorted.length}명</span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-navy-100 bg-white">
-        <table className="w-full border-collapse">
+      <div className="overflow-x-auto rounded-xl border border-navy-100 bg-white">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead className="border-b border-navy-100 bg-navy-50/60">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">상태</th>

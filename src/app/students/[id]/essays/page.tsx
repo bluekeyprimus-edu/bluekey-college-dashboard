@@ -80,7 +80,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
       </div>
 
       <Card>
-        <CardHeader className="flex items-center justify-between">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>자기소개서 (Personal Statement)</CardTitle>
           {personalStatement && <Pill tone={statusTone(personalStatement.status)}>{ESSAY_STATUS_LABEL[personalStatement.status]}</Pill>}
         </CardHeader>

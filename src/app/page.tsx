@@ -49,7 +49,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <div className="flex items-center justify-between border-b border-navy-100 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-navy-100 px-5 py-4">
           <h2 className="font-serif text-lg font-semibold text-navy-900">주의 필요 학생</h2>
           <Link href="/students" className="text-sm font-medium text-gold-600 hover:text-gold-700">
             전체 학생 보기 →
@@ -63,10 +63,10 @@ export default async function DashboardPage() {
             <Link
               key={row.student.id}
               href={`/students/${row.student.id}`}
-              className="flex items-center gap-4 px-5 py-4 hover:bg-navy-50/60"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 hover:bg-navy-50/60 sm:flex-nowrap"
             >
               <StatusDot status={row.status} />
-              <div className="min-w-[180px]">
+              <div className="min-w-[140px] flex-1 sm:min-w-[180px] sm:flex-none">
                 <div className="text-sm font-semibold text-navy-900">
                   {row.student.english_name ?? row.student.student_name}
                 </div>
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
                   {row.student.high_school} · {row.student.graduation_year}년 졸업
                 </div>
               </div>
-              <div className="w-40">
+              <div className="w-full sm:w-40">
                 <ProgressBar value={row.progress} showLabel size="sm" />
               </div>
               <div className="flex-1 text-sm text-navy-600">
