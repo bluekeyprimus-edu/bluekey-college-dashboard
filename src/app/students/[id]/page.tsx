@@ -137,7 +137,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
             />
             <ProfileField label="최고 SAT (슈퍼스코어)" value={bestSat} />
             <div className="pt-2">
-              <Link href="/academics" className="text-xs font-medium text-gold-600 hover:text-gold-700">
+              <Link href={`/students/${student.id}/academics`} className="text-xs font-medium text-gold-600 hover:text-gold-700">
                 학업 프로필 전체 보기 →
               </Link>
             </div>

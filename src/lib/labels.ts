@@ -43,3 +43,30 @@ export const CURRICULUM_LABEL: Record<string, string> = {
   Korean: "국내 교육과정",
   Other: "기타",
 };
+
+export const GPA_SUBJECT_LABEL: Record<string, string> = {
+  english: "영어",
+  math: "수학",
+  science: "과학",
+  social_studies: "사회",
+  foreign_language: "외국어",
+  other: "기타",
+  overall: "전체 GPA",
+};
+
+export const SUBJECT_AREA_LABEL: Record<string, string> = {
+  STEM: "STEM",
+  Humanities: "Humanities",
+  Other: "기타",
+};
+
+export const COURSE_LEVEL_OPTIONS = [
+  "Regular",
+  "Honors",
+  "AP",
+  "IB HL",
+  "IB SL",
+  "A-Level",
+  "Dual Enrollment",
+  "College Level",
+] as const;
