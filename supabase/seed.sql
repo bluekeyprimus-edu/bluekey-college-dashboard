@@ -1,3 +1,6 @@
+-- Clean slate for these seed counselor emails (in case schema.sql already seeded one with a different id)
+delete from counselors where email in ('bluekeyprep@gmail.com','grace@bluekeyprep.com','david@bluekeyprep.com');
+
 -- Sample data so the dashboard has something to show right away.
 -- Safe to delete later: `truncate students cascade;`
 
