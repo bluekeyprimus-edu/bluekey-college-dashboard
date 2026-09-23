@@ -515,9 +515,15 @@ export async function createParentAccount(studentId: string, formData: FormData)
     authUserId = created.user.id;
   }
 
+  // upsert, not insert: re-submitting the form (double click, refresh after
+  // success) would otherwise hit the (auth_user_id, student_id) unique
+  // constraint — treat that as "already linked" and just update the name.
   const { error: linkError } = await supabaseAdmin!
     .from("parent_accounts")
-    .insert({ auth_user_id: authUserId, student_id: studentId, parent_name: parentName, email });
+    .upsert(
+      { auth_user_id: authUserId, student_id: studentId, parent_name: parentName, email },
+      { onConflict: "auth_user_id,student_id" }
+    );
   if (linkError) throw new Error(`연결 실패: ${linkError.message}`);
 
   revalidatePath(`/students/${studentId}`);
