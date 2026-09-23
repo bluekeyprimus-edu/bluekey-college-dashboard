@@ -177,21 +177,28 @@ export interface RosterRow {
 export async function getRosterRows(): Promise<RosterRow[]> {
   const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress } = await import("./progress");
   const students = await getStudents();
-  const rows: RosterRow[] = [];
-  for (const student of students) {
-    const progressRow = await getProgress(student.id);
-    const progressPct = progressRow ? overallProgress(progressRow) : 0;
-    const colleges = await getCollegeList(student.id);
-    const tasks = await getTasks(student.id);
-    const deadline = nextDeadline(colleges);
-    rows.push({
-      student,
-      progress: progressPct,
-      status: trackStatusFromProgress(progressPct, deadline?.days ?? null),
-      nextDeadline: deadline,
-      pendingTasks: pendingTaskCount(tasks),
-    });
-  }
+  // Fetch every student's progress/colleges/tasks in parallel instead of
+  // one student, one field at a time — with N students this was 3*N+1
+  // sequential round trips to Supabase, which is what made this page (and
+  // the dashboard, which reads the same roster) feel slow once deployed.
+  const rows = await Promise.all(
+    students.map(async (student) => {
+      const [progressRow, colleges, tasks] = await Promise.all([
+        getProgress(student.id),
+        getCollegeList(student.id),
+        getTasks(student.id),
+      ]);
+      const progressPct = progressRow ? overallProgress(progressRow) : 0;
+      const deadline = nextDeadline(colleges);
+      return {
+        student,
+        progress: progressPct,
+        status: trackStatusFromProgress(progressPct, deadline?.days ?? null),
+        nextDeadline: deadline,
+        pendingTasks: pendingTaskCount(tasks),
+      };
+    })
+  );
   return rows;
 }
 
