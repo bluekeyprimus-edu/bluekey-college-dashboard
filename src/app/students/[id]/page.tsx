@@ -65,7 +65,15 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
             {student.high_school} · {student.graduation_year}년 졸업
           </p>
         </div>
-        <Pill tone="gold">담당 카운슬러: {student.counselor_name ?? "미배정"}</Pill>
+        <div className="flex items-center gap-2">
+          <Pill tone="gold">담당 카운슬러: {student.counselor_name ?? "미배정"}</Pill>
+          <Link
+            href={`/students/${student.id}/edit`}
+            className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs font-medium text-navy-700 hover:bg-navy-50"
+          >
+            정보 수정
+          </Link>
+        </div>
       </div>
 
       {/* Overall progress */}

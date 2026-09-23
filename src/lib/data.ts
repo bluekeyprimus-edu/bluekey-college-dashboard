@@ -150,3 +150,9 @@ export async function getRosterRows(): Promise<RosterRow[]> {
   }
   return rows;
 }
+
+export async function getCounselors() {
+  if (!isSupabaseConfigured) return mock.mockCounselors;
+  const { data } = await supabase!.from("counselors").select("*").order("name");
+  return data ?? mock.mockCounselors;
+}
