@@ -4,6 +4,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 
+// Supabase project lives in ap-northeast-2 (Seoul) — without this, Vercel
+// runs the app's server functions in the US by default, so every page
+// render does a US<->Seoul round trip to the database on top of the
+// Korea<->Vercel one. Colocating fixes both dashboard and per-student
+// pages, not just the roster query.
+export const preferredRegion = "icn1";
+
 export const metadata: Metadata = {
   title: "BlueKey College Consulting Dashboard",
   description: "학생 대입 준비 현황을 관리하는 카운슬러 대시보드",
