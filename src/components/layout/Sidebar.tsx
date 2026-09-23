@@ -6,11 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  GraduationCap,
-  Trophy,
-  ListChecks,
-  FileText,
-  PenLine,
   CheckSquare,
   Database,
   Settings,
@@ -22,11 +17,6 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 const NAV = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
   { href: "/students", label: "학생", icon: Users },
-  { href: "/academics", label: "학업", icon: GraduationCap },
-  { href: "/activities", label: "활동", icon: Trophy },
-  { href: "/college-list", label: "컬리지 리스트", icon: ListChecks },
-  { href: "/applications", label: "지원 현황", icon: FileText },
-  { href: "/essays", label: "에세이", icon: PenLine },
   { href: "/tasks", label: "할일", icon: CheckSquare },
   { href: "/admissions-data", label: "입시 데이터", icon: Database },
   { href: "/settings/counselors", label: "카운슬러 계정", icon: Settings },
@@ -66,8 +56,8 @@ export function Sidebar({
               className="h-9 w-9 rounded-md object-cover"
             />
             <div>
-              <div className="font-serif text-[15px] font-semibold leading-tight text-white">BlueKey</div>
-              <div className="text-[11px] tracking-wide text-navy-300">대학 입시 컨설팅</div>
+              <div className="font-serif text-base font-semibold leading-tight text-white">BlueKey</div>
+              <div className="font-serif text-base font-semibold leading-tight tracking-wide text-white">Consulting</div>
             </div>
           </div>
           <button

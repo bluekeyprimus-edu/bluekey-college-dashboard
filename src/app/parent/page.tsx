@@ -27,7 +27,10 @@ export default async function ParentHomePage() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Image src="/logo.png" alt="BlueKey" width={32} height={32} className="h-8 w-8 rounded-md object-cover" />
-          <span className="font-serif text-lg font-semibold text-navy-900">BlueKey 학부모 포털</span>
+          <div>
+            <div className="font-serif text-base font-semibold leading-tight text-navy-900">BlueKey</div>
+            <div className="font-serif text-base font-semibold leading-tight tracking-wide text-navy-900">Consulting</div>
+          </div>
         </div>
         <LogoutButton />
       </div>
