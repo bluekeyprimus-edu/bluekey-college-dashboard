@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import * as mock from "./mock-data";
+import { getCounselorRestriction } from "./current-counselor";
 import {
   Student,
   StudentProgress,
@@ -16,6 +17,7 @@ import {
   PersonalStatement,
   SupplementalEssay,
   HistoricalAdmission,
+  Counselor,
   TaskItem,
   TrackStatus,
 } from "./types";
@@ -30,11 +32,19 @@ type StudentRow = Omit<Student, "counselor_name"> & {
 };
 
 export async function getStudents(): Promise<Student[]> {
-  if (!isSupabaseConfigured) return mock.mockStudents;
-  const { data, error } = await supabase!
-    .from("students")
-    .select("*, counselors(name)")
-    .order("student_name");
+  // Non-admin counselors only ever see their own assigned students — this
+  // is the single choke point every /students/[id]/** sub-page reads
+  // through (via getStudent below), so it locks down the whole per-student
+  // area, not just the roster list.
+  const restrictToCounselorId = await getCounselorRestriction();
+
+  if (!isSupabaseConfigured) {
+    const rows = mock.mockStudents;
+    return restrictToCounselorId ? rows.filter((s) => s.counselor_id === restrictToCounselorId) : rows;
+  }
+  let query = supabase!.from("students").select("*, counselors(name)").order("student_name");
+  if (restrictToCounselorId) query = query.eq("counselor_id", restrictToCounselorId);
+  const { data, error } = await query;
   if (error || !data) return mock.mockStudents;
   return (data as unknown as StudentRow[]).map((row) => ({
     ...row,
@@ -136,9 +146,24 @@ export async function getTasks(studentId: string): Promise<TaskItem[]> {
 }
 
 export async function getAllTasks(): Promise<TaskItem[]> {
-  if (!isSupabaseConfigured) return mock.mockTasks;
+  const restrictToCounselorId = await getCounselorRestriction();
+
+  if (!isSupabaseConfigured) {
+    if (!restrictToCounselorId) return mock.mockTasks;
+    const allowedIds = new Set(
+      mock.mockStudents.filter((s) => s.counselor_id === restrictToCounselorId).map((s) => s.id)
+    );
+    return mock.mockTasks.filter((t) => allowedIds.has(t.student_id));
+  }
+
   const { data } = await supabase!.from("tasks").select("*").order("deadline");
-  return (data as TaskItem[]) ?? [];
+  const tasks = (data as TaskItem[]) ?? [];
+  if (!restrictToCounselorId) return tasks;
+
+  // Tasks aren't tagged with a counselor directly — scope them through the
+  // (already-scoped) student list instead of a second restricted query.
+  const allowedIds = new Set((await getStudents()).map((s) => s.id));
+  return tasks.filter((t) => allowedIds.has(t.student_id));
 }
 
 export interface RosterRow {
@@ -182,8 +207,8 @@ export async function getHistoricalAdmissionsByUniversity(universityName: string
   return all.filter((r) => r.university_name.trim().toLowerCase() === needle);
 }
 
-export async function getCounselors() {
+export async function getCounselors(): Promise<Counselor[]> {
   if (!isSupabaseConfigured) return mock.mockCounselors;
   const { data } = await supabase!.from("counselors").select("*").order("name");
-  return data ?? mock.mockCounselors;
+  return (data as Counselor[]) ?? mock.mockCounselors;
 }

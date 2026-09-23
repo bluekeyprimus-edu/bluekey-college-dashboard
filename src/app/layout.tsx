@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { getCurrentCounselor } from "@/lib/current-counselor";
 
 export const metadata: Metadata = {
   title: "BlueKey College Consulting Dashboard",
@@ -24,12 +25,19 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // A signed-in, non-admin counselor gets a trimmed-down sidebar (no
+  // account-management link) — computed once here so every page doesn't
+  // need to re-fetch it. Admins and non-counselor sessions (parents) see
+  // the default nav; parents don't get the sidebar at all (see AppShell).
+  const actingCounselor = await getCurrentCounselor();
+  const isRestrictedCounselor = Boolean(actingCounselor && !actingCounselor.isAdmin);
+
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full">
         <ServiceWorkerRegister />
-        <AppShell>{children}</AppShell>
+        <AppShell isRestrictedCounselor={isRestrictedCounselor}>{children}</AppShell>
       </body>
     </html>
   );

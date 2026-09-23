@@ -13,9 +13,11 @@ import {
   PenLine,
   CheckSquare,
   Database,
+  Settings,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const NAV = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
@@ -27,10 +29,20 @@ const NAV = [
   { href: "/essays", label: "에세이", icon: PenLine },
   { href: "/tasks", label: "할일", icon: CheckSquare },
   { href: "/admissions-data", label: "입시 데이터", icon: Database },
+  { href: "/settings/counselors", label: "카운슬러 계정", icon: Settings },
 ];
 
-export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function Sidebar({
+  open,
+  onClose,
+  isRestrictedCounselor = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isRestrictedCounselor?: boolean;
+}) {
   const pathname = usePathname();
+  const nav = isRestrictedCounselor ? NAV.filter((item) => item.href !== "/settings/counselors") : NAV;
 
   return (
     <>
@@ -69,7 +81,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
             return (
               <Link
@@ -90,8 +102,9 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           })}
         </nav>
 
-        <div className="border-t border-navy-800 px-6 py-4 text-[11px] text-navy-400">
-          블루키 컨설팅 · 강남
+        <div className="border-t border-navy-800 px-6 py-4">
+          <div className="mb-2 text-[11px] text-navy-400">블루키 컨설팅 · 강남</div>
+          <LogoutButton variant="dark" className="w-full" />
         </div>
       </aside>
     </>

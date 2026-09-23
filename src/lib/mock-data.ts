@@ -18,9 +18,9 @@ import {
 } from "./types";
 
 export const mockCounselors: Counselor[] = [
-  { id: "c1", name: "Jacob Chung", email: "bluekeyprep@gmail.com" },
-  { id: "c2", name: "Grace Lim", email: "grace@bluekeyprep.com" },
-  { id: "c3", name: "David Park", email: "david@bluekeyprep.com" },
+  { id: "c1", name: "Jacob Chung", email: "bluekeyprep@gmail.com", auth_user_id: null, is_admin: true },
+  { id: "c2", name: "Grace Lim", email: "grace@bluekeyprep.com", auth_user_id: null, is_admin: false },
+  { id: "c3", name: "David Park", email: "david@bluekeyprep.com", auth_user_id: null, is_admin: false },
 ];
 
 export const mockStudents: Student[] = [

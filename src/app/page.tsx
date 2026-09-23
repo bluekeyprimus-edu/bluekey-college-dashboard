@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getRosterRows } from "@/lib/data";
+import { getCounselorRestriction } from "@/lib/current-counselor";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
@@ -21,7 +22,7 @@ function StatCard({ label, value, tone }: { label: string; value: number | strin
 }
 
 export default async function DashboardPage() {
-  const rows = await getRosterRows();
+  const [rows, restricted] = await Promise.all([getRosterRows(), getCounselorRestriction()]);
 
   const total = rows.length;
   const onTrack = rows.filter((r) => r.status === "green").length;
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="font-serif text-2xl font-semibold text-navy-900">카운슬러 대시보드</h1>
-        <p className="mt-1 text-sm text-navy-500">전체 재학생 현황 개요</p>
+        <p className="mt-1 text-sm text-navy-500">{restricted ? "내 담당 학생 현황 개요" : "전체 재학생 현황 개요"}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

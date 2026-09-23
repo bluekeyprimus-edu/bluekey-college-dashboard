@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { ApplicationChecklist, CollegeCategory, TaskStatus } from "./types";
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
+import { getCurrentCounselor } from "./current-counselor";
 
 function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -585,4 +586,84 @@ export async function deleteHistoricalAdmission(recordId: string) {
   const { error } = await supabase!.from("historical_admissions").delete().eq("id", recordId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath("/admissions-data");
+}
+
+// ============================================================
+// Counselor login accounts — same pattern as parent accounts, but linked
+// 1:1 onto the existing counselors row (auth_user_id column) instead of a
+// separate join table, since a counselor has exactly one login.
+// ============================================================
+export async function createCounselorAccount(counselorId: string, formData: FormData) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 로그인 계정을 관리할 수 있어요.");
+  }
+
+  if (!isAdminConfigured) {
+    throw new Error("Service Role Key가 아직 설정되지 않았어요. .env.local에 SUPABASE_SERVICE_ROLE_KEY를 추가해주세요.");
+  }
+
+  const email = str(formData, "email");
+  const password = str(formData, "password");
+  if (!email || !password) throw new Error("이메일과 비밀번호는 필수예요.");
+  if (password.length < 6) throw new Error("비밀번호는 6자 이상이어야 해요.");
+
+  let authUserId: string;
+
+  const { data: created, error: createError } = await supabaseAdmin!.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role: "counselor" },
+  });
+
+  if (createError || !created.user) {
+    const { data: existing, error: listError } = await supabaseAdmin!.auth.admin.listUsers({ perPage: 1000 });
+    const match = listError ? undefined : existing.users.find((u) => u.email === email);
+    if (!match) {
+      throw new Error(`계정 생성 실패: ${createError?.message ?? "알 수 없는 오류"}`);
+    }
+    authUserId = match.id;
+    // Make sure an existing auth user picked up this way is tagged as a
+    // counselor too (e.g. it was created before this role existed).
+    await supabaseAdmin!.auth.admin.updateUserById(authUserId, { user_metadata: { role: "counselor" } });
+  } else {
+    authUserId = created.user.id;
+  }
+
+  const { error: linkError } = await supabaseAdmin!
+    .from("counselors")
+    .update({ auth_user_id: authUserId, email })
+    .eq("id", counselorId);
+  if (linkError) throw new Error(`연결 실패: ${linkError.message}`);
+
+  revalidatePath("/settings/counselors");
+}
+
+export async function unlinkCounselorAccount(counselorId: string) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 로그인 계정을 관리할 수 있어요.");
+  }
+
+  if (!isAdminConfigured) {
+    throw new Error("Service Role Key가 아직 설정되지 않았어요.");
+  }
+  const { error } = await supabaseAdmin!.from("counselors").update({ auth_user_id: null }).eq("id", counselorId);
+  if (error) throw new Error(`해제 실패: ${error.message}`);
+  revalidatePath("/settings/counselors");
+}
+
+export async function addCounselor(formData: FormData) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 로그인 계정을 관리할 수 있어요.");
+  }
+
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const name = str(formData, "name");
+  if (!name) throw new Error("이름은 필수예요.");
+  const { error } = await supabase!.from("counselors").insert({ name, email: str(formData, "email") });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+  revalidatePath("/settings/counselors");
 }

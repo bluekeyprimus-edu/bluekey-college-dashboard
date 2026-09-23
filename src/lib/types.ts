@@ -38,6 +38,8 @@ export interface Counselor {
   id: string;
   name: string;
   email: string | null;
+  auth_user_id: string | null;
+  is_admin: boolean;
 }
 
 export interface Student {
