@@ -14,7 +14,7 @@ import {
   getConsultationNotes,
 } from "@/lib/data";
 import { getParentAccountsForStudent } from "@/lib/parent";
-import { createParentAccount, deleteParentAccount } from "@/lib/actions";
+import { createParentAccount, deleteParentAccount, updateStudentProgress } from "@/lib/actions";
 import { overallProgress } from "@/lib/progress";
 import { PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
 import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_LABEL } from "@/lib/labels";
@@ -110,6 +110,36 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                 </div>
               ))}
           </div>
+
+          <details className="mt-6 rounded-lg border border-navy-100">
+            <summary className="cursor-pointer list-none rounded-lg px-3 py-2.5 text-sm font-medium text-navy-700 hover:bg-navy-50">
+              진행률 수정
+            </summary>
+            <form action={updateStudentProgress.bind(null, student.id)} className="space-y-4 border-t border-navy-100 p-3">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {categories.map((key) => (
+                  <div key={key}>
+                    <label className="mb-1 block text-xs font-medium text-navy-500">{PROGRESS_CATEGORY_LABELS[key]}</label>
+                    <input
+                      type="number"
+                      name={key}
+                      min={0}
+                      max={100}
+                      step={5}
+                      defaultValue={progress?.[key] ?? 0}
+                      className="w-full rounded-lg border border-navy-200 bg-white px-2.5 py-1.5 text-sm text-navy-900 focus:border-gold-400 focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-navy-400">각 항목은 0~100 사이 값이고, 전체 진행률은 11개 항목의 평균으로 자동 계산돼요.</p>
+                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
+                  저장
+                </button>
+              </div>
+            </form>
+          </details>
         </CardBody>
       </Card>
 

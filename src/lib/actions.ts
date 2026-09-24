@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { ApplicationChecklist, CollegeCategory, TaskStatus } from "./types";
+import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS } from "./types";
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 import { getCurrentCounselor } from "./current-counselor";
 
@@ -59,6 +59,28 @@ export async function createStudent(formData: FormData) {
   revalidatePath("/students");
   revalidatePath("/");
   redirect(`/students/${data.id}`);
+}
+
+// ============================================================
+// Progress (overall application progress — averaged from these 11 categories)
+// ============================================================
+const PROGRESS_KEYS = Object.keys(PROGRESS_CATEGORY_LABELS) as (keyof typeof PROGRESS_CATEGORY_LABELS)[];
+
+export async function updateStudentProgress(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const values: Record<string, number> = {};
+  for (const key of PROGRESS_KEYS) {
+    const v = num(formData, key);
+    values[key] = v === null ? 0 : Math.min(100, Math.max(0, Math.round(v)));
+  }
+
+  const { error } = await supabase!.from("student_progress").upsert({ student_id: studentId, ...values });
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/students`);
+  revalidatePath(`/parent/${studentId}`);
 }
 
 export async function updateStudent(studentId: string, formData: FormData) {
