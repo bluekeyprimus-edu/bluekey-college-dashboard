@@ -16,6 +16,7 @@ import {
   TaskItem,
   Counselor,
   ConsultationNote,
+  Attachment,
 } from "./types";
 
 export const mockCounselors: Counselor[] = [
@@ -465,3 +466,7 @@ export const mockConsultationNotes: ConsultationNote[] = [
     updated_at: "2026-09-12T10:00:00Z",
   },
 ];
+
+// Mock mode has no real file storage to point at, so this stays empty —
+// the upload/delete actions require Supabase to be configured anyway.
+export const mockAttachments: Attachment[] = [];

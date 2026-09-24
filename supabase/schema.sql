@@ -378,6 +378,36 @@ create table if not exists consultation_notes (
 create index if not exists idx_consultation_notes_student on consultation_notes(student_id, meeting_date desc);
 
 -- ============================================================
+-- Attachments (Section: files on activities / awards / essays)
+-- Generic polymorphic table: entity_type + entity_id point at whichever
+-- extracurriculars / awards / personal_statement / supplemental_essays row
+-- the file belongs to. Actual bytes live in Supabase Storage (bucket
+-- "attachments", created below); this row is just the pointer + metadata.
+-- ============================================================
+create table if not exists attachments (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  entity_type text not null check (entity_type in ('extracurricular', 'award', 'personal_statement', 'essay')),
+  entity_id uuid not null,
+  file_name text not null,
+  storage_path text not null,
+  file_url text not null,
+  file_size int,
+  uploaded_by uuid references counselors(id) on delete set null,
+  created_at timestamptz default now()
+);
+create index if not exists idx_attachments_entity on attachments(entity_type, entity_id);
+create index if not exists idx_attachments_student on attachments(student_id);
+
+-- Storage bucket the app uploads into (via the service-role key, so no
+-- storage.objects RLS policy is needed — the service role bypasses RLS).
+-- Public so the app can just store/use a plain public URL per file rather
+-- than generating signed URLs on every render.
+insert into storage.buckets (id, name, public)
+values ('attachments', 'attachments', true)
+on conflict (id) do nothing;
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================

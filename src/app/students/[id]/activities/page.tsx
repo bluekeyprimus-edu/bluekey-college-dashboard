@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getStudent, getExtracurriculars, getAwards } from "@/lib/data";
+import { getStudent, getExtracurriculars, getAwards, getAttachments } from "@/lib/data";
 import {
   addExtracurricular,
   updateExtracurricular,
@@ -10,6 +10,7 @@ import {
   deleteAward,
 } from "@/lib/actions";
 import { Extracurricular, Award } from "@/lib/types";
+import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 import { EC_STATUS_LABEL, EC_STATUS_OPTIONS, AWARD_LEVEL_LABEL, AWARD_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -188,7 +189,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
   const student = await getStudent(id);
   if (!student) notFound();
 
-  const [ecs, awards] = await Promise.all([getExtracurriculars(id), getAwards(id)]);
+  const [ecs, awards, attachments] = await Promise.all([getExtracurriculars(id), getAwards(id), getAttachments(id)]);
 
   return (
     <div className="space-y-6">
@@ -251,6 +252,12 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                     </button>
                   </div>
                 </form>
+                <AttachmentsSection
+                  studentId={id}
+                  entityType="extracurricular"
+                  entityId={e.id}
+                  attachments={attachments.filter((a) => a.entity_id === e.id)}
+                />
                 <form action={deleteExtracurricular.bind(null, id, e.id)} className="mt-2 flex justify-end">
                   <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
                     이 활동 삭제
@@ -306,6 +313,12 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                     </button>
                   </div>
                 </form>
+                <AttachmentsSection
+                  studentId={id}
+                  entityType="award"
+                  entityId={a.id}
+                  attachments={attachments.filter((att) => att.entity_id === a.id)}
+                />
                 <form action={deleteAward.bind(null, id, a.id)} className="mt-2 flex justify-end">
                   <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
                     이 수상 삭제

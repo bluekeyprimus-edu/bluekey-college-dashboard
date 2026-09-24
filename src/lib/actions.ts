@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS } from "./types";
+import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS, AttachmentEntityType } from "./types";
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 import { getCurrentCounselor } from "./current-counselor";
 
@@ -384,6 +384,85 @@ export async function deleteAward(studentId: string, awardId: string) {
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/activities`);
   revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Attachments — files on extracurriculars / awards / personal statement /
+// supplemental essays. Uses supabaseAdmin (service role) for both the
+// storage upload and the row insert/delete, so no storage.objects RLS
+// policy is needed — the service role bypasses it entirely, same as the
+// parent-account creation flow above.
+// ============================================================
+const ATTACHMENTS_BUCKET = "attachments";
+const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20MB
+
+function attachmentRevalidatePaths(studentId: string, entityType: AttachmentEntityType) {
+  if (entityType === "extracurricular" || entityType === "award") {
+    revalidatePath(`/students/${studentId}/activities`);
+  } else {
+    revalidatePath(`/students/${studentId}/essays`);
+  }
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function uploadAttachment(
+  studentId: string,
+  entityType: AttachmentEntityType,
+  entityId: string,
+  formData: FormData
+) {
+  if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("파일을 선택해주세요.");
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    throw new Error("파일 크기는 20MB 이하만 가능해요.");
+  }
+
+  const safeName = file.name.replace(/[^\w.\-가-힣 ]/g, "_");
+  const path = `${studentId}/${entityType}/${entityId}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabaseAdmin!.storage
+    .from(ATTACHMENTS_BUCKET)
+    .upload(path, file, { contentType: file.type || undefined });
+  if (uploadError) throw new Error(`업로드 실패: ${uploadError.message}`);
+
+  const { data: publicUrlData } = supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).getPublicUrl(path);
+
+  const actingCounselor = await getCurrentCounselor();
+  const { error: insertError } = await supabaseAdmin!.from("attachments").insert({
+    student_id: studentId,
+    entity_type: entityType,
+    entity_id: entityId,
+    file_name: file.name,
+    storage_path: path,
+    file_url: publicUrlData.publicUrl,
+    file_size: file.size,
+    uploaded_by: actingCounselor?.id ?? null,
+  });
+  if (insertError) {
+    await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([path]);
+    throw new Error(`저장 실패: ${insertError.message}`);
+  }
+
+  attachmentRevalidatePaths(studentId, entityType);
+}
+
+export async function deleteAttachment(
+  studentId: string,
+  entityType: AttachmentEntityType,
+  attachmentId: string,
+  storagePath: string
+) {
+  if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
+  const { error } = await supabaseAdmin!.from("attachments").delete().eq("id", attachmentId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+
+  attachmentRevalidatePaths(studentId, entityType);
 }
 
 // ============================================================

@@ -297,4 +297,18 @@ export interface ConsultationNote {
   updated_at: string;
 }
 
+export type AttachmentEntityType = "extracurricular" | "award" | "personal_statement" | "essay";
+
+export interface Attachment {
+  id: string;
+  student_id: string;
+  entity_type: AttachmentEntityType;
+  entity_id: string;
+  file_name: string;
+  storage_path: string;
+  file_url: string;
+  file_size: number | null;
+  created_at: string;
+}
+
 export type TrackStatus = "green" | "yellow" | "red";

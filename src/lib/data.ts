@@ -21,6 +21,7 @@ import {
   TaskItem,
   TrackStatus,
   ConsultationNote,
+  Attachment,
 } from "./types";
 
 // Thin data-access layer. When NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are set
@@ -115,6 +116,18 @@ export async function getAwards(studentId: string): Promise<Award[]> {
 type ConsultationNoteRow = Omit<ConsultationNote, "counselor_name"> & {
   counselors: { name: string } | null;
 };
+
+export async function getAttachments(studentId: string): Promise<Attachment[]> {
+  // One query for the whole student, grouped by entity_id on the page side
+  // — avoids an N+1 fetch per extracurricular/award/essay item.
+  if (!isSupabaseConfigured) return mock.mockAttachments.filter((a) => a.student_id === studentId);
+  const { data } = await supabase!
+    .from("attachments")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  return (data as Attachment[]) ?? [];
+}
 
 export async function getConsultationNotes(studentId: string): Promise<ConsultationNote[]> {
   if (!isSupabaseConfigured) {

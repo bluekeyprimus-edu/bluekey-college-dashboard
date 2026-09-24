@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getPersonalStatement, getSupplementalEssays } from "@/lib/data";
+import { getStudent, getPersonalStatement, getSupplementalEssays, getAttachments } from "@/lib/data";
 import { upsertPersonalStatement, addSupplementalEssay, updateSupplementalEssay, deleteSupplementalEssay } from "@/lib/actions";
 import { SupplementalEssay } from "@/lib/types";
+import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 import { ESSAY_STATUS_LABEL, ESSAY_STATUS_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -67,7 +68,11 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
   const student = await getStudent(id);
   if (!student) notFound();
 
-  const [personalStatement, essays] = await Promise.all([getPersonalStatement(id), getSupplementalEssays(id)]);
+  const [personalStatement, essays, attachments] = await Promise.all([
+    getPersonalStatement(id),
+    getSupplementalEssays(id),
+    getAttachments(id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -118,6 +123,12 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
               </button>
             </div>
           </form>
+          <AttachmentsSection
+            studentId={id}
+            entityType="personal_statement"
+            entityId={id}
+            attachments={attachments.filter((a) => a.entity_id === id)}
+          />
         </CardBody>
       </Card>
 
@@ -163,6 +174,12 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
                     </button>
                   </div>
                 </form>
+                <AttachmentsSection
+                  studentId={id}
+                  entityType="essay"
+                  entityId={e.id}
+                  attachments={attachments.filter((a) => a.entity_id === e.id)}
+                />
                 <form action={deleteSupplementalEssay.bind(null, id, e.id)} className="mt-2 flex justify-end">
                   <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
                     이 에세이 삭제
