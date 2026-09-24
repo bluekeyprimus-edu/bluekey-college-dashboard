@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCounselors } from "@/lib/data";
-import { createCounselorAccount, unlinkCounselorAccount, addCounselor } from "@/lib/actions";
+import { getCounselors, getLastGradeBumpYear } from "@/lib/data";
+import { createCounselorAccount, unlinkCounselorAccount, addCounselor, runGradeBumpNow } from "@/lib/actions";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -17,7 +17,7 @@ export default async function CounselorSettingsPage() {
   const actingCounselor = await getCurrentCounselor();
   if (!actingCounselor?.isAdmin) redirect("/");
 
-  const counselors = await getCounselors();
+  const [counselors, lastGradeBumpYear] = await Promise.all([getCounselors(), getLastGradeBumpYear()]);
 
   return (
     <div className="space-y-6">
@@ -96,6 +96,27 @@ export default async function CounselorSettingsPage() {
                 추가
               </button>
             </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>학년 자동 업데이트</CardTitle>
+        </CardHeader>
+        <CardBody className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-navy-700">
+              매년 9월 1일, 8~11학년 재학생 전원의 학년이 자동으로 한 학년씩 올라가요 (12학년은 그대로 두고, 졸업 처리는 따로 해주세요).
+            </p>
+            <p className="mt-1 text-xs text-navy-400">
+              {lastGradeBumpYear ? `마지막 실행: ${lastGradeBumpYear}학년도` : "아직 실행된 적 없어요."}
+            </p>
+          </div>
+          <form action={runGradeBumpNow}>
+            <button type="submit" className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
+              지금 실행
+            </button>
           </form>
         </CardBody>
       </Card>

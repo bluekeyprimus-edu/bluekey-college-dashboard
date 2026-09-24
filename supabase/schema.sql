@@ -437,6 +437,18 @@ create table if not exists student_expenses (
 create index if not exists idx_student_expenses_student on student_expenses(student_id);
 
 -- ============================================================
+-- System Settings (Section: misc key/value state for background jobs)
+-- Right now just tracks the school-year label the grade auto-bump last
+-- ran for, so a retry (or the admin's manual "지금 실행" button) can't
+-- double-bump everyone's grade within the same school year.
+-- ============================================================
+create table if not exists system_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz default now()
+);
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================

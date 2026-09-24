@@ -123,6 +123,12 @@ type ConsultationNoteRow = Omit<ConsultationNote, "counselor_name"> & {
 // Finance (admin-only profitability tracking) — always fetched all-at-once
 // for the /finance overview, never per student, to avoid an N+1 fetch.
 // ============================================================
+export async function getLastGradeBumpYear(): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase!.from("system_settings").select("value").eq("key", "last_grade_bump_year").maybeSingle();
+  return data?.value ?? null;
+}
+
 export async function getAllStudentFinances(): Promise<StudentFinance[]> {
   if (!isSupabaseConfigured) return mock.mockStudentFinances;
   const { data } = await supabase!.from("student_finances").select("*");

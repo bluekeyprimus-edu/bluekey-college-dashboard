@@ -71,9 +71,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except Next internals and the public/ files the PWA and
+    // Everything except Next internals, the public/ files the PWA and
     // browser need to load unauthenticated (manifest, icons, service
-    // worker, favicon).
-    "/((?!_next/static|_next/image|favicon-32\\.png|icon-192\\.png|icon-512\\.png|logo\\.png|apple-touch-icon\\.png|manifest\\.json|sw\\.js).*)",
+    // worker, favicon), and /api/cron/** — Vercel's cron invoker carries
+    // no Supabase session cookie, so it would otherwise get redirected to
+    // /login before ever reaching the route (which checks CRON_SECRET
+    // itself instead).
+    "/((?!_next/static|_next/image|favicon-32\\.png|icon-192\\.png|icon-512\\.png|logo\\.png|apple-touch-icon\\.png|manifest\\.json|sw\\.js|api/cron/).*)",
   ],
 };

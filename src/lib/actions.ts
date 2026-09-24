@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS, AttachmentEntityType, ExpenseCategory } from "./types";
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
+import { bumpGradesForNewSchoolYear } from "./grade-bump";
 import { getCurrentCounselor } from "./current-counselor";
 
 function str(formData: FormData, key: string): string | null {
@@ -384,6 +385,29 @@ export async function deleteAward(studentId: string, awardId: string) {
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/activities`);
   revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Grade auto-bump — the real automation runs on a schedule (see
+// vercel.json + /api/cron/bump-grades); this is the admin's manual "run it
+// now" button, for testing or as a fallback if the cron somehow doesn't
+// fire. Same shared function either way, so behavior can't drift between
+// the two triggers.
+// ============================================================
+export async function runGradeBumpNow() {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자만 학년 업데이트를 실행할 수 있어요.");
+  }
+
+  const result = await bumpGradesForNewSchoolYear();
+  if (!result.ok) throw new Error(result.reason ?? "학년 업데이트 실패");
+
+  revalidatePath("/settings/counselors");
+  revalidatePath("/students");
+  revalidatePath("/");
+
+  if (result.skipped) throw new Error(`이미 ${result.runKey}학년도에 실행된 적이 있어요.`);
 }
 
 // ============================================================
