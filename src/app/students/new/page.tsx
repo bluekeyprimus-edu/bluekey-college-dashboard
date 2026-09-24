@@ -22,6 +22,7 @@ export default async function NewStudentPage() {
         counselors={counselors}
         submitLabel="학생 등록"
         defaultValues={defaultCounselorId ? { counselor_id: defaultCounselorId } : undefined}
+        canAssignCounselor={actingCounselor?.isAdmin ?? false}
       />
     </div>
   );

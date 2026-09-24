@@ -19,11 +19,17 @@ export function StudentForm({
   defaultValues,
   counselors,
   submitLabel,
+  canAssignCounselor = true,
 }: {
   action: (formData: FormData) => void;
   defaultValues?: Partial<Student>;
   counselors: Pick<Counselor, "id" | "name">[];
   submitLabel: string;
+  // Only an admin may choose/change who a student is assigned to. When
+  // false, the field is shown read-only — the server also enforces this
+  // independently, so hiding the control here is a UX nicety, not the
+  // actual guard.
+  canAssignCounselor?: boolean;
 }) {
   const d = defaultValues ?? {};
 
@@ -83,12 +89,19 @@ export function StudentForm({
             </label>
           </div>
           <Field label="담당 카운슬러">
-            <select name="counselor_id" defaultValue={d.counselor_id ?? ""} className={inputClass}>
-              <option value="">미배정</option>
-              {counselors.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            {canAssignCounselor ? (
+              <select name="counselor_id" defaultValue={d.counselor_id ?? ""} className={inputClass}>
+                <option value="">미배정</option>
+                {counselors.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
+                {counselors.find((c) => c.id === d.counselor_id)?.name ?? "나에게 배정됨"}
+                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
+              </div>
+            )}
           </Field>
         </CardBody>
       </Card>

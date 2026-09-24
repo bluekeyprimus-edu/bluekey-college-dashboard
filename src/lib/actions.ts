@@ -48,6 +48,14 @@ export async function createStudent(formData: FormData) {
     throw new Error("필수 항목(학생 이름, 현재 학년, 졸업연도, 고등학교, 커리큘럼)을 입력해주세요.");
   }
 
+  // Only an admin may choose who a student is assigned to. A non-admin's
+  // submission is always forced to themselves, whatever the form said —
+  // the UI already hides the picker for them, this is the real enforcement.
+  const actingCounselor = await getCurrentCounselor();
+  if (actingCounselor && !actingCounselor.isAdmin) {
+    payload.counselor_id = actingCounselor.id;
+  }
+
   const { data, error } = await supabase!.from("students").insert(payload).select("id").single();
   if (error || !data) {
     throw new Error(`학생 등록 실패: ${error?.message ?? "알 수 없는 오류"}`);
@@ -90,6 +98,16 @@ export async function updateStudent(studentId: string, formData: FormData) {
   const payload = studentPayload(formData);
   if (!payload.student_name || !payload.current_grade || !payload.graduation_year || !payload.high_school || !payload.curriculum) {
     throw new Error("필수 항목(학생 이름, 현재 학년, 졸업연도, 고등학교, 커리큘럼)을 입력해주세요.");
+  }
+
+  // Same rule as createStudent: reassignment is admin-only. A non-admin can
+  // only ever reach this action for a student already assigned to them (the
+  // access-scoping choke point in getStudent blocks anything else), so
+  // forcing counselor_id back to themselves just means their submission
+  // can't move the student off their own list.
+  const actingCounselor = await getCurrentCounselor();
+  if (actingCounselor && !actingCounselor.isAdmin) {
+    payload.counselor_id = actingCounselor.id;
   }
 
   const { error } = await supabase!.from("students").update(payload).eq("id", studentId);
