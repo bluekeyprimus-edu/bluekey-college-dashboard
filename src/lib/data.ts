@@ -22,6 +22,8 @@ import {
   TrackStatus,
   ConsultationNote,
   Attachment,
+  StudentFinance,
+  StudentExpense,
 } from "./types";
 
 // Thin data-access layer. When NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are set
@@ -116,6 +118,22 @@ export async function getAwards(studentId: string): Promise<Award[]> {
 type ConsultationNoteRow = Omit<ConsultationNote, "counselor_name"> & {
   counselors: { name: string } | null;
 };
+
+// ============================================================
+// Finance (admin-only profitability tracking) — always fetched all-at-once
+// for the /finance overview, never per student, to avoid an N+1 fetch.
+// ============================================================
+export async function getAllStudentFinances(): Promise<StudentFinance[]> {
+  if (!isSupabaseConfigured) return mock.mockStudentFinances;
+  const { data } = await supabase!.from("student_finances").select("*");
+  return (data as StudentFinance[]) ?? [];
+}
+
+export async function getAllStudentExpenses(): Promise<StudentExpense[]> {
+  if (!isSupabaseConfigured) return mock.mockStudentExpenses;
+  const { data } = await supabase!.from("student_expenses").select("*");
+  return (data as StudentExpense[]) ?? [];
+}
 
 export async function getAttachments(studentId: string): Promise<Attachment[]> {
   // One query for the whole student, grouped by entity_id on the page side

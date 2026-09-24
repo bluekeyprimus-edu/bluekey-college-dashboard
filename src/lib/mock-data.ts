@@ -17,6 +17,8 @@ import {
   Counselor,
   ConsultationNote,
   Attachment,
+  StudentFinance,
+  StudentExpense,
 } from "./types";
 
 export const mockCounselors: Counselor[] = [
@@ -470,3 +472,19 @@ export const mockConsultationNotes: ConsultationNote[] = [
 // Mock mode has no real file storage to point at, so this stays empty —
 // the upload/delete actions require Supabase to be configured anyway.
 export const mockAttachments: Attachment[] = [];
+
+export const mockStudentFinances: StudentFinance[] = [
+  {
+    student_id: "s1",
+    consulting_fee: 45000000,
+    contract_start: "2025-03-01",
+    contract_end: "2027-01-31",
+    notes: null,
+    updated_at: "2026-09-01T00:00:00Z",
+  },
+];
+
+export const mockStudentExpenses: StudentExpense[] = [
+  { id: "se1", student_id: "s1", category: "extracurricular", description: "로봇공학 경진대회 참가비", amount: 1200000, expense_date: "2025-06-10", created_at: "2025-06-10T00:00:00Z" },
+  { id: "se2", student_id: "s1", category: "essay", description: "에세이 코칭 (외부 강사)", amount: 2500000, expense_date: "2026-08-15", created_at: "2026-08-15T00:00:00Z" },
+];

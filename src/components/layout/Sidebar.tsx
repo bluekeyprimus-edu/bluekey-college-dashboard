@@ -9,6 +9,7 @@ import {
   CheckSquare,
   Database,
   Settings,
+  TrendingUp,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -19,8 +20,13 @@ const NAV = [
   { href: "/students", label: "학생", icon: Users },
   { href: "/tasks", label: "할일", icon: CheckSquare },
   { href: "/admissions-data", label: "입시 데이터", icon: Database },
+  { href: "/finance", label: "통계", icon: TrendingUp },
   { href: "/settings/counselors", label: "카운슬러 계정", icon: Settings },
 ];
+
+// Admin-only tabs — hidden entirely for a non-admin counselor, same
+// restriction the pages themselves enforce with a redirect.
+const ADMIN_ONLY_HREFS = ["/finance", "/settings/counselors"];
 
 export function Sidebar({
   open,
@@ -32,7 +38,7 @@ export function Sidebar({
   isRestrictedCounselor?: boolean;
 }) {
   const pathname = usePathname();
-  const nav = isRestrictedCounselor ? NAV.filter((item) => item.href !== "/settings/counselors") : NAV;
+  const nav = isRestrictedCounselor ? NAV.filter((item) => !ADMIN_ONLY_HREFS.includes(item.href)) : NAV;
 
   return (
     <>

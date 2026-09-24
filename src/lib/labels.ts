@@ -155,3 +155,10 @@ export const ADMISSION_RESULT_LABEL: Record<string, string> = {
   Deferred: "보류",
   Rejected: "불합격",
 };
+
+export const EXPENSE_CATEGORY_LABEL: Record<string, string> = {
+  extracurricular: "EC 비용",
+  essay: "에세이 비용",
+  test_prep: "시험 준비 비용",
+  other: "기타 비용",
+};

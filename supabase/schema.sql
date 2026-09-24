@@ -408,6 +408,35 @@ values ('attachments', 'attachments', true)
 on conflict (id) do nothing;
 
 -- ============================================================
+-- Student Finances (Section: admin-only profitability tracking)
+-- consulting_fee is what the student/family paid for the whole engagement
+-- (often spanning 1-2+ years); student_expenses are itemized costs against
+-- it (EC program fees, essay coaching, test prep, etc). Net profit is
+-- computed in the app as consulting_fee minus the sum of expenses —
+-- nothing here is a running balance, so there's no risk of it drifting.
+-- Admin-only everywhere: never surfaced to non-admin counselors or parents.
+-- ============================================================
+create table if not exists student_finances (
+  student_id uuid primary key references students(id) on delete cascade,
+  consulting_fee bigint not null default 0 check (consulting_fee >= 0),
+  contract_start date,
+  contract_end date,
+  notes text,
+  updated_at timestamptz default now()
+);
+
+create table if not exists student_expenses (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  category text not null check (category in ('extracurricular', 'essay', 'test_prep', 'other')),
+  description text,
+  amount bigint not null check (amount >= 0),
+  expense_date date default current_date,
+  created_at timestamptz default now()
+);
+create index if not exists idx_student_expenses_student on student_expenses(student_id);
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================

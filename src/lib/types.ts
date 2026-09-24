@@ -297,6 +297,27 @@ export interface ConsultationNote {
   updated_at: string;
 }
 
+export type ExpenseCategory = "extracurricular" | "essay" | "test_prep" | "other";
+
+export interface StudentFinance {
+  student_id: string;
+  consulting_fee: number;
+  contract_start: string | null;
+  contract_end: string | null;
+  notes: string | null;
+  updated_at: string;
+}
+
+export interface StudentExpense {
+  id: string;
+  student_id: string;
+  category: ExpenseCategory;
+  description: string | null;
+  amount: number;
+  expense_date: string | null;
+  created_at: string;
+}
+
 export type AttachmentEntityType = "extracurricular" | "award" | "personal_statement" | "essay";
 
 export interface Attachment {

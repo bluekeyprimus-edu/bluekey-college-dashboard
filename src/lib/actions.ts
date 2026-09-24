@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS, AttachmentEntityType } from "./types";
+import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LABELS, AttachmentEntityType, ExpenseCategory } from "./types";
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 import { getCurrentCounselor } from "./current-counselor";
 
@@ -384,6 +384,69 @@ export async function deleteAward(studentId: string, awardId: string) {
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/activities`);
   revalidatePath(`/students/${studentId}`);
+}
+
+// ============================================================
+// Finance (admin-only profitability tracking: consulting fee vs. itemized
+// expenses like EC/essay costs). Every mutation here is admin-gated —
+// this is sensitive business data, unlike the read-only per-counselor
+// scoping used elsewhere.
+// ============================================================
+export async function updateStudentFinance(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 재무 정보를 관리할 수 있어요.");
+  }
+
+  const payload = {
+    student_id: studentId,
+    consulting_fee: num(formData, "consulting_fee") ?? 0,
+    contract_start: str(formData, "contract_start"),
+    contract_end: str(formData, "contract_end"),
+    notes: str(formData, "notes"),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase!.from("student_finances").upsert(payload);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+
+  revalidatePath("/finance");
+}
+
+export async function addStudentExpense(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 재무 정보를 관리할 수 있어요.");
+  }
+
+  const amount = num(formData, "amount");
+  if (!amount || amount <= 0) throw new Error("금액을 입력해주세요.");
+
+  const { error } = await supabase!.from("student_expenses").insert({
+    student_id: studentId,
+    category: (str(formData, "category") as ExpenseCategory) ?? "other",
+    description: str(formData, "description"),
+    amount,
+    expense_date: str(formData, "expense_date") ?? new Date().toISOString().slice(0, 10),
+  });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath("/finance");
+}
+
+export async function deleteStudentExpense(expenseId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 재무 정보를 관리할 수 있어요.");
+  }
+
+  const { error } = await supabase!.from("student_expenses").delete().eq("id", expenseId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+
+  revalidatePath("/finance");
 }
 
 // ============================================================
