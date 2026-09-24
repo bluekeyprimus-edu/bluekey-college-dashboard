@@ -20,6 +20,7 @@ import {
   Counselor,
   TaskItem,
   TrackStatus,
+  ConsultationNote,
 } from "./types";
 
 // Thin data-access layer. When NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are set
@@ -109,6 +110,27 @@ export async function getAwards(studentId: string): Promise<Award[]> {
   if (!isSupabaseConfigured) return mock.mockAwards.filter((a) => a.student_id === studentId);
   const { data } = await supabase!.from("awards").select("*").eq("student_id", studentId);
   return (data as Award[]) ?? [];
+}
+
+type ConsultationNoteRow = Omit<ConsultationNote, "counselor_name"> & {
+  counselors: { name: string } | null;
+};
+
+export async function getConsultationNotes(studentId: string): Promise<ConsultationNote[]> {
+  if (!isSupabaseConfigured) {
+    return mock.mockConsultationNotes
+      .filter((n) => n.student_id === studentId)
+      .sort((a, b) => (a.meeting_date < b.meeting_date ? 1 : -1));
+  }
+  const { data } = await supabase!
+    .from("consultation_notes")
+    .select("*, counselors(name)")
+    .eq("student_id", studentId)
+    .order("meeting_date", { ascending: false });
+  return ((data as unknown as ConsultationNoteRow[]) ?? []).map((row) => ({
+    ...row,
+    counselor_name: row.counselors?.name,
+  })) as ConsultationNote[];
 }
 
 export async function getPersonalStatement(studentId: string): Promise<PersonalStatement | null> {

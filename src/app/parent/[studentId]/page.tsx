@@ -18,6 +18,7 @@ import {
   getPersonalStatement,
   getSupplementalEssays,
   getTasks,
+  getConsultationNotes,
 } from "@/lib/data";
 import { overallProgress, checklistCompletion } from "@/lib/progress";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
@@ -41,7 +42,8 @@ export const dynamic = "force-dynamic";
 // Parent-facing view. Deliberately never reads or renders: extracurricular
 // rating_* fields, college_list.counselor_recommendation/notes, essay
 // draft_link/counselor/editor/counselor_comments, or task notes — those are
-// counselor-internal and must never reach this page.
+// counselor-internal and must never reach this page. Consultation notes ARE
+// shown here — the counselor confirmed parents should see meeting summaries.
 
 export default async function ParentStudentPage({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params;
@@ -59,7 +61,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const student = await getStudent(studentId);
   if (!student) notFound();
 
-  const [progress, academic, gpaRows, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks] =
+  const [progress, academic, gpaRows, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes] =
     await Promise.all([
       getProgress(studentId),
       getAcademicOverview(studentId),
@@ -74,6 +76,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       getPersonalStatement(studentId),
       getSupplementalEssays(studentId),
       getTasks(studentId),
+      getConsultationNotes(studentId),
     ]);
 
   const overall = progress ? overallProgress(progress) : 0;
@@ -268,6 +271,27 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
               </div>
             ))}
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>상담 내역</CardTitle>
+        </CardHeader>
+        <CardBody className="space-y-3">
+          {consultationNotes.length === 0 && <p className="text-sm text-navy-400">등록된 상담 기록이 아직 없어요.</p>}
+          {consultationNotes.map((n) => (
+            <div key={n.id} className="border-b border-navy-100 pb-3 last:border-0 last:pb-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm font-medium text-navy-900">{n.meeting_date}</span>
+                <div className="flex items-center gap-2 text-xs text-navy-400">
+                  {n.attendees && <span>{n.attendees}</span>}
+                  {n.counselor_name && <span>{n.counselor_name}</span>}
+                </div>
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-navy-600">{n.content}</p>
+            </div>
+          ))}
         </CardBody>
       </Card>
 

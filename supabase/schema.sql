@@ -360,6 +360,24 @@ create index if not exists idx_parent_accounts_student on parent_accounts(studen
 create index if not exists idx_parent_accounts_auth_user on parent_accounts(auth_user_id);
 
 -- ============================================================
+-- Consultation Notes (Section: student/parent meeting logs)
+-- Counselors log a summary each time they meet with a student and/or
+-- parent (target: 2+ times/month). Visible to the counselor AND, unlike
+-- the hidden EC/award ratings, shown on the parent portal too.
+-- ============================================================
+create table if not exists consultation_notes (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  counselor_id uuid references counselors(id) on delete set null,
+  meeting_date date not null default current_date,
+  attendees text,
+  content text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index if not exists idx_consultation_notes_student on consultation_notes(student_id, meeting_date desc);
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================

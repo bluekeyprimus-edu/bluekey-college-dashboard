@@ -285,4 +285,16 @@ export interface TaskItem {
   notes: string | null;
 }
 
+export interface ConsultationNote {
+  id: string;
+  student_id: string;
+  counselor_id: string | null;
+  counselor_name?: string;
+  meeting_date: string;
+  attendees: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type TrackStatus = "green" | "yellow" | "red";

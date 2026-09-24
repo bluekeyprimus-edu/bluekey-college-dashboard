@@ -347,6 +347,61 @@ export async function deleteAward(studentId: string, awardId: string) {
 }
 
 // ============================================================
+// Consultation Notes — student/parent meeting logs. counselor_id is always
+// the acting counselor, never a form field, so a note can't be misattributed.
+// ============================================================
+function consultationNotePayload(formData: FormData) {
+  return {
+    meeting_date: str(formData, "meeting_date") ?? new Date().toISOString().slice(0, 10),
+    attendees: str(formData, "attendees"),
+    content: str(formData, "content"),
+  };
+}
+
+export async function addConsultationNote(studentId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = consultationNotePayload(formData);
+  if (!payload.content) throw new Error("상담 내용은 필수예요.");
+
+  const actingCounselor = await getCurrentCounselor();
+  const { error } = await supabase!.from("consultation_notes").insert({
+    student_id: studentId,
+    counselor_id: actingCounselor?.id ?? null,
+    ...payload,
+  });
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/notes`);
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/parent/${studentId}`);
+}
+
+export async function updateConsultationNote(studentId: string, noteId: string, formData: FormData) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = consultationNotePayload(formData);
+  if (!payload.content) throw new Error("상담 내용은 필수예요.");
+
+  const { error } = await supabase!
+    .from("consultation_notes")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", noteId);
+  if (error) throw new Error(`수정 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/notes`);
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/parent/${studentId}`);
+}
+
+export async function deleteConsultationNote(studentId: string, noteId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("consultation_notes").delete().eq("id", noteId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/notes`);
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/parent/${studentId}`);
+}
+
+// ============================================================
 // Tasks (Section 10) — cross-student board
 // ============================================================
 export async function addTask(formData: FormData) {

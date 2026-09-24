@@ -15,6 +15,7 @@ import {
   HistoricalAdmission,
   TaskItem,
   Counselor,
+  ConsultationNote,
 } from "./types";
 
 export const mockCounselors: Counselor[] = [
@@ -427,4 +428,40 @@ export const mockHistoricalAdmissions: HistoricalAdmission[] = [
   { id: "ha5", graduation_year: 2024, high_school: "Seoul International School", gpa: 3.75, sat_score: 1470, act_score: null, curriculum: "AP", intended_major: "Business", ec_strength: 3, awards_strength: 3, application_round: "RD", university_name: "University of Pennsylvania", admission_result: "Rejected" },
   { id: "ha6", graduation_year: 2025, high_school: "Korea International School", gpa: 3.6, sat_score: 1380, act_score: null, curriculum: "IB", intended_major: "Psychology", ec_strength: 4, awards_strength: 2, application_round: "RD", university_name: "University of Michigan", admission_result: "Accepted" },
   { id: "ha7", graduation_year: 2024, high_school: "Seoul International School", gpa: 3.5, sat_score: 1340, act_score: null, curriculum: "AP", intended_major: "Psychology", ec_strength: 3, awards_strength: 2, application_round: "RD", university_name: "University of Michigan", admission_result: "Accepted" },
+];
+
+export const mockConsultationNotes: ConsultationNote[] = [
+  {
+    id: "cn1",
+    student_id: "s1",
+    counselor_id: "c1",
+    counselor_name: "Jacob Chung",
+    meeting_date: "2026-09-05",
+    attendees: "정서연, 학부모",
+    content: "코넬 ED 에세이 초안 리뷰. 학부모님께서 안전지원 학교 추가를 요청하심 — Purdue 검토 후 리스트에 추가하기로 함. 다음 미팅 전까지 추천서 요청 완료 예정.",
+    created_at: "2026-09-05T10:00:00Z",
+    updated_at: "2026-09-05T10:00:00Z",
+  },
+  {
+    id: "cn2",
+    student_id: "s1",
+    counselor_id: "c1",
+    counselor_name: "Jacob Chung",
+    meeting_date: "2026-09-19",
+    attendees: "정서연",
+    content: "SAT 12월 재시험 일정 확정. 위스콘신-매디슨 지원 에세이 아웃라인 작성 시작. 다음 미팅은 10월 3일.",
+    created_at: "2026-09-19T10:00:00Z",
+    updated_at: "2026-09-19T10:00:00Z",
+  },
+  {
+    id: "cn3",
+    student_id: "s2",
+    counselor_id: "c2",
+    counselor_name: "Grace Lim",
+    meeting_date: "2026-09-12",
+    attendees: "학부모",
+    content: "SAT 재시험 일정 관련 상담. 여름방학 활동 계획 논의.",
+    created_at: "2026-09-12T10:00:00Z",
+    updated_at: "2026-09-12T10:00:00Z",
+  },
 ];

@@ -11,6 +11,7 @@ import {
   getTasks,
   getPersonalStatement,
   getSupplementalEssays,
+  getConsultationNotes,
 } from "@/lib/data";
 import { getParentAccountsForStudent } from "@/lib/parent";
 import { createParentAccount, deleteParentAccount } from "@/lib/actions";
@@ -37,7 +38,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const student = await getStudent(id);
   if (!student) notFound();
 
-  const [progress, academic, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts] =
+  const [progress, academic, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts, consultationNotes] =
     await Promise.all([
       getProgress(id),
       getAcademicOverview(id),
@@ -49,6 +50,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       getPersonalStatement(id),
       getSupplementalEssays(id),
       getParentAccountsForStudent(id),
+      getConsultationNotes(id),
     ]);
 
   const overall = progress ? overallProgress(progress) : 0;
@@ -249,6 +251,25 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               </div>
             ))}
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>상담 내역</CardTitle>
+          <Link href={`/students/${student.id}/notes`} className="text-xs font-medium text-gold-600 hover:text-gold-700">상담 내역 관리 →</Link>
+        </CardHeader>
+        <CardBody className="space-y-3">
+          {consultationNotes.length === 0 && <p className="text-sm text-navy-400">등록된 상담 기록이 아직 없어요.</p>}
+          {consultationNotes.slice(0, 3).map((n) => (
+            <div key={n.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-navy-900">{n.meeting_date}</span>
+                {n.attendees && <span className="text-xs text-navy-400">{n.attendees}</span>}
+              </div>
+              <div className="mt-0.5 line-clamp-2 text-xs text-navy-500">{n.content}</div>
+            </div>
+          ))}
         </CardBody>
       </Card>
 
