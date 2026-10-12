@@ -32,6 +32,8 @@ import {
   ESSAY_STATUS_LABEL,
   TASK_PRIORITY_LABEL,
   TASK_STATUS_LABEL,
+  GPA_SUBJECT_LABEL,
+  SUBJECT_AREA_LABEL,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -49,6 +51,7 @@ export const dynamic = "force-dynamic";
 // unlike the counselor-facing activities/essays pages.
 
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
+const GPA_DETAIL_SUBJECTS = ["english", "math", "science", "social_studies", "foreign_language", "other"] as const;
 
 function attachmentsFor(all: Attachment[], entityId: string): Attachment[] {
   return all.filter((a) => a.entity_id === entityId);
@@ -215,12 +218,55 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           <div className="col-span-2">
             <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-navy-400">학년별 GPA</div>
             <div className="flex flex-wrap gap-2">
-              {GRADE_LEVELS.map((g) => (
-                <div key={g} className="rounded-lg border border-navy-100 px-3 py-1.5 text-center">
-                  <div className="text-[10px] text-navy-400">{g}학년</div>
-                  <div className="text-sm font-semibold text-navy-900">{gpaOverallByGrade[g] ?? "—"}</div>
-                </div>
-              ))}
+              {GRADE_LEVELS.map((g) => {
+                const gradeSubjectRows = gpaRows.filter((r) => r.grade_level === g && r.subject !== "overall");
+                const gradeCourses = courses.filter((c) => c.grade_level === g);
+                const hasDetail = gradeSubjectRows.some((r) => r.gpa !== null) || gradeCourses.length > 0;
+                return (
+                  <details key={g} className="group rounded-lg border border-navy-100 open:bg-navy-50/50">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-1.5 text-center select-none">
+                      <div>
+                        <div className="text-[10px] text-navy-400">{g}학년</div>
+                        <div className="text-sm font-semibold text-navy-900">{gpaOverallByGrade[g] ?? "—"}</div>
+                      </div>
+                      {hasDetail && (
+                        <span className="text-[10px] text-navy-300 group-open:rotate-180">▾</span>
+                      )}
+                    </summary>
+                    {hasDetail && (
+                      <div className="w-56 space-y-2 border-t border-navy-100 px-3 py-2 sm:w-64">
+                        {gradeSubjectRows.some((r) => r.gpa !== null) && (
+                          <div className="space-y-0.5">
+                            {GPA_DETAIL_SUBJECTS.map((subject) => {
+                              const row = gradeSubjectRows.find((r) => r.subject === subject);
+                              if (!row || row.gpa === null) return null;
+                              return (
+                                <div key={subject} className="flex items-center justify-between text-xs">
+                                  <span className="text-navy-500">{GPA_SUBJECT_LABEL[subject]}</span>
+                                  <span className="font-medium text-navy-900">{row.gpa}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {gradeCourses.length > 0 && (
+                          <div className="space-y-1 border-t border-navy-50 pt-2">
+                            {gradeCourses.map((c) => (
+                              <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
+                                <span className="truncate text-navy-700">{c.course_name}</span>
+                                <span className="shrink-0 text-[10px] text-navy-400">
+                                  {c.course_level}
+                                  {c.subject_area ? ` · ${SUBJECT_AREA_LABEL[c.subject_area]}` : ""}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </details>
+                );
+              })}
             </div>
           </div>
           <div>
