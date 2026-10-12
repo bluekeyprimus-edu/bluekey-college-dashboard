@@ -169,6 +169,8 @@ export interface Extracurricular {
   major_relevance: string | null;
   common_app_activity: boolean;
   status: ECStatus;
+  created_at?: string;
+  updated_at?: string;
   // Counselor-only — never render on a student/parent-facing view.
   rating_strength: number | null;
   rating_leadership: number | null;
@@ -190,6 +192,7 @@ export interface Award {
   description: string | null;
   academic_area: string | null;
   major_relevance: string | null;
+  created_at?: string;
 }
 
 export interface HistoricalAdmission {
@@ -254,6 +257,8 @@ export interface CollegeListEntry {
   application_status: string;
   notes: string | null;
   checklist?: ApplicationChecklist;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ApplicationChecklist {
@@ -283,6 +288,8 @@ export interface TaskItem {
   priority: TaskPriority;
   status: TaskStatus;
   notes: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ConsultationNote {
