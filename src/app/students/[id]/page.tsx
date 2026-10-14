@@ -88,7 +88,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           {canViewAll ? (
             <Pill tone="gold">담당 카운슬러: {student.counselor_name ?? "미배정"}</Pill>
           ) : (
-            <Pill tone="gold">{access.canViewEc ? "EC 코디네이터로 배정됨" : "원서 담당으로 배정됨"}</Pill>
+            <Pill tone="gold">{access.canViewEc ? "EC 담당으로 배정됨" : "원서 담당으로 배정됨"}</Pill>
           )}
           {canViewAll && (
             <Link

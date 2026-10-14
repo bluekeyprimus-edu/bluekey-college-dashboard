@@ -119,7 +119,7 @@ export function StudentForm({
               </div>
             )}
           </Field>
-          <Field label="EC 코디네이터">
+          <Field label="EC 담당">
             {canAssignCounselor ? (
               <select name="ec_counselor_id" defaultValue={d.ec_counselor_id ?? ""} className={inputClass}>
                 <option value="">미배정</option>
@@ -137,7 +137,7 @@ export function StudentForm({
         </CardBody>
       </Card>
       <p className="px-1 text-xs text-navy-400">
-        원서 담당은 컬리지 리스트·에세이·Admissions Positioning만, EC 코디네이터는 활동·수상 내역만 볼 수 있어요. 전체 담당 카운슬러는 모든 영역을 볼 수 있어요.
+        원서 담당은 컬리지 리스트·에세이·Admissions Positioning만, EC 담당은 활동·수상 내역만 볼 수 있어요. 전체 담당 카운슬러는 모든 영역을 볼 수 있어요.
       </p>
 
       <Card>
