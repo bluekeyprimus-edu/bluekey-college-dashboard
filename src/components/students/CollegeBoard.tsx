@@ -16,6 +16,8 @@ import { CHECKLIST_ITEM_LABEL, COLLEGE_CATEGORY_LABEL, APPLICATION_STATUS_OPTION
 import { checklistCompletion } from "@/lib/progress";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { deleteCollegeFromList, toggleChecklistItem, updateCollegeCategory, updateCollegeStatus } from "@/lib/actions";
 
@@ -152,9 +154,7 @@ function CollegeCard({
               <textarea name="notes" defaultValue={college.notes ?? ""} rows={2} className={inputClass} />
             </div>
             <div className="flex justify-end">
-              <button type="submit" className="rounded-md border border-navy-200 px-3 py-1 text-xs font-medium text-navy-700 hover:bg-navy-50">
-                저장
-              </button>
+              <SubmitButton label="저장" variant="inline" toastMessage="저장되었습니다" />
             </div>
           </form>
 
@@ -236,6 +236,7 @@ export function CollegeBoard({ studentId, initialColleges }: { studentId: string
   const [colleges, setColleges] = useState(initialColleges);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const { showToast } = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   function handleDragEnd(event: DragEndEvent) {
@@ -271,6 +272,7 @@ export function CollegeBoard({ studentId, initialColleges }: { studentId: string
     startTransition(() => {
       deleteCollegeFromList(studentId, collegeId);
     });
+    showToast("삭제되었습니다");
   }
 
   return (

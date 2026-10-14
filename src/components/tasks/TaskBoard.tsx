@@ -7,6 +7,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { TaskItem, TaskPriority, TaskStatus } from "@/lib/types";
 import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { deleteTask, updateTask, updateTaskStatus } from "@/lib/actions";
 
@@ -121,9 +123,7 @@ function TaskCard({
             <textarea name="notes" rows={2} defaultValue={task.notes ?? ""} className={inputClass} />
           </div>
           <div className="flex justify-end">
-            <button type="submit" className="rounded-md border border-navy-200 px-3 py-1 text-xs font-medium text-navy-700 hover:bg-navy-50">
-              저장
-            </button>
+            <SubmitButton label="저장" variant="inline" toastMessage="저장되었습니다" />
           </div>
         </form>
       )}
@@ -183,6 +183,7 @@ export function TaskBoard({ initialTasks, todayISO }: { initialTasks: TaskWithSt
   const [tasks, setTasks] = useState(initialTasks);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const { showToast } = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   function handleDragEnd(event: DragEndEvent) {
@@ -209,6 +210,7 @@ export function TaskBoard({ initialTasks, todayISO }: { initialTasks: TaskWithSt
     startTransition(() => {
       deleteTask(taskId);
     });
+    showToast("삭제되었습니다");
   }
 
   return (

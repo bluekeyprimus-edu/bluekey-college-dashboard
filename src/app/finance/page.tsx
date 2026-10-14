@@ -6,6 +6,7 @@ import { StudentExpense, StudentFinance } from "@/lib/types";
 import { EXPENSE_CATEGORY_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -129,9 +130,7 @@ export default async function FinancePage() {
                     <input name="notes" defaultValue={finance?.notes ?? ""} className={inputClass} />
                   </div>
                   <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
 
@@ -150,9 +149,7 @@ export default async function FinancePage() {
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="text-xs font-medium text-navy-700">{won(e.amount)}</span>
                         <form action={deleteStudentExpense.bind(null, e.id)}>
-                          <button type="submit" className="text-[11px] font-medium text-rose-500 hover:text-rose-700">
-                            삭제
-                          </button>
+                          <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
                         </form>
                       </div>
                     </div>
@@ -167,9 +164,7 @@ export default async function FinancePage() {
                     <input name="description" placeholder="내용" className={inputClass} />
                     <input type="number" name="amount" min={0} step={10000} placeholder="금액" required className={inputClass} />
                     <input type="date" name="expense_date" className={inputClass} />
-                    <button type="submit" className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs font-medium text-navy-700 hover:bg-navy-50">
-                      비용 추가
-                    </button>
+                    <SubmitButton label="비용 추가" variant="secondary-sm" toastMessage="추가되었습니다" />
                   </form>
                 </div>
               </div>

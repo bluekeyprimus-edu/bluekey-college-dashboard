@@ -65,3 +65,34 @@ body {
 ::selection {
   background: var(--color-gold-200);
 }
+
+/* Consistent pointer cursor on everything clickable — some browsers
+   (notably Safari) don't show a pointer over <button>/<summary> by
+   default, which makes the app feel less "clickable" than it is. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+select,
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]),
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -4,6 +4,7 @@ import { getStudent, getConsultationNotes } from "@/lib/data";
 import { addConsultationNote, updateConsultationNote, deleteConsultationNote } from "@/lib/actions";
 import { ConsultationNote } from "@/lib/types";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +60,7 @@ export default async function ConsultationNotesPage({ params }: { params: Promis
             <form action={addConsultationNote.bind(null, id)} className="space-y-4 border-t border-navy-100 p-3">
               <NoteFields d={{ meeting_date: new Date().toISOString().slice(0, 10) }} />
               <div className="flex justify-end">
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  추가
-                </button>
+                <SubmitButton label="추가" toastMessage="추가되었습니다" />
               </div>
             </form>
           </details>
@@ -84,15 +83,11 @@ export default async function ConsultationNotesPage({ params }: { params: Promis
                 <form action={updateConsultationNote.bind(null, id, n.id)} className="space-y-4">
                   <NoteFields d={n} />
                   <div className="flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
                 <form action={deleteConsultationNote.bind(null, id, n.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    이 상담 기록 삭제
-                  </button>
+                  <SubmitButton label="이 상담 기록 삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                 </form>
               </div>
             </details>

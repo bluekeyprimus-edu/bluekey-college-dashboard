@@ -3,6 +3,7 @@ import { addTask } from "@/lib/actions";
 import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
 import { TaskBoard, TaskWithStudent } from "@/components/tasks/TaskBoard";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -107,9 +108,7 @@ export default async function TasksPage() {
               <input name="notes" className={inputClass} />
             </div>
             <div className="flex items-end sm:col-span-2 lg:col-span-4">
-              <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                + 할일 추가
-              </button>
+              <SubmitButton label="+ 할일 추가" toastMessage="추가되었습니다" />
             </div>
           </form>
         </CardBody>

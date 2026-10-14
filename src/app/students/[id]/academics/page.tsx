@@ -6,6 +6,7 @@ import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
 import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -102,9 +103,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               학교는 석차를 산정하지 않음
             </label>
             <div className="flex justify-end">
-              <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                저장
-              </button>
+              <SubmitButton label="저장" toastMessage="저장되었습니다" />
             </div>
           </form>
         </CardBody>
@@ -151,9 +150,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               </table>
             </div>
             <div className="flex justify-end">
-              <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                GPA 저장
-              </button>
+              <SubmitButton label="GPA 저장" toastMessage="저장되었습니다" />
             </div>
           </form>
         </CardBody>
@@ -192,9 +189,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                       <td className="px-2 py-2 text-navy-600">{SUBJECT_AREA_LABEL[c.subject_area ?? "Other"]}</td>
                       <td className="px-2 py-2 text-right">
                         <form action={deleteCourse.bind(null, id, c.id)}>
-                          <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                            삭제
-                          </button>
+                          <SubmitButton label="삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                         </form>
                       </td>
                     </tr>
@@ -241,9 +236,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               </select>
             </div>
             <div className="flex items-end sm:col-span-2 lg:col-span-5">
-              <button type="submit" className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
-                + 과목 추가
-              </button>
+              <SubmitButton label="+ 과목 추가" variant="secondary" toastMessage="추가되었습니다" />
             </div>
           </form>
         </CardBody>

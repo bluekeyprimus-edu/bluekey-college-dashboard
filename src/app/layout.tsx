@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { ToastProvider } from "@/components/ui/Toast";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 
 // Supabase project lives in ap-northeast-2 (Seoul) — without this, Vercel
@@ -44,7 +45,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full">
         <ServiceWorkerRegister />
-        <AppShell isRestrictedCounselor={isRestrictedCounselor}>{children}</AppShell>
+        <ToastProvider>
+          <AppShell isRestrictedCounselor={isRestrictedCounselor}>{children}</AppShell>
+        </ToastProvider>
       </body>
     </html>
   );

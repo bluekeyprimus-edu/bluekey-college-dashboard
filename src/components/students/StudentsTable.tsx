@@ -6,6 +6,7 @@ import { RosterRow } from "@/lib/data";
 import { deleteStudent } from "@/lib/actions";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { cn } from "@/lib/cn";
 
 type SortKey = "name" | "grade" | "school" | "major" | "counselor" | "progress" | "deadline";
@@ -176,9 +177,12 @@ export function StudentsTable({ rows, isAdmin = false }: { rows: RosterRow[]; is
                         }
                       }}
                     >
-                      <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                        삭제
-                      </button>
+                      <SubmitButton
+                        label="삭제"
+                        pendingLabel="삭제 중..."
+                        variant="ghost-danger"
+                        toastMessage="삭제되었습니다"
+                      />
                     </form>
                   </td>
                 )}

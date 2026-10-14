@@ -4,6 +4,7 @@ import { HistoricalAdmission } from "@/lib/types";
 import { ADMISSION_RESULT_LABEL, ADMISSION_RESULT_OPTIONS, CURRICULUM_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -187,9 +188,7 @@ export default async function AdmissionsDataPage({
             <form action={addHistoricalAdmission} className="space-y-4 border-t border-navy-100 p-3">
               <RecordFields />
               <div className="flex justify-end">
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  추가
-                </button>
+                <SubmitButton label="추가" toastMessage="추가되었습니다" />
               </div>
             </form>
           </details>
@@ -220,15 +219,11 @@ export default async function AdmissionsDataPage({
                 <form action={updateHistoricalAdmission.bind(null, r.id)} className="space-y-4">
                   <RecordFields d={r} />
                   <div className="flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
                 <form action={deleteHistoricalAdmission.bind(null, r.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    이 기록 삭제
-                  </button>
+                  <SubmitButton label="이 기록 삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                 </form>
               </div>
             </details>

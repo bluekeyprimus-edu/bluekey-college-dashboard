@@ -89,7 +89,7 @@ export async function createStudent(formData: FormData) {
 
   revalidatePath("/students");
   revalidatePath("/");
-  redirect(`/students/${data.id}`);
+  redirect(`/students/${data.id}?saved=1`);
 }
 
 // ============================================================
@@ -141,7 +141,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
   revalidatePath("/students");
   revalidatePath("/");
   revalidatePath(`/students/${studentId}`);
-  redirect(`/students/${studentId}`);
+  redirect(`/students/${studentId}?saved=1`);
 }
 
 // Admin-only, irreversible: removes the student and (via each table's

@@ -14,6 +14,7 @@ import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 import { EC_STATUS_LABEL, EC_STATUS_OPTIONS, AWARD_LEVEL_LABEL, AWARD_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -178,9 +179,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
             <form action={addExtracurricular.bind(null, id)} className="space-y-4 border-t border-navy-100 p-3">
               <EcFields />
               <div className="flex justify-end">
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  추가
-                </button>
+                <SubmitButton label="추가" toastMessage="추가되었습니다" />
               </div>
             </form>
           </details>
@@ -211,9 +210,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                 <form action={updateExtracurricular.bind(null, id, e.id)} className="space-y-4">
                   <EcFields d={e} />
                   <div className="flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
                 <AttachmentsSection
@@ -223,9 +220,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                   attachments={attachments.filter((a) => a.entity_id === e.id)}
                 />
                 <form action={deleteExtracurricular.bind(null, id, e.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    이 활동 삭제
-                  </button>
+                  <SubmitButton label="이 활동 삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                 </form>
               </div>
             </details>
@@ -245,9 +240,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
             <form action={addAward.bind(null, id)} className="space-y-4 border-t border-navy-100 p-3">
               <AwardFields />
               <div className="flex justify-end">
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  추가
-                </button>
+                <SubmitButton label="추가" toastMessage="추가되었습니다" />
               </div>
             </form>
           </details>
@@ -272,9 +265,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                 <form action={updateAward.bind(null, id, a.id)} className="space-y-4">
                   <AwardFields d={a} />
                   <div className="flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
                 <AttachmentsSection
@@ -284,9 +275,7 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                   attachments={attachments.filter((att) => att.entity_id === a.id)}
                 />
                 <form action={deleteAward.bind(null, id, a.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    이 수상 삭제
-                  </button>
+                  <SubmitButton label="이 수상 삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                 </form>
               </div>
             </details>

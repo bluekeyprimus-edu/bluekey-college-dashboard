@@ -4,6 +4,7 @@ import { createCounselorAccount, unlinkCounselorAccount, addCounselor, runGradeB
 import { getCurrentCounselor } from "@/lib/current-counselor";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -46,9 +47,7 @@ export default async function CounselorSettingsPage() {
 
               {c.auth_user_id ? (
                 <form action={unlinkCounselorAccount.bind(null, c.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    로그인 연결 해제
-                  </button>
+                  <SubmitButton label="로그인 연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
                 </form>
               ) : (
                 <details className="mt-3">
@@ -65,9 +64,7 @@ export default async function CounselorSettingsPage() {
                       <input type="text" name="password" required minLength={6} className={inputClass} />
                     </div>
                     <div className="flex items-end">
-                      <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                        계정 생성
-                      </button>
+                      <SubmitButton label="계정 생성" toastMessage="생성되었습니다" />
                     </div>
                   </form>
                 </details>
@@ -92,9 +89,7 @@ export default async function CounselorSettingsPage() {
               <input type="email" name="email" className={inputClass} />
             </div>
             <div className="flex items-end">
-              <button type="submit" className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
-                추가
-              </button>
+              <SubmitButton label="추가" variant="secondary" toastMessage="추가되었습니다" />
             </div>
           </form>
         </CardBody>
@@ -114,9 +109,7 @@ export default async function CounselorSettingsPage() {
             </p>
           </div>
           <form action={runGradeBumpNow}>
-            <button type="submit" className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
-              지금 실행
-            </button>
+            <SubmitButton label="지금 실행" variant="secondary" toastMessage="실행되었습니다" />
           </form>
         </CardBody>
       </Card>

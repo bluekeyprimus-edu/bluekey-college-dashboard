@@ -1,5 +1,6 @@
 import { Attachment, AttachmentEntityType } from "@/lib/types";
 import { uploadAttachment, deleteAttachment } from "@/lib/actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "";
@@ -38,9 +39,7 @@ export function AttachmentsSection({
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-[11px] text-navy-400">{formatFileSize(a.file_size)}</span>
             <form action={deleteAttachment.bind(null, studentId, entityType, a.id, a.storage_path)}>
-              <button type="submit" className="text-[11px] font-medium text-rose-500 hover:text-rose-700">
-                삭제
-              </button>
+              <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
             </form>
           </div>
         </div>
@@ -57,9 +56,7 @@ export function AttachmentsSection({
           required
           className="flex-1 text-xs text-navy-600 file:mr-2 file:rounded-md file:border-0 file:bg-navy-900 file:px-2.5 file:py-1 file:text-xs file:font-medium file:text-white file:hover:bg-navy-800"
         />
-        <button type="submit" className="rounded-md border border-navy-200 px-2.5 py-1 text-xs font-medium text-navy-700 hover:bg-navy-50">
-          업로드
-        </button>
+        <SubmitButton label="업로드" variant="inline-sm" toastMessage="업로드되었습니다" />
       </form>
     </div>
   );

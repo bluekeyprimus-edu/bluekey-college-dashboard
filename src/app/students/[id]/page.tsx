@@ -21,6 +21,8 @@ import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_L
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { ToastFlash } from "@/components/ui/ToastFlash";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +66,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
+      <ToastFlash param="saved" message="저장되었습니다" />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/students" className="text-xs font-medium text-navy-400 hover:text-navy-600">← 전체 학생</Link>
@@ -134,9 +137,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-navy-400">각 항목은 0~100 사이 값이고, 전체 진행률은 11개 항목의 평균으로 자동 계산돼요.</p>
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  저장
-                </button>
+                <SubmitButton label="저장" toastMessage="저장되었습니다" />
               </div>
             </form>
           </details>
@@ -320,9 +321,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                 <div className="text-xs text-navy-400">{p.email}</div>
               </div>
               <form action={deleteParentAccount.bind(null, id, p.id)}>
-                <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                  연결 해제
-                </button>
+                <SubmitButton label="연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
               </form>
             </div>
           ))}
@@ -346,9 +345,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               </div>
               <div className="sm:col-span-3 flex items-center justify-between">
                 <p className="text-xs text-navy-400">비밀번호는 직접 정해서 학부모님께 따로 전달해주세요.</p>
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  계정 생성
-                </button>
+                <SubmitButton label="계정 생성" toastMessage="생성되었습니다" />
               </div>
             </form>
           </details>

@@ -4,6 +4,7 @@ import { getStudent, getCollegeList } from "@/lib/data";
 import { addCollegeToList } from "@/lib/actions";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CollegeBoard } from "@/components/students/CollegeBoard";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -93,9 +94,7 @@ export default async function CollegeListPage({ params }: { params: Promise<{ id
               <input name="notes" className={inputClass} />
             </div>
             <div className="flex items-end sm:col-span-2 lg:col-span-4">
-              <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                + 대학 추가
-              </button>
+              <SubmitButton label="+ 대학 추가" toastMessage="추가되었습니다" />
             </div>
           </form>
         </CardBody>

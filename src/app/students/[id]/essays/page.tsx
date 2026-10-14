@@ -7,6 +7,7 @@ import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 import { ESSAY_STATUS_LABEL, ESSAY_STATUS_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -118,9 +119,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
               <p className="text-xs text-navy-400">최근 수정: {new Date(personalStatement.last_updated).toLocaleDateString("ko-KR")}</p>
             )}
             <div className="flex justify-end">
-              <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                저장
-              </button>
+              <SubmitButton label="저장" toastMessage="저장되었습니다" />
             </div>
           </form>
           <AttachmentsSection
@@ -144,9 +143,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
             <form action={addSupplementalEssay.bind(null, id)} className="space-y-4 border-t border-navy-100 p-3">
               <EssayFields />
               <div className="flex justify-end">
-                <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                  추가
-                </button>
+                <SubmitButton label="추가" toastMessage="추가되었습니다" />
               </div>
             </form>
           </details>
@@ -169,9 +166,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
                 <form action={updateSupplementalEssay.bind(null, id, e.id)} className="space-y-4">
                   <EssayFields d={e} />
                   <div className="flex justify-end">
-                    <button type="submit" className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800">
-                      저장
-                    </button>
+                    <SubmitButton label="저장" toastMessage="저장되었습니다" />
                   </div>
                 </form>
                 <AttachmentsSection
@@ -181,9 +176,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
                   attachments={attachments.filter((a) => a.entity_id === e.id)}
                 />
                 <form action={deleteSupplementalEssay.bind(null, id, e.id)} className="mt-2 flex justify-end">
-                  <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
-                    이 에세이 삭제
-                  </button>
+                  <SubmitButton label="이 에세이 삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
                 </form>
               </div>
             </details>
