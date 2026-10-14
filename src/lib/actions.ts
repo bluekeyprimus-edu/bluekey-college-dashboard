@@ -305,25 +305,15 @@ function extracurricularPayload(formData: FormData) {
   return {
     activity_name: str(formData, "activity_name"),
     category: str(formData, "category"),
-    organization: str(formData, "organization"),
     position_role: str(formData, "position_role"),
     grades_participated: str(formData, "grades_participated"),
     start_date: str(formData, "start_date"),
     end_date: str(formData, "end_date"),
-    hours_per_week: num(formData, "hours_per_week"),
-    weeks_per_year: num(formData, "weeks_per_year"),
     description: str(formData, "description"),
-    achievements: str(formData, "achievements"),
-    quantifiable_impact: str(formData, "quantifiable_impact"),
-    leadership: str(formData, "leadership"),
     major_relevance: str(formData, "major_relevance"),
     common_app_activity: formData.get("common_app_activity") === "on",
-    status: str(formData, "status") ?? "Idea",
-    rating_strength: num(formData, "rating_strength"),
-    rating_leadership: num(formData, "rating_leadership"),
-    rating_impact: num(formData, "rating_impact"),
-    rating_uniqueness: num(formData, "rating_uniqueness"),
-    rating_major_relevance: num(formData, "rating_major_relevance"),
+    status: str(formData, "status") ?? "Developing",
+    counselor_evaluation: str(formData, "counselor_evaluation"),
   };
 }
 

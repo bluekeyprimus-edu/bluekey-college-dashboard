@@ -10,14 +10,7 @@ export type CourseLevel =
   | "A-Level"
   | "Dual Enrollment"
   | "College Level";
-export type ECStatus =
-  | "Idea"
-  | "Planning"
-  | "Started"
-  | "Developing"
-  | "Impact Created"
-  | "Completed"
-  | "Common App Ready";
+export type ECStatus = "Developing" | "Completed" | "Common App Ready";
 export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";
 export type AwardLevel = "School" | "Regional" | "State" | "National" | "International";
 export type CollegeCategory = "Reach" | "High Target" | "Target" | "Likely" | "Safety";
@@ -155,28 +148,18 @@ export interface Extracurricular {
   student_id: string;
   activity_name: string;
   category: string | null;
-  organization: string | null;
   position_role: string | null;
   grades_participated: string | null;
   start_date: string | null;
   end_date: string | null;
-  hours_per_week: number | null;
-  weeks_per_year: number | null;
   description: string | null;
-  achievements: string | null;
-  quantifiable_impact: string | null;
-  leadership: string | null;
   major_relevance: string | null;
   common_app_activity: boolean;
   status: ECStatus;
   created_at?: string;
   updated_at?: string;
-  // Counselor-only — never render on a student/parent-facing view.
-  rating_strength: number | null;
-  rating_leadership: number | null;
-  rating_impact: number | null;
-  rating_uniqueness: number | null;
-  rating_major_relevance: number | null;
+  // Counselor-only narrative evaluation — never render on a student/parent-facing view.
+  counselor_evaluation: string | null;
 }
 
 export interface Award {

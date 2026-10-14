@@ -21,20 +21,6 @@ const inputClass =
   "w-full rounded-lg border border-navy-200 bg-white px-2.5 py-1.5 text-sm text-navy-900 focus:border-gold-400 focus:outline-none";
 const labelClass = "mb-1 block text-xs font-medium text-navy-500";
 
-function RatingSelect({ name, label, defaultValue }: { name: string; label: string; defaultValue: number | null }) {
-  return (
-    <div>
-      <label className={labelClass}>{label}</label>
-      <select name={name} defaultValue={defaultValue ?? ""} className={inputClass}>
-        <option value="">—</option>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <option key={n} value={n}>{n}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 function EcFields({ d = {} }: { d?: Partial<Extracurricular> }) {
   return (
     <>
@@ -49,15 +35,11 @@ function EcFields({ d = {} }: { d?: Partial<Extracurricular> }) {
         </div>
         <div>
           <label className={labelClass}>진행 상태</label>
-          <select name="status" defaultValue={d.status ?? "Idea"} className={inputClass}>
+          <select name="status" defaultValue={d.status ?? "Developing"} className={inputClass}>
             {EC_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{EC_STATUS_LABEL[s]}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className={labelClass}>기관/단체</label>
-          <input name="organization" defaultValue={d.organization ?? ""} className={inputClass} />
         </div>
         <div>
           <label className={labelClass}>역할/직책</label>
@@ -80,14 +62,7 @@ function EcFields({ d = {} }: { d?: Partial<Extracurricular> }) {
         <div>
           <label className={labelClass}>종료일</label>
           <input type="date" name="end_date" defaultValue={d.end_date ?? ""} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>주당 시간</label>
-          <input type="number" step="0.5" name="hours_per_week" defaultValue={d.hours_per_week ?? ""} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>연간 주 수</label>
-          <input type="number" step="0.5" name="weeks_per_year" defaultValue={d.weeks_per_year ?? ""} className={inputClass} />
+          <p className="mt-1 text-[11px] text-navy-400">비워두면 현재 진행 중인 활동으로 표시돼요.</p>
         </div>
       </div>
 
@@ -95,18 +70,6 @@ function EcFields({ d = {} }: { d?: Partial<Extracurricular> }) {
         <div>
           <label className={labelClass}>활동 설명</label>
           <textarea name="description" rows={2} defaultValue={d.description ?? ""} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>성과</label>
-          <textarea name="achievements" rows={2} defaultValue={d.achievements ?? ""} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>정량적 임팩트</label>
-          <textarea name="quantifiable_impact" rows={2} defaultValue={d.quantifiable_impact ?? ""} className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>리더십 경험</label>
-          <textarea name="leadership" rows={2} defaultValue={d.leadership ?? ""} className={inputClass} />
         </div>
         <div className="sm:col-span-2">
           <label className={labelClass}>전공 연관성</label>
@@ -116,12 +79,14 @@ function EcFields({ d = {} }: { d?: Partial<Extracurricular> }) {
 
       <div>
         <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gold-600">카운슬러 전용 평가 (학생·학부모 비공개)</div>
-        <div className="grid grid-cols-2 gap-3 rounded-lg border border-gold-200 bg-gold-50/40 p-3 sm:grid-cols-5">
-          <RatingSelect name="rating_strength" label="강점" defaultValue={d.rating_strength ?? null} />
-          <RatingSelect name="rating_leadership" label="리더십" defaultValue={d.rating_leadership ?? null} />
-          <RatingSelect name="rating_impact" label="임팩트" defaultValue={d.rating_impact ?? null} />
-          <RatingSelect name="rating_uniqueness" label="독창성" defaultValue={d.rating_uniqueness ?? null} />
-          <RatingSelect name="rating_major_relevance" label="전공 연관성" defaultValue={d.rating_major_relevance ?? null} />
+        <div className="rounded-lg border border-gold-200 bg-gold-50/40 p-3">
+          <textarea
+            name="counselor_evaluation"
+            rows={4}
+            placeholder="강점, 리더십, 임팩트, 독창성, 전공 연관성 등 자유롭게 서술해주세요."
+            defaultValue={d.counselor_evaluation ?? ""}
+            className={inputClass}
+          />
         </div>
       </div>
     </>
@@ -229,8 +194,8 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                   <div>
                     <span className="text-sm font-semibold text-navy-900">{e.activity_name}</span>
                     <span className="ml-2 text-xs text-navy-400">
-                      {e.organization}
-                      {e.position_role && ` · ${e.position_role}`}
+                      {e.position_role}
+                      {e.start_date && ` · ${e.start_date} ~ ${e.end_date || "현재"}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -238,10 +203,9 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
                     <Pill tone="neutral">{EC_STATUS_LABEL[e.status] ?? e.status}</Pill>
                   </div>
                 </div>
-                <div className="mt-1 text-[11px] text-gold-600">
-                  강점 {e.rating_strength ?? "—"} · 리더십 {e.rating_leadership ?? "—"} · 임팩트 {e.rating_impact ?? "—"} · 독창성{" "}
-                  {e.rating_uniqueness ?? "—"} · 전공연관성 {e.rating_major_relevance ?? "—"}
-                </div>
+                {e.counselor_evaluation && (
+                  <div className="mt-1 line-clamp-1 text-[11px] text-gold-600">{e.counselor_evaluation}</div>
+                )}
               </summary>
               <div className="border-t border-navy-100 p-3">
                 <form action={updateExtracurricular.bind(null, id, e.id)} className="space-y-4">

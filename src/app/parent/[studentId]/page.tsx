@@ -368,8 +368,8 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                 <Pill tone="neutral">{EC_STATUS_LABEL[e.status] ?? e.status}</Pill>
               </div>
               <div className="text-xs text-navy-400">
-                {e.organization}
-                {e.position_role && ` · ${e.position_role}`}
+                {e.position_role}
+                {e.start_date && ` · ${e.start_date} ~ ${e.end_date || "현재"}`}
               </div>
               <AttachmentLinks items={attachmentsFor(attachments, e.id)} />
             </div>

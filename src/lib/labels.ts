@@ -16,11 +16,7 @@ export const TASK_STATUS_LABEL: Record<string, string> = {
 };
 
 export const EC_STATUS_LABEL: Record<string, string> = {
-  Idea: "아이디어",
-  Planning: "계획",
-  Started: "시작",
   Developing: "진행 중",
-  "Impact Created": "성과 창출",
   Completed: "완료",
   "Common App Ready": "커먼앱 준비 완료",
 };
@@ -124,15 +120,7 @@ export const AWARD_LEVEL_LABEL: Record<string, string> = {
   International: "국제",
 };
 
-export const EC_STATUS_OPTIONS = [
-  "Idea",
-  "Planning",
-  "Started",
-  "Developing",
-  "Impact Created",
-  "Completed",
-  "Common App Ready",
-] as const;
+export const EC_STATUS_OPTIONS = ["Developing", "Completed", "Common App Ready"] as const;
 
 export const AWARD_LEVEL_OPTIONS = ["School", "Regional", "State", "National", "International"] as const;
 

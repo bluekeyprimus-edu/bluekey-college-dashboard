@@ -166,26 +166,16 @@ create table if not exists extracurriculars (
   student_id uuid references students(id) on delete cascade,
   activity_name text not null,
   category text,
-  organization text,
   position_role text,
   grades_participated text,
   start_date date,
-  end_date date,
-  hours_per_week numeric(4,1),
-  weeks_per_year numeric(4,1),
+  end_date date, -- null/blank end_date means "still ongoing" (displayed as "~현재")
   description text,
-  achievements text,
-  quantifiable_impact text,
-  leadership text,
   major_relevance text,
   common_app_activity boolean default false,
-  status text check (status in ('Idea','Planning','Started','Developing','Impact Created','Completed','Common App Ready')) default 'Idea',
-  -- counselor-only ratings — must never be exposed on any student/parent-facing view or API response
-  rating_strength int check (rating_strength between 1 and 5),
-  rating_leadership int check (rating_leadership between 1 and 5),
-  rating_impact int check (rating_impact between 1 and 5),
-  rating_uniqueness int check (rating_uniqueness between 1 and 5),
-  rating_major_relevance int check (rating_major_relevance between 1 and 5),
+  status text check (status in ('Developing','Completed','Common App Ready')) default 'Developing',
+  -- counselor-only narrative evaluation — must never be exposed on any student/parent-facing view or API response
+  counselor_evaluation text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
