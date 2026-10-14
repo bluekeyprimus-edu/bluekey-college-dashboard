@@ -68,7 +68,13 @@ export async function getStudents(): Promise<Student[]> {
     );
   }
   const { data, error } = await query;
-  if (error || !data) return mock.mockStudents;
+  // A real Supabase/PostgREST error used to fall back to mock data here —
+  // which is how the ambiguous-embed bug above went unnoticed: the roster
+  // silently became 5 fake students instead of failing loudly. Any error
+  // this configured-Supabase branch hits now is a real one, so it throws
+  // and surfaces in src/app/error.tsx instead of being hidden as mock data.
+  if (error) throw new Error(`학생 목록을 불러오지 못했어요: ${error.message}`);
+  if (!data) throw new Error("학생 목록을 불러오지 못했어요: 알 수 없는 오류");
   return (data as unknown as StudentRow[]).map((row) => ({
     ...row,
     counselor_name: row.counselors?.name,
