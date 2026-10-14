@@ -1034,9 +1034,42 @@ export async function addCounselor(formData: FormData) {
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const name = str(formData, "name");
   if (!name) throw new Error("이름은 필수예요.");
-  const { error } = await supabase!.from("counselors").insert({ name, email: str(formData, "email") });
+  const { error } = await supabase!.from("counselors").insert({
+    name,
+    email: str(formData, "email"),
+    is_admin: formData.get("is_admin") === "on",
+  });
   if (error) throw new Error(`추가 실패: ${error.message}`);
   revalidatePath("/settings/counselors");
+}
+
+// Grants/revokes admin. Admin sees and can edit every student (bypassing
+// the per-role scoping entirely) plus the admin-only pages — finance,
+// this counselor-management page, and student/counselor deletion. Mirrors
+// deleteCounselor's "can't remove the last admin" safeguard so the team
+// can never end up with zero admin accounts.
+export async function setCounselorAdmin(counselorId: string, isAdmin: boolean) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 권한을 변경할 수 있어요.");
+  }
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  if (!isAdmin) {
+    const { count } = await supabase!
+      .from("counselors")
+      .select("id", { count: "exact", head: true })
+      .eq("is_admin", true);
+    if ((count ?? 0) <= 1) {
+      throw new Error("마지막 관리자 권한은 해제할 수 없어요.");
+    }
+  }
+
+  const { error } = await supabase!.from("counselors").update({ is_admin: isAdmin }).eq("id", counselorId);
+  if (error) throw new Error(`변경 실패: ${error.message}`);
+  revalidatePath("/settings/counselors");
+  revalidatePath("/students");
+  revalidatePath("/");
 }
 
 export async function deleteCounselor(counselorId: string) {

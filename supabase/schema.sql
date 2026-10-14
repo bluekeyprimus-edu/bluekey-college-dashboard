@@ -452,5 +452,5 @@ create table if not exists system_settings (
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================
 insert into counselors (name, email)
-values ('Jacob Chung', 'bluekeyprep@gmail.com')
+values ('Jacob Jeong', 'bluekeyprep@gmail.com')
 on conflict (email) do nothing;

@@ -5,7 +5,7 @@ delete from counselors where email in ('bluekeyprep@gmail.com','grace@bluekeypre
 -- Safe to delete later: `truncate students cascade;`
 
 insert into counselors (id, name, email) values
-  ('11111111-1111-1111-1111-111111111111', 'Jacob Chung', 'bluekeyprep@gmail.com'),
+  ('11111111-1111-1111-1111-111111111111', 'Jacob Jeong', 'bluekeyprep@gmail.com'),
   ('11111111-1111-1111-1111-111111111112', 'Grace Lim', 'grace@bluekeyprep.com'),
   ('11111111-1111-1111-1111-111111111113', 'David Park', 'david@bluekeyprep.com')
 on conflict (email) do nothing;
@@ -72,6 +72,6 @@ insert into application_checklist (college_list_id, college_added, major_selecte
 
 insert into tasks (student_id, task, assigned_to, deadline, priority, status, notes) values
   ('22222222-2222-2222-2222-222222222221', 'Finalize Cornell engineering supplement', 'Sarah', '2026-10-10', 'High', 'In Progress', null),
-  ('22222222-2222-2222-2222-222222222221', 'Request teacher recommendation #2', 'Jacob Chung', '2026-10-05', 'High', 'Not Started', 'Ask AP CS teacher'),
+  ('22222222-2222-2222-2222-222222222221', 'Request teacher recommendation #2', 'Jacob Jeong', '2026-10-05', 'High', 'Not Started', 'Ask AP CS teacher'),
   ('22222222-2222-2222-2222-222222222222', 'Book SAT retake', 'Ethan', '2026-12-01', 'Medium', 'Not Started', null),
   ('22222222-2222-2222-2222-222222222224', 'Draft initial college list', 'David Park', '2026-10-20', 'Medium', 'Waiting', null);

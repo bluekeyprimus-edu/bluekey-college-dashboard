@@ -22,7 +22,7 @@ import {
 } from "./types";
 
 export const mockCounselors: Counselor[] = [
-  { id: "c1", name: "Jacob Chung", email: "bluekeyprep@gmail.com", auth_user_id: null, is_admin: true },
+  { id: "c1", name: "Jacob Jeong", email: "bluekeyprep@gmail.com", auth_user_id: null, is_admin: true },
   { id: "c2", name: "Grace Lim", email: "grace@bluekeyprep.com", auth_user_id: null, is_admin: false },
   { id: "c3", name: "David Park", email: "david@bluekeyprep.com", auth_user_id: null, is_admin: false },
 ];
@@ -44,7 +44,7 @@ export const mockStudents: Student[] = [
     secondary_major_interest: "Economics",
     career_interest: "Product Management",
     counselor_id: "c1",
-    counselor_name: "Jacob Chung",
+    counselor_name: "Jacob Jeong",
     application_counselor_id: null,
     ec_counselor_id: null,
     status: "active",
@@ -88,7 +88,7 @@ export const mockStudents: Student[] = [
     secondary_major_interest: "Political Science",
     career_interest: "Diplomacy / Law",
     counselor_id: "c1",
-    counselor_name: "Jacob Chung",
+    counselor_name: "Jacob Jeong",
     application_counselor_id: null,
     ec_counselor_id: null,
     status: "active",
@@ -325,7 +325,7 @@ export const mockSupplementalEssays: SupplementalEssay[] = [
     word_limit: 650,
     status: "Revision 1",
     draft_link: "https://docs.google.com/document/d/example-se1",
-    counselor: "Jacob Chung",
+    counselor: "Jacob Jeong",
     editor: null,
     counselor_comments: "Strong opening — tighten the middle paragraph before next pass.",
     last_updated: "2026-09-10T00:00:00Z",
@@ -410,7 +410,7 @@ export const mockCollegeList: CollegeListEntry[] = [
 
 export const mockTasks: TaskItem[] = [
   { id: "t1", student_id: "s1", task: "Finalize Cornell engineering supplement", assigned_to: "Sarah", deadline: "2026-10-10", priority: "High", status: "In Progress", notes: null },
-  { id: "t2", student_id: "s1", task: "Request teacher recommendation #2", assigned_to: "Jacob Chung", deadline: "2026-10-05", priority: "High", status: "Not Started", notes: "Ask AP CS teacher" },
+  { id: "t2", student_id: "s1", task: "Request teacher recommendation #2", assigned_to: "Jacob Jeong", deadline: "2026-10-05", priority: "High", status: "Not Started", notes: "Ask AP CS teacher" },
   { id: "t3", student_id: "s2", task: "Book SAT retake", assigned_to: "Ethan", deadline: "2026-12-01", priority: "Medium", status: "Not Started", notes: null },
   { id: "t4", student_id: "s4", task: "Draft initial college list", assigned_to: "David Park", deadline: "2026-10-20", priority: "Medium", status: "Waiting", notes: null },
 ];
@@ -430,7 +430,7 @@ export const mockConsultationNotes: ConsultationNote[] = [
     id: "cn1",
     student_id: "s1",
     counselor_id: "c1",
-    counselor_name: "Jacob Chung",
+    counselor_name: "Jacob Jeong",
     meeting_date: "2026-09-05",
     attendees: "정서연, 학부모",
     content: "코넬 ED 에세이 초안 리뷰. 학부모님께서 안전지원 학교 추가를 요청하심 — Purdue 검토 후 리스트에 추가하기로 함. 다음 미팅 전까지 추천서 요청 완료 예정.",
@@ -441,7 +441,7 @@ export const mockConsultationNotes: ConsultationNote[] = [
     id: "cn2",
     student_id: "s1",
     counselor_id: "c1",
-    counselor_name: "Jacob Chung",
+    counselor_name: "Jacob Jeong",
     meeting_date: "2026-09-19",
     attendees: "정서연",
     content: "SAT 12월 재시험 일정 확정. 위스콘신-매디슨 지원 에세이 아웃라인 작성 시작. 다음 미팅은 10월 3일.",

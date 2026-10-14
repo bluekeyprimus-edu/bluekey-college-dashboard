@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCounselors, getLastGradeBumpYear, getStudents } from "@/lib/data";
-import { createCounselorAccount, unlinkCounselorAccount, addCounselor, runGradeBumpNow } from "@/lib/actions";
+import { createCounselorAccount, unlinkCounselorAccount, addCounselor, setCounselorAdmin, runGradeBumpNow } from "@/lib/actions";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -57,6 +57,18 @@ export default async function CounselorSettingsPage() {
                   )}
                 </div>
               </div>
+
+              {actingCounselor.id !== c.id && (
+                <div className="mt-2 flex justify-end">
+                  <form action={setCounselorAdmin.bind(null, c.id, !c.is_admin)}>
+                    <SubmitButton
+                      label={c.is_admin ? "관리자 권한 해제" : "관리자 권한 부여"}
+                      variant={c.is_admin ? "ghost-danger-sm" : "secondary-sm"}
+                      toastMessage={c.is_admin ? "관리자 권한이 해제되었습니다" : "관리자 권한이 부여되었습니다"}
+                    />
+                  </form>
+                </div>
+              )}
 
               {c.auth_user_id ? (
                 <div className="mt-2 flex items-center justify-end gap-3">
@@ -120,7 +132,11 @@ export default async function CounselorSettingsPage() {
               <label className={labelClass}>이메일</label>
               <input type="email" name="email" className={inputClass} />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end justify-between gap-3">
+              <label className="flex items-center gap-2 pb-2 text-sm text-navy-700">
+                <input type="checkbox" name="is_admin" />
+                관리자 권한 부여
+              </label>
               <SubmitButton label="추가" variant="secondary" toastMessage="추가되었습니다" />
             </div>
           </form>
