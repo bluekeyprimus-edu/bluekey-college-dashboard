@@ -1010,3 +1010,53 @@ export async function addCounselor(formData: FormData) {
   if (error) throw new Error(`추가 실패: ${error.message}`);
   revalidatePath("/settings/counselors");
 }
+
+export async function deleteCounselor(counselorId: string) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 계정을 삭제할 수 있어요.");
+  }
+  if (actingCounselor.id === counselorId) {
+    throw new Error("로그인 중인 본인 계정은 삭제할 수 없어요.");
+  }
+
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const { data: target, error: fetchError } = await supabase!
+    .from("counselors")
+    .select("auth_user_id, is_admin")
+    .eq("id", counselorId)
+    .maybeSingle();
+  if (fetchError) throw new Error(`조회 실패: ${fetchError.message}`);
+  if (!target) return; // already gone
+
+  if (target.is_admin) {
+    const { count } = await supabase!
+      .from("counselors")
+      .select("id", { count: "exact", head: true })
+      .eq("is_admin", true);
+    if ((count ?? 0) <= 1) {
+      throw new Error("마지막 관리자 계정은 삭제할 수 없어요.");
+    }
+  }
+
+  // Remove the linked login too, so deleting the counselor row doesn't
+  // leave an orphaned Supabase Auth user with no counselor behind it.
+  if (target.auth_user_id) {
+    if (!isAdminConfigured) {
+      throw new Error("이 계정은 로그인이 연결되어 있어요. Service Role Key 설정 후 다시 시도해주세요.");
+    }
+    const { error: authError } = await supabaseAdmin!.auth.admin.deleteUser(target.auth_user_id);
+    if (authError) throw new Error(`로그인 계정 삭제 실패: ${authError.message}`);
+  }
+
+  // students.counselor_id / consultation_notes.counselor_id / attachments.uploaded_by
+  // are all "on delete set null", so assigned students are kept and simply
+  // become unassigned rather than being deleted.
+  const { error } = await supabase!.from("counselors").delete().eq("id", counselorId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+
+  revalidatePath("/settings/counselors");
+  revalidatePath("/students");
+  revalidatePath("/");
+}

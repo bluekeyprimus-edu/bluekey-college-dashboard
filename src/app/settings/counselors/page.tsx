@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { getCounselors, getLastGradeBumpYear } from "@/lib/data";
+import { getCounselors, getLastGradeBumpYear, getStudents } from "@/lib/data";
 import { createCounselorAccount, unlinkCounselorAccount, addCounselor, runGradeBumpNow } from "@/lib/actions";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { DeleteCounselorButton } from "@/components/settings/DeleteCounselorButton";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,16 @@ export default async function CounselorSettingsPage() {
   const actingCounselor = await getCurrentCounselor();
   if (!actingCounselor?.isAdmin) redirect("/");
 
-  const [counselors, lastGradeBumpYear] = await Promise.all([getCounselors(), getLastGradeBumpYear()]);
+  const [counselors, lastGradeBumpYear, students] = await Promise.all([
+    getCounselors(),
+    getLastGradeBumpYear(),
+    getStudents(),
+  ]);
+  const assignedCountByCounselor = new Map<string, number>();
+  for (const s of students) {
+    if (!s.counselor_id) continue;
+    assignedCountByCounselor.set(s.counselor_id, (assignedCountByCounselor.get(s.counselor_id) ?? 0) + 1);
+  }
 
   return (
     <div className="space-y-6">
@@ -42,13 +52,25 @@ export default async function CounselorSettingsPage() {
                 <div className="flex items-center gap-1.5">
                   {c.is_admin && <Pill tone="gold">관리자</Pill>}
                   <Pill tone={c.auth_user_id ? "green" : "neutral"}>{c.auth_user_id ? "로그인 연결됨" : "미연결"}</Pill>
+                  {(assignedCountByCounselor.get(c.id) ?? 0) > 0 && (
+                    <Pill tone="neutral">담당 학생 {assignedCountByCounselor.get(c.id)}명</Pill>
+                  )}
                 </div>
               </div>
 
               {c.auth_user_id ? (
-                <form action={unlinkCounselorAccount.bind(null, c.id)} className="mt-2 flex justify-end">
-                  <SubmitButton label="로그인 연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
-                </form>
+                <div className="mt-2 flex items-center justify-end gap-3">
+                  {actingCounselor.id !== c.id && (
+                    <DeleteCounselorButton
+                      counselorId={c.id}
+                      counselorName={c.name}
+                      assignedStudentCount={assignedCountByCounselor.get(c.id) ?? 0}
+                    />
+                  )}
+                  <form action={unlinkCounselorAccount.bind(null, c.id)}>
+                    <SubmitButton label="로그인 연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
+                  </form>
+                </div>
               ) : (
                 <details className="mt-3">
                   <summary className="cursor-pointer list-none text-xs font-medium text-gold-600 hover:text-gold-700">
@@ -68,6 +90,16 @@ export default async function CounselorSettingsPage() {
                     </div>
                   </form>
                 </details>
+              )}
+
+              {!c.auth_user_id && actingCounselor.id !== c.id && (
+                <div className="mt-2 flex justify-end">
+                  <DeleteCounselorButton
+                    counselorId={c.id}
+                    counselorName={c.name}
+                    assignedStudentCount={assignedCountByCounselor.get(c.id) ?? 0}
+                  />
+                </div>
               )}
             </div>
           ))}
