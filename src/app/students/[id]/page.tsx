@@ -373,6 +373,12 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                   <label className="mb-1 block text-xs font-medium text-navy-500">임시 비밀번호 *</label>
                   <input type="text" name="password" required minLength={6} className="w-full rounded-lg border border-navy-200 bg-white px-2.5 py-1.5 text-sm text-navy-900 focus:border-gold-400 focus:outline-none" />
                 </div>
+                <div className="sm:col-span-3">
+                  <label className="flex items-center gap-1.5 text-xs text-navy-500">
+                    <input type="checkbox" name="confirm_sibling" />
+                    이 이메일이 이미 다른 학생에게 연결되어 있다면, 같은 학부모(형제/자매)가 맞을 때만 체크
+                  </label>
+                </div>
                 <div className="sm:col-span-3 flex items-center justify-between">
                   <p className="text-xs text-navy-400">비밀번호는 직접 정해서 학부모님께 따로 전달해주세요.</p>
                   <SubmitButton label="계정 생성" toastMessage="생성되었습니다" />

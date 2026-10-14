@@ -952,15 +952,36 @@ export async function createParentAccount(studentId: string, formData: FormData)
   });
 
   if (createError || !created.user) {
-    // Most likely this email already has an account (a sibling's parent
-    // account) — look it up and link this student to the existing user
-    // instead of failing.
+    // This email already has an auth account. That's expected for a real
+    // sibling (same parent, second child) — but it's also exactly what
+    // happens if this email was already used for some OTHER, unrelated
+    // student (a typo, or reusing a placeholder address), in which case
+    // blindly linking here would let that parent's login see both
+    // students' data. So: find out who this email is already linked to,
+    // and only proceed without asking if it's nobody or this same
+    // student — otherwise require the counselor to explicitly confirm
+    // it's really a sibling via the confirm_sibling checkbox.
     const { data: existing, error: listError } = await supabaseAdmin!.auth.admin.listUsers({ perPage: 1000 });
     const match = listError ? undefined : existing.users.find((u) => u.email === email);
     if (!match) {
       throw new Error(`계정 생성 실패: ${createError?.message ?? "알 수 없는 오류"}`);
     }
     authUserId = match.id;
+
+    const { data: existingLinks } = await supabaseAdmin!
+      .from("parent_accounts")
+      .select("student_id, students(student_name, english_name)")
+      .eq("auth_user_id", authUserId);
+    const otherLinks = ((existingLinks as unknown as { student_id: string; students: { student_name: string; english_name: string | null } | null }[]) ?? []).filter(
+      (row) => row.student_id !== studentId
+    );
+    const confirmedSibling = formData.get("confirm_sibling") === "on";
+    if (otherLinks.length > 0 && !confirmedSibling) {
+      const names = otherLinks.map((row) => row.students?.english_name ?? row.students?.student_name ?? "알 수 없음").join(", ");
+      throw new Error(
+        `이 이메일(${email})은 이미 ${names} 학생의 보호자 계정으로 연결되어 있어요. 같은 학부모(형제/자매)가 맞으면 "형제/자매 확인" 체크박스를 체크하고 다시 등록해주세요. 아니라면 다른 이메일을 사용해주세요.`
+      );
+    }
   } else {
     authUserId = created.user.id;
   }
