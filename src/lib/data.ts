@@ -57,7 +57,11 @@ export async function getStudents(): Promise<Student[]> {
         )
       : rows;
   }
-  let query = supabase!.from("students").select("*, counselors(name)").order("student_name");
+  // counselors!counselor_id(...) disambiguates which of the three student->counselors
+  // foreign keys (counselor_id / application_counselor_id / ec_counselor_id) this embed
+  // means — with all three pointing at the same table, a plain "counselors(name)" is an
+  // ambiguous embed that PostgREST rejects, which silently fell back to mock data below.
+  let query = supabase!.from("students").select("*, counselors!counselor_id(name)").order("student_name");
   if (restrictToCounselorId) {
     query = query.or(
       `counselor_id.eq.${restrictToCounselorId},application_counselor_id.eq.${restrictToCounselorId},ec_counselor_id.eq.${restrictToCounselorId}`
