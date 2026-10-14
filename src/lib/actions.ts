@@ -7,6 +7,21 @@ import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LA
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 import { bumpGradesForNewSchoolYear } from "./grade-bump";
 import { getCurrentCounselor } from "./current-counselor";
+import { getStudent } from "./data";
+
+// Re-checked on every student-scoped write, not just at page-render time:
+// a non-admin counselor's browser could otherwise call a server action
+// directly (devtools, a replayed request) with a studentId that was never
+// actually shown to them and write to — or read back the existence of —
+// a student assigned to someone else. getStudent() already applies the
+// same per-counselor restriction the roster/profile pages rely on, so
+// this just reuses that choke point instead of re-implementing it.
+async function assertStudentAccess(studentId: string): Promise<void> {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor || actingCounselor.isAdmin) return;
+  const student = await getStudent(studentId);
+  if (!student) throw new Error("권한이 없어요. 배정된 학생만 수정할 수 있어요.");
+}
 
 function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -98,6 +113,7 @@ export async function createStudent(formData: FormData) {
 const PROGRESS_KEYS = Object.keys(PROGRESS_CATEGORY_LABELS) as (keyof typeof PROGRESS_CATEGORY_LABELS)[];
 
 export async function updateStudentProgress(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const values: Record<string, number> = {};
@@ -170,6 +186,7 @@ const GPA_SUBJECTS = ["english", "math", "science", "social_studies", "foreign_l
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
 
 export async function upsertAcademicOverview(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -191,6 +208,7 @@ export async function upsertAcademicOverview(studentId: string, formData: FormDa
 }
 
 export async function upsertGpaGrid(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const rows = [];
@@ -211,6 +229,7 @@ export async function upsertGpaGrid(studentId: string, formData: FormData) {
 }
 
 export async function addCourse(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -232,6 +251,7 @@ export async function addCourse(studentId: string, formData: FormData) {
 }
 
 export async function deleteCourse(studentId: string, courseId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("courses").delete().eq("id", courseId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -239,6 +259,7 @@ export async function deleteCourse(studentId: string, courseId: string) {
 }
 
 export async function addCollegeToList(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -270,6 +291,7 @@ export async function addCollegeToList(studentId: string, formData: FormData) {
 }
 
 export async function deleteCollegeFromList(studentId: string, collegeId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("college_list").delete().eq("id", collegeId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -278,6 +300,7 @@ export async function deleteCollegeFromList(studentId: string, collegeId: string
 }
 
 export async function updateCollegeCategory(studentId: string, collegeId: string, category: CollegeCategory) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("college_list").update({ category }).eq("id", collegeId);
   if (error) throw new Error(`업데이트 실패: ${error.message}`);
@@ -291,6 +314,7 @@ export async function toggleChecklistItem(
   field: keyof Omit<ApplicationChecklist, "college_list_id">,
   value: boolean
 ) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!
     .from("application_checklist")
@@ -302,6 +326,7 @@ export async function toggleChecklistItem(
 }
 
 export async function updateCollegeStatus(studentId: string, collegeId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = {
     application_round: str(formData, "application_round"),
@@ -340,6 +365,7 @@ function extracurricularPayload(formData: FormData) {
 }
 
 export async function addExtracurricular(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = extracurricularPayload(formData);
   if (!payload.activity_name) throw new Error("활동명은 필수예요.");
@@ -352,6 +378,7 @@ export async function addExtracurricular(studentId: string, formData: FormData) 
 }
 
 export async function updateExtracurricular(studentId: string, ecId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = extracurricularPayload(formData);
   if (!payload.activity_name) throw new Error("활동명은 필수예요.");
@@ -364,6 +391,7 @@ export async function updateExtracurricular(studentId: string, ecId: string, for
 }
 
 export async function deleteExtracurricular(studentId: string, ecId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("extracurriculars").delete().eq("id", ecId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -390,6 +418,7 @@ function awardPayload(formData: FormData) {
 }
 
 export async function addAward(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = awardPayload(formData);
   if (!payload.award_name) throw new Error("수상명은 필수예요.");
@@ -402,6 +431,7 @@ export async function addAward(studentId: string, formData: FormData) {
 }
 
 export async function updateAward(studentId: string, awardId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = awardPayload(formData);
   if (!payload.award_name) throw new Error("수상명은 필수예요.");
@@ -414,6 +444,7 @@ export async function updateAward(studentId: string, awardId: string, formData: 
 }
 
 export async function deleteAward(studentId: string, awardId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("awards").delete().eq("id", awardId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -533,6 +564,7 @@ export async function uploadAttachment(
   formData: FormData
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  await assertStudentAccess(studentId);
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -578,6 +610,7 @@ export async function deleteAttachment(
   storagePath: string
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  await assertStudentAccess(studentId);
 
   await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
   const { error } = await supabaseAdmin!.from("attachments").delete().eq("id", attachmentId);
@@ -599,6 +632,7 @@ function consultationNotePayload(formData: FormData) {
 }
 
 export async function addConsultationNote(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = consultationNotePayload(formData);
   if (!payload.content) throw new Error("상담 내용은 필수예요.");
@@ -617,6 +651,7 @@ export async function addConsultationNote(studentId: string, formData: FormData)
 }
 
 export async function updateConsultationNote(studentId: string, noteId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = consultationNotePayload(formData);
   if (!payload.content) throw new Error("상담 내용은 필수예요.");
@@ -633,6 +668,7 @@ export async function updateConsultationNote(studentId: string, noteId: string, 
 }
 
 export async function deleteConsultationNote(studentId: string, noteId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("consultation_notes").delete().eq("id", noteId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -659,6 +695,7 @@ export async function addTask(formData: FormData) {
   if (!payload.student_id || !payload.task) {
     throw new Error("학생과 할일 내용은 필수예요.");
   }
+  await assertStudentAccess(payload.student_id);
 
   const { error } = await supabase!.from("tasks").insert(payload);
   if (error) throw new Error(`추가 실패: ${error.message}`);
@@ -682,6 +719,7 @@ export async function updateTask(taskId: string, formData: FormData) {
   if (!payload.student_id || !payload.task) {
     throw new Error("학생과 할일 내용은 필수예요.");
   }
+  await assertStudentAccess(payload.student_id);
 
   const { error } = await supabase!.from("tasks").update(payload).eq("id", taskId);
   if (error) throw new Error(`수정 실패: ${error.message}`);
@@ -692,6 +730,8 @@ export async function updateTask(taskId: string, formData: FormData) {
 
 export async function updateTaskStatus(taskId: string, status: TaskStatus) {
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { data: existing } = await supabase!.from("tasks").select("student_id").eq("id", taskId).maybeSingle();
+  if (existing) await assertStudentAccess(existing.student_id);
   const { error } = await supabase!.from("tasks").update({ status }).eq("id", taskId);
   if (error) throw new Error(`업데이트 실패: ${error.message}`);
   revalidatePath("/tasks");
@@ -699,6 +739,8 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus) {
 
 export async function deleteTask(taskId: string) {
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { data: existing } = await supabase!.from("tasks").select("student_id").eq("id", taskId).maybeSingle();
+  if (existing) await assertStudentAccess(existing.student_id);
   const { error } = await supabase!.from("tasks").delete().eq("id", taskId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath("/tasks");
@@ -708,6 +750,7 @@ export async function deleteTask(taskId: string) {
 // Essay Management (Section 9)
 // ============================================================
 export async function upsertPersonalStatement(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -740,6 +783,7 @@ function supplementalEssayPayload(formData: FormData) {
 }
 
 export async function addSupplementalEssay(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = supplementalEssayPayload(formData);
   if (!payload.university_name) throw new Error("대학명은 필수예요.");
@@ -752,6 +796,7 @@ export async function addSupplementalEssay(studentId: string, formData: FormData
 }
 
 export async function updateSupplementalEssay(studentId: string, essayId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = supplementalEssayPayload(formData);
   if (!payload.university_name) throw new Error("대학명은 필수예요.");
@@ -764,6 +809,7 @@ export async function updateSupplementalEssay(studentId: string, essayId: string
 }
 
 export async function deleteSupplementalEssay(studentId: string, essayId: string) {
+  await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("supplemental_essays").delete().eq("id", essayId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -778,6 +824,7 @@ export async function deleteSupplementalEssay(studentId: string, essayId: string
 // key cannot do this.
 // ============================================================
 export async function createParentAccount(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
   if (!isAdminConfigured) {
     throw new Error("Service Role Key가 아직 설정되지 않았어요. .env.local에 SUPABASE_SERVICE_ROLE_KEY를 추가해주세요.");
   }
@@ -826,6 +873,7 @@ export async function createParentAccount(studentId: string, formData: FormData)
 }
 
 export async function deleteParentAccount(studentId: string, parentAccountId: string) {
+  await assertStudentAccess(studentId);
   if (!isAdminConfigured) {
     throw new Error("Service Role Key가 아직 설정되지 않았어요.");
   }
