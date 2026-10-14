@@ -85,6 +85,12 @@ function TaskCard({
         {task.assigned_to && <Pill tone="neutral">담당: {task.assigned_to}</Pill>}
       </div>
 
+      {/* "대기" 상태인데 뭘 기다리는지 모르면 의미가 없으니, 카드를 펼치지 않아도
+          바로 보이게 메모를 여기 한 번 더 보여줘요. */}
+      {!expanded && task.notes && (
+        <p className="mt-1.5 line-clamp-2 text-xs text-navy-500">{task.notes}</p>
+      )}
+
       {expanded && (
         <form action={updateTask.bind(null, task.id)} className="mt-3 space-y-2 border-t border-navy-100 pt-3">
           <div>

@@ -251,6 +251,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                   <div className="text-xs text-navy-400">
                     {TASK_STATUS_LABEL[t.status] ?? t.status} {t.deadline && `· 마감 ${t.deadline}`}
                   </div>
+                  {t.notes && <p className="mt-0.5 line-clamp-1 text-xs text-navy-400">{t.notes}</p>}
                 </div>
               ))}
               <Link href="/tasks" className="text-xs font-medium text-gold-600 hover:text-gold-700">전체 할일 보기 →</Link>
