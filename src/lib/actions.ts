@@ -57,6 +57,28 @@ export async function createStudent(formData: FormData) {
     payload.counselor_id = actingCounselor.id;
   }
 
+  // Guard against accidental duplicate submissions (slow network + an extra
+  // click, or a resubmit) creating the same student twice. If a student
+  // with the same name/school/grad year was just created moments ago,
+  // treat this as a repeat submit and send the counselor to that existing
+  // record instead of inserting another one.
+  const dedupeWindowAgo = new Date(Date.now() - 15_000).toISOString();
+  const { data: recentDuplicate } = await supabase!
+    .from("students")
+    .select("id")
+    .eq("student_name", payload.student_name)
+    .eq("high_school", payload.high_school)
+    .eq("graduation_year", payload.graduation_year)
+    .gte("created_at", dedupeWindowAgo)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recentDuplicate) {
+    revalidatePath("/students");
+    revalidatePath("/");
+    redirect(`/students/${recentDuplicate.id}`);
+  }
+
   const { data, error } = await supabase!.from("students").insert(payload).select("id").single();
   if (error || !data) {
     throw new Error(`학생 등록 실패: ${error?.message ?? "알 수 없는 오류"}`);

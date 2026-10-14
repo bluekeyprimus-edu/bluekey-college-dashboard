@@ -1,4 +1,5 @@
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Student, Counselor } from "@/lib/types";
 
 const inputClass =
@@ -122,12 +123,7 @@ export function StudentForm({
       </Card>
 
       <div className="flex justify-end gap-3">
-        <button
-          type="submit"
-          className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-navy-800"
-        >
-          {submitLabel}
-        </button>
+        <SubmitButton label={submitLabel} pendingLabel="저장 중..." />
       </div>
     </form>
   );
