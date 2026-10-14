@@ -389,7 +389,7 @@ create index if not exists idx_consultation_notes_student on consultation_notes(
 create table if not exists attachments (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references students(id) on delete cascade,
-  entity_type text not null check (entity_type in ('extracurricular', 'award', 'personal_statement', 'essay')),
+  entity_type text not null check (entity_type in ('extracurricular', 'award', 'personal_statement', 'essay', 'transcript')),
   entity_id uuid not null,
   file_name text not null,
   storage_path text not null,

@@ -128,7 +128,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
             studentId={id}
             entityType="personal_statement"
             entityId={id}
-            attachments={attachments.filter((a) => a.entity_id === id)}
+            attachments={attachments.filter((a) => a.entity_id === id && a.entity_type === "personal_statement")}
           />
         </CardBody>
       </Card>

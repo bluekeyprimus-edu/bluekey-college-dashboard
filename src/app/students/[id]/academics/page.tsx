@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses, getSatScores, getActScores } from "@/lib/data";
+import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses, getSatScores, getActScores, getAttachments } from "@/lib/data";
 import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse, addSatScore, deleteSatScore, addActScore, deleteActScore } from "@/lib/actions";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
 import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,13 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
   const access = await getStudentAccess(id);
   if (!access?.canViewAll) notFound();
 
-  const [academic, gpaRows, courses, satScores, actScores] = await Promise.all([
+  const [academic, gpaRows, courses, satScores, actScores, attachments] = await Promise.all([
     getAcademicOverview(id),
     getGpaByGrade(id),
     getCourses(id),
     getSatScores(id),
     getActScores(id),
+    getAttachments(id),
   ]);
 
   const rigor = computeRigorSummary(courses);
@@ -157,6 +159,12 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               <SubmitButton label="GPA 저장" toastMessage="저장되었습니다" />
             </div>
           </form>
+          <AttachmentsSection
+            studentId={id}
+            entityType="transcript"
+            entityId={id}
+            attachments={attachments.filter((a) => a.entity_id === id && a.entity_type === "transcript")}
+          />
         </CardBody>
       </Card>
 

@@ -327,7 +327,7 @@ export interface StudentExpense {
   created_at: string;
 }
 
-export type AttachmentEntityType = "extracurricular" | "award" | "personal_statement" | "essay";
+export type AttachmentEntityType = "extracurricular" | "award" | "personal_statement" | "essay" | "transcript";
 
 export interface Attachment {
   id: string;

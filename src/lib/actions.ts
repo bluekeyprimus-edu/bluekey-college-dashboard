@@ -646,10 +646,22 @@ const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20MB
 function attachmentRevalidatePaths(studentId: string, entityType: AttachmentEntityType) {
   if (entityType === "extracurricular" || entityType === "award") {
     revalidatePath(`/students/${studentId}/activities`);
+  } else if (entityType === "transcript") {
+    revalidatePath(`/students/${studentId}/academics`);
   } else {
     revalidatePath(`/students/${studentId}/essays`);
   }
   revalidatePath(`/students/${studentId}`);
+}
+
+// Which role may manage attachments on a given entity — mirrors the scope
+// each entity's own CRUD actions already require (EC/award actions take
+// "ec", college-list/essay actions take "application", everything else
+// including transcripts is general-counselor/admin territory).
+function attachmentScope(entityType: AttachmentEntityType): StudentAccessScope {
+  if (entityType === "extracurricular" || entityType === "award") return "ec";
+  if (entityType === "personal_statement" || entityType === "essay") return "application";
+  return "all";
 }
 
 export async function uploadAttachment(
@@ -659,7 +671,7 @@ export async function uploadAttachment(
   formData: FormData
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  await assertStudentAccess(studentId, entityType === "extracurricular" || entityType === "award" ? "ec" : "application");
+  await assertStudentAccess(studentId, attachmentScope(entityType));
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -705,7 +717,7 @@ export async function deleteAttachment(
   storagePath: string
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  await assertStudentAccess(studentId, entityType === "extracurricular" || entityType === "award" ? "ec" : "application");
+  await assertStudentAccess(studentId, attachmentScope(entityType));
 
   await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
   const { error } = await supabaseAdmin!.from("attachments").delete().eq("id", attachmentId);
