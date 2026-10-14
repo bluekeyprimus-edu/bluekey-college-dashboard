@@ -85,7 +85,6 @@ export interface StudentProgress {
   supplemental_essays: number;
   recommendation_letters: number;
   school_documents: number;
-  financial_aid: number;
 }
 
 export const PROGRESS_CATEGORY_LABELS: Record<keyof Omit<StudentProgress, "student_id">, string> = {
@@ -99,7 +98,6 @@ export const PROGRESS_CATEGORY_LABELS: Record<keyof Omit<StudentProgress, "stude
   supplemental_essays: "추가 에세이",
   recommendation_letters: "추천서",
   school_documents: "학교 서류",
-  financial_aid: "재정 지원",
 };
 
 export interface AcademicOverview {
@@ -135,6 +133,9 @@ export interface Course {
 export interface SatScore {
   id: string;
   student_id: string;
+  // Which sitting this is (1st, 2nd, ...) — SAT can be retaken, so this is
+  // how multiple attempts are told apart alongside test_date.
+  attempt_number: number | null;
   test_date: string;
   total_score: number;
   reading_writing: number;
@@ -144,6 +145,7 @@ export interface SatScore {
 export interface ActScore {
   id: string;
   student_id: string;
+  attempt_number: number | null;
   test_date: string;
   composite: number;
   english: number;

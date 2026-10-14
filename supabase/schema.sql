@@ -67,7 +67,6 @@ create table if not exists student_progress (
   supplemental_essays int default 0 check (supplemental_essays between 0 and 100),
   recommendation_letters int default 0 check (recommendation_letters between 0 and 100),
   school_documents int default 0 check (school_documents between 0 and 100),
-  financial_aid int default 0 check (financial_aid between 0 and 100),
   updated_at timestamptz default now()
 );
 
@@ -115,6 +114,9 @@ create index if not exists idx_courses_student on courses(student_id);
 create table if not exists sat_scores (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id) on delete cascade,
+  -- Which sitting this is (1st, 2nd, ...) — SAT/ACT are commonly retaken,
+  -- so this plus test_date is how multiple attempts are told apart.
+  attempt_number int,
   test_date date,
   total_score int,
   reading_writing int,
@@ -126,6 +128,7 @@ create index if not exists idx_sat_student on sat_scores(student_id);
 create table if not exists act_scores (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id) on delete cascade,
+  attempt_number int,
   test_date date,
   composite numeric(3,1),
   english int,

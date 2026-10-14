@@ -153,7 +153,6 @@ export const mockProgress: Record<string, StudentProgress> = {
     supplemental_essays: 30,
     recommendation_letters: 50,
     school_documents: 40,
-    financial_aid: 20,
   },
   s2: {
     student_id: "s2",
@@ -167,7 +166,6 @@ export const mockProgress: Record<string, StudentProgress> = {
     supplemental_essays: 0,
     recommendation_letters: 20,
     school_documents: 10,
-    financial_aid: 0,
   },
   s3: {
     student_id: "s3",
@@ -181,7 +179,6 @@ export const mockProgress: Record<string, StudentProgress> = {
     supplemental_essays: 75,
     recommendation_letters: 80,
     school_documents: 70,
-    financial_aid: 50,
   },
   s4: {
     student_id: "s4",
@@ -195,7 +192,6 @@ export const mockProgress: Record<string, StudentProgress> = {
     supplemental_essays: 0,
     recommendation_letters: 0,
     school_documents: 10,
-    financial_aid: 0,
   },
   s5: {
     student_id: "s5",
@@ -209,7 +205,6 @@ export const mockProgress: Record<string, StudentProgress> = {
     supplemental_essays: 0,
     recommendation_letters: 0,
     school_documents: 0,
-    financial_aid: 0,
   },
 };
 
@@ -235,8 +230,8 @@ export const mockCourses: Course[] = [
 ];
 
 export const mockSat: SatScore[] = [
-  { id: "sat1", student_id: "s1", test_date: "2025-11-01", total_score: 1540, reading_writing: 760, math: 780 },
-  { id: "sat2", student_id: "s1", test_date: "2025-08-01", total_score: 1490, reading_writing: 720, math: 770 },
+  { id: "sat1", student_id: "s1", attempt_number: 2, test_date: "2025-11-01", total_score: 1540, reading_writing: 760, math: 780 },
+  { id: "sat2", student_id: "s1", attempt_number: 1, test_date: "2025-08-01", total_score: 1490, reading_writing: 720, math: 770 },
 ];
 
 export const mockAct: ActScore[] = [];

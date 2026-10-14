@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses } from "@/lib/data";
-import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse } from "@/lib/actions";
+import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses, getSatScores, getActScores } from "@/lib/data";
+import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse, addSatScore, deleteSatScore, addActScore, deleteActScore } from "@/lib/actions";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
 import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -35,10 +35,12 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
   const access = await getStudentAccess(id);
   if (!access?.canViewAll) notFound();
 
-  const [academic, gpaRows, courses] = await Promise.all([
+  const [academic, gpaRows, courses, satScores, actScores] = await Promise.all([
     getAcademicOverview(id),
     getGpaByGrade(id),
     getCourses(id),
+    getSatScores(id),
+    getActScores(id),
   ]);
 
   const rigor = computeRigorSummary(courses);
@@ -155,6 +157,149 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               <SubmitButton label="GPA 저장" toastMessage="저장되었습니다" />
             </div>
           </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>표준화 시험 (SAT/ACT)</CardTitle>
+        </CardHeader>
+        <CardBody className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-navy-900">SAT</h3>
+            {satScores.length === 0 && <p className="text-sm text-navy-400">등록된 SAT 성적이 아직 없어요.</p>}
+            {satScores.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-sm">
+                  <thead>
+                    <tr className="text-xs font-medium uppercase tracking-wide text-navy-400">
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">차수</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">응시일</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">총점</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">RW</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">Math</th>
+                      <th className="border-b border-navy-100 px-2 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {satScores.map((s) => (
+                      <tr key={s.id} className="border-b border-navy-50 last:border-0">
+                        <td className="px-2 py-2 text-navy-600">{s.attempt_number ? `${s.attempt_number}차` : "—"}</td>
+                        <td className="px-2 py-2 text-navy-600">{s.test_date}</td>
+                        <td className="px-2 py-2 font-medium text-navy-900">{s.total_score}</td>
+                        <td className="px-2 py-2 text-navy-600">{s.reading_writing}</td>
+                        <td className="px-2 py-2 text-navy-600">{s.math}</td>
+                        <td className="px-2 py-2 text-right">
+                          <form action={deleteSatScore.bind(null, id, s.id)}>
+                            <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <form action={addSatScore.bind(null, id)} className="grid grid-cols-2 gap-3 border-t border-navy-100 pt-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div>
+                <label className={labelClass}>차수</label>
+                <input type="number" min={1} name="attempt_number" placeholder="예: 1" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>응시일</label>
+                <input type="date" name="test_date" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>총점 *</label>
+                <input type="number" name="total_score" required className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Reading/Writing</label>
+                <input type="number" name="reading_writing" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Math</label>
+                <input type="number" name="math" className={inputClass} />
+              </div>
+              <div className="flex items-end">
+                <SubmitButton label="+ SAT 추가" variant="secondary-sm" toastMessage="추가되었습니다" />
+              </div>
+            </form>
+          </div>
+
+          <div className="space-y-3 border-t border-navy-100 pt-6">
+            <h3 className="text-sm font-semibold text-navy-900">ACT</h3>
+            {actScores.length === 0 && <p className="text-sm text-navy-400">등록된 ACT 성적이 아직 없어요.</p>}
+            {actScores.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="text-xs font-medium uppercase tracking-wide text-navy-400">
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">차수</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">응시일</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">종합</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">English</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">Math</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">Reading</th>
+                      <th className="border-b border-navy-100 px-2 py-2 text-left">Science</th>
+                      <th className="border-b border-navy-100 px-2 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {actScores.map((a) => (
+                      <tr key={a.id} className="border-b border-navy-50 last:border-0">
+                        <td className="px-2 py-2 text-navy-600">{a.attempt_number ? `${a.attempt_number}차` : "—"}</td>
+                        <td className="px-2 py-2 text-navy-600">{a.test_date}</td>
+                        <td className="px-2 py-2 font-medium text-navy-900">{a.composite}</td>
+                        <td className="px-2 py-2 text-navy-600">{a.english}</td>
+                        <td className="px-2 py-2 text-navy-600">{a.math}</td>
+                        <td className="px-2 py-2 text-navy-600">{a.reading}</td>
+                        <td className="px-2 py-2 text-navy-600">{a.science}</td>
+                        <td className="px-2 py-2 text-right">
+                          <form action={deleteActScore.bind(null, id, a.id)}>
+                            <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <form action={addActScore.bind(null, id)} className="grid grid-cols-2 gap-3 border-t border-navy-100 pt-4 sm:grid-cols-4 lg:grid-cols-7">
+              <div>
+                <label className={labelClass}>차수</label>
+                <input type="number" min={1} name="attempt_number" placeholder="예: 1" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>응시일</label>
+                <input type="date" name="test_date" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>종합 *</label>
+                <input type="number" step="0.1" name="composite" required className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>English</label>
+                <input type="number" name="english" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Math</label>
+                <input type="number" name="math" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Reading</label>
+                <input type="number" name="reading" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Science</label>
+                <input type="number" name="science" className={inputClass} />
+              </div>
+              <div className="flex items-end sm:col-span-4 lg:col-span-7">
+                <SubmitButton label="+ ACT 추가" variant="secondary-sm" toastMessage="추가되었습니다" />
+              </div>
+            </form>
+          </div>
         </CardBody>
       </Card>
 

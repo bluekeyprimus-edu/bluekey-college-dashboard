@@ -12,7 +12,6 @@ export function overallProgress(p: StudentProgress): number {
     p.supplemental_essays,
     p.recommendation_letters,
     p.school_documents,
-    p.financial_aid,
   ];
   const sum = values.reduce((a, b) => a + b, 0);
   return Math.round(sum / values.length);

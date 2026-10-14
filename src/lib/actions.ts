@@ -286,6 +286,73 @@ export async function deleteCourse(studentId: string, courseId: string) {
   revalidatePath(`/students/${studentId}/academics`);
 }
 
+// ============================================================
+// SAT / ACT scores — a student can sit these more than once, so each row
+// is one sitting (attempt_number + test_date tell them apart) rather than
+// a single overwritable score.
+// ============================================================
+export async function addSatScore(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: studentId,
+    attempt_number: num(formData, "attempt_number"),
+    test_date: str(formData, "test_date"),
+    total_score: num(formData, "total_score"),
+    reading_writing: num(formData, "reading_writing"),
+    math: num(formData, "math"),
+  };
+  if (!payload.total_score) throw new Error("총점은 필수예요.");
+
+  const { error } = await supabase!.from("sat_scores").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteSatScore(studentId: string, scoreId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("sat_scores").delete().eq("id", scoreId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function addActScore(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const payload = {
+    student_id: studentId,
+    attempt_number: num(formData, "attempt_number"),
+    test_date: str(formData, "test_date"),
+    composite: num(formData, "composite"),
+    english: num(formData, "english"),
+    math: num(formData, "math"),
+    reading: num(formData, "reading"),
+    science: num(formData, "science"),
+  };
+  if (!payload.composite) throw new Error("종합 점수는 필수예요.");
+
+  const { error } = await supabase!.from("act_scores").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteActScore(studentId: string, scoreId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("act_scores").delete().eq("id", scoreId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
 export async function addCollegeToList(studentId: string, formData: FormData) {
   await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
