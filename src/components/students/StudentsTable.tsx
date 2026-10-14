@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { RosterRow } from "@/lib/data";
+import { deleteStudent } from "@/lib/actions";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { cn } from "@/lib/cn";
 
 type SortKey = "name" | "grade" | "school" | "major" | "counselor" | "progress" | "deadline";
 
-export function StudentsTable({ rows }: { rows: RosterRow[] }) {
+export function StudentsTable({ rows, isAdmin = false }: { rows: RosterRow[]; isAdmin?: boolean }) {
   const [search, setSearch] = useState("");
   const [counselor, setCounselor] = useState("all");
   const [gradeFilter, setGradeFilter] = useState("all");
@@ -127,6 +128,7 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
               {th("progress", "진행률")}
               {th("deadline", "다음 마감일")}
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">할일</th>
+              {isAdmin && <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-navy-100">
@@ -160,6 +162,26 @@ export function StudentsTable({ rows }: { rows: RosterRow[] }) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-sm text-navy-600">{row.pendingTasks}</td>
+                {isAdmin && (
+                  <td className="px-4 py-3 text-right">
+                    <form
+                      action={deleteStudent.bind(null, row.student.id)}
+                      onSubmit={(e) => {
+                        if (
+                          !confirm(
+                            `${row.student.english_name ?? row.student.student_name} 학생을 삭제할까요? 활동/수상/에세이/할일 등 관련 기록이 모두 함께 삭제되고 되돌릴 수 없어요.`
+                          )
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <button type="submit" className="text-xs font-medium text-rose-500 hover:text-rose-700">
+                        삭제
+                      </button>
+                    </form>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

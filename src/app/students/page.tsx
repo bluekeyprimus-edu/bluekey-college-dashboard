@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { getRosterRows } from "@/lib/data";
-import { getCounselorRestriction } from "@/lib/current-counselor";
+import { getCounselorRestriction, getCurrentCounselor } from "@/lib/current-counselor";
 import { StudentsTable } from "@/components/students/StudentsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage() {
-  const [rows, restricted] = await Promise.all([getRosterRows(), getCounselorRestriction()]);
+  const [rows, restricted, actingCounselor] = await Promise.all([
+    getRosterRows(),
+    getCounselorRestriction(),
+    getCurrentCounselor(),
+  ]);
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -23,7 +27,7 @@ export default async function StudentsPage() {
           + 새 학생 추가
         </Link>
       </div>
-      <StudentsTable rows={rows} />
+      <StudentsTable rows={rows} isAdmin={actingCounselor?.isAdmin ?? false} />
     </div>
   );
 }

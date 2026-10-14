@@ -144,6 +144,28 @@ export async function updateStudent(studentId: string, formData: FormData) {
   redirect(`/students/${studentId}`);
 }
 
+// Admin-only, irreversible: removes the student and (via each table's
+// "on delete cascade" FK) everything attached to them — progress,
+// academics, scores, activities, awards, college list, essays, tasks,
+// consultation notes, attachments, parent account links, finance rows.
+// Used from the students list to clean up e.g. a mis-entered/duplicate
+// student record.
+export async function deleteStudent(studentId: string) {
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 학생 삭제는 관리자만 할 수 있어요.");
+  }
+
+  const { error } = await supabase!.from("students").delete().eq("id", studentId);
+  if (error) throw new Error(`학생 삭제 실패: ${error.message}`);
+
+  revalidatePath("/students");
+  revalidatePath("/");
+  revalidatePath("/tasks");
+}
+
 const GPA_SUBJECTS = ["english", "math", "science", "social_studies", "foreign_language", "other", "overall"] as const;
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
 
