@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getAcademicOverview, getGpaByGrade, getCourses } from "@/lib/data";
+import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses } from "@/lib/data";
 import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse } from "@/lib/actions";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
 import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
@@ -32,6 +32,8 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!access?.canViewAll) notFound();
 
   const [academic, gpaRows, courses] = await Promise.all([
     getAcademicOverview(id),

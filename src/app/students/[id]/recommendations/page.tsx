@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getAcademicOverview, getSatScores, getCollegeList, getHistoricalAdmissionsByUniversity } from "@/lib/data";
+import { getStudent, getStudentAccess, getAcademicOverview, getSatScores, getCollegeList, getHistoricalAdmissionsByUniversity } from "@/lib/data";
 import { computeAdmissionsPositioning, PositioningResult } from "@/lib/positioning";
 import { COLLEGE_CATEGORY_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -19,6 +19,8 @@ export default async function RecommendationsPage({ params }: { params: Promise<
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!(access?.canViewAll || access?.canViewApplication)) notFound();
 
   const [academic, sat, colleges] = await Promise.all([getAcademicOverview(id), getSatScores(id), getCollegeList(id)]);
 

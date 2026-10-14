@@ -52,8 +52,25 @@ export interface Student {
   career_interest: string | null;
   counselor_id: string | null;
   counselor_name?: string;
+  // Narrower assignments alongside the general counselor — see
+  // schema.sql. Either can be null (most students only have the one
+  // general counselor) and either can point at the same person as
+  // counselor_id or someone else.
+  application_counselor_id: string | null;
+  ec_counselor_id: string | null;
   status: "active" | "inactive" | "graduated";
   photo_url: string | null;
+}
+
+// What the acting counselor may see/edit for one particular student.
+// canViewAll is true for admins and for the student's general counselor
+// (counselor_id match) and implies the other two; canViewEc/canViewApplication
+// are true when the acting counselor is specifically the ec_counselor_id /
+// application_counselor_id for this student (or canViewAll is already true).
+export interface StudentAccess {
+  canViewAll: boolean;
+  canViewEc: boolean;
+  canViewApplication: boolean;
 }
 
 export interface StudentProgress {

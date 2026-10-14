@@ -89,7 +89,7 @@ export function StudentForm({
               미국 영주권 보유
             </label>
           </div>
-          <Field label="담당 카운슬러">
+          <Field label="담당 카운슬러 (전체)">
             {canAssignCounselor ? (
               <select name="counselor_id" defaultValue={d.counselor_id ?? ""} className={inputClass}>
                 <option value="">미배정</option>
@@ -104,8 +104,41 @@ export function StudentForm({
               </div>
             )}
           </Field>
+          <Field label="원서 담당">
+            {canAssignCounselor ? (
+              <select name="application_counselor_id" defaultValue={d.application_counselor_id ?? ""} className={inputClass}>
+                <option value="">미배정</option>
+                {counselors.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
+                {counselors.find((c) => c.id === d.application_counselor_id)?.name ?? "미배정"}
+                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
+              </div>
+            )}
+          </Field>
+          <Field label="EC 코디네이터">
+            {canAssignCounselor ? (
+              <select name="ec_counselor_id" defaultValue={d.ec_counselor_id ?? ""} className={inputClass}>
+                <option value="">미배정</option>
+                {counselors.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
+                {counselors.find((c) => c.id === d.ec_counselor_id)?.name ?? "미배정"}
+                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
+              </div>
+            )}
+          </Field>
         </CardBody>
       </Card>
+      <p className="px-1 text-xs text-navy-400">
+        원서 담당은 컬리지 리스트·에세이·Admissions Positioning만, EC 코디네이터는 활동·수상 내역만 볼 수 있어요. 전체 담당 카운슬러는 모든 영역을 볼 수 있어요.
+      </p>
 
       <Card>
         <CardHeader><CardTitle>진로/전공</CardTitle></CardHeader>

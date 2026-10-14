@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import * as mock from "./mock-data";
-import { getCounselorRestriction } from "./current-counselor";
+import { getCounselorRestriction, getCurrentCounselor } from "./current-counselor";
 import {
   Student,
   StudentProgress,
@@ -24,6 +24,7 @@ import {
   Attachment,
   StudentFinance,
   StudentExpense,
+  StudentAccess,
 } from "./types";
 
 // Thin data-access layer. When NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are set
@@ -36,18 +37,32 @@ type StudentRow = Omit<Student, "counselor_name"> & {
 };
 
 export async function getStudents(): Promise<Student[]> {
-  // Non-admin counselors only ever see their own assigned students — this
-  // is the single choke point every /students/[id]/** sub-page reads
-  // through (via getStudent below), so it locks down the whole per-student
-  // area, not just the roster list.
+  // Non-admin counselors only ever see students they hold SOME role on —
+  // general counselor, application lead, or EC coordinator. This is the
+  // single choke point every /students/[id]/** sub-page reads through
+  // (via getStudent below), so it locks down the whole per-student area,
+  // not just the roster list. It only decides "do they have any access at
+  // all" — which of the three roles they actually hold (and therefore
+  // which sections they may see/edit) is getStudentAccess()'s job.
   const restrictToCounselorId = await getCounselorRestriction();
 
   if (!isSupabaseConfigured) {
     const rows = mock.mockStudents;
-    return restrictToCounselorId ? rows.filter((s) => s.counselor_id === restrictToCounselorId) : rows;
+    return restrictToCounselorId
+      ? rows.filter(
+          (s) =>
+            s.counselor_id === restrictToCounselorId ||
+            s.application_counselor_id === restrictToCounselorId ||
+            s.ec_counselor_id === restrictToCounselorId
+        )
+      : rows;
   }
   let query = supabase!.from("students").select("*, counselors(name)").order("student_name");
-  if (restrictToCounselorId) query = query.eq("counselor_id", restrictToCounselorId);
+  if (restrictToCounselorId) {
+    query = query.or(
+      `counselor_id.eq.${restrictToCounselorId},application_counselor_id.eq.${restrictToCounselorId},ec_counselor_id.eq.${restrictToCounselorId}`
+    );
+  }
   const { data, error } = await query;
   if (error || !data) return mock.mockStudents;
   return (data as unknown as StudentRow[]).map((row) => ({
@@ -59,6 +74,43 @@ export async function getStudents(): Promise<Student[]> {
 export async function getStudent(id: string): Promise<Student | null> {
   const students = await getStudents();
   return students.find((s) => s.id === id) ?? null;
+}
+
+// Which sections of ONE student the acting counselor may see/edit. Unlike
+// getStudent (which only answers "do they have any access at all"), this
+// tells apart the three roles so a page can show/allow only the section
+// that role actually owns. Returns null in exactly the same situations
+// getStudent would return null (admin bypasses everything; a non-counselor
+// session — parent, unauthenticated — is treated as unrestricted here too,
+// matching getCounselorRestriction's contract: access for those is enforced
+// elsewhere, by middleware/page checks, not by this data layer).
+export async function getStudentAccess(studentId: string): Promise<StudentAccess | null> {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor || actingCounselor.isAdmin) {
+    return { canViewAll: true, canViewEc: true, canViewApplication: true };
+  }
+
+  if (!isSupabaseConfigured) {
+    const row = mock.mockStudents.find((s) => s.id === studentId);
+    if (!row) return null;
+    const canViewAll = row.counselor_id === actingCounselor.id;
+    const canViewEc = canViewAll || row.ec_counselor_id === actingCounselor.id;
+    const canViewApplication = canViewAll || row.application_counselor_id === actingCounselor.id;
+    if (!canViewAll && !canViewEc && !canViewApplication) return null;
+    return { canViewAll, canViewEc, canViewApplication };
+  }
+
+  const { data } = await supabase!
+    .from("students")
+    .select("counselor_id, application_counselor_id, ec_counselor_id")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (!data) return null;
+  const canViewAll = data.counselor_id === actingCounselor.id;
+  const canViewEc = canViewAll || data.ec_counselor_id === actingCounselor.id;
+  const canViewApplication = canViewAll || data.application_counselor_id === actingCounselor.id;
+  if (!canViewAll && !canViewEc && !canViewApplication) return null;
+  return { canViewAll, canViewEc, canViewApplication };
 }
 
 export async function getProgress(studentId: string): Promise<StudentProgress | null> {

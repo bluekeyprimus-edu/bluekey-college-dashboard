@@ -37,12 +37,21 @@ create table if not exists students (
   secondary_major_interest text,
   career_interest text,
   counselor_id uuid references counselors(id) on delete set null,
+  -- Two optional, narrower assignments alongside the general counselor
+  -- above: an application lead (college list / essays / recommendations)
+  -- and an EC coordinator (extracurriculars / awards). Either can be the
+  -- same person as counselor_id or someone else entirely; both are
+  -- nullable since most students just have the one general counselor.
+  application_counselor_id uuid references counselors(id) on delete set null,
+  ec_counselor_id uuid references counselors(id) on delete set null,
   status text default 'active' check (status in ('active','inactive','graduated')),
   photo_url text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 create index if not exists idx_students_counselor on students(counselor_id);
+create index if not exists idx_students_application_counselor on students(application_counselor_id);
+create index if not exists idx_students_ec_counselor on students(ec_counselor_id);
 
 -- Overall progress breakdown (Section 1) — stored per category so counselors
 -- can set/override until automatic calculation is wired up later.

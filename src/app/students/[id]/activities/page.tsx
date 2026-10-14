@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getStudent, getExtracurriculars, getAwards, getAttachments } from "@/lib/data";
+import { getStudent, getStudentAccess, getExtracurriculars, getAwards, getAttachments } from "@/lib/data";
 import {
   addExtracurricular,
   updateExtracurricular,
@@ -154,6 +154,8 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!(access?.canViewAll || access?.canViewEc)) notFound();
 
   const [ecs, awards, attachments] = await Promise.all([getExtracurriculars(id), getAwards(id), getAttachments(id)]);
 

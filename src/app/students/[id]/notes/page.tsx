@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getStudent, getConsultationNotes } from "@/lib/data";
+import { getStudent, getStudentAccess, getConsultationNotes } from "@/lib/data";
 import { addConsultationNote, updateConsultationNote, deleteConsultationNote } from "@/lib/actions";
 import { ConsultationNote } from "@/lib/types";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -35,6 +35,8 @@ export default async function ConsultationNotesPage({ params }: { params: Promis
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!(access?.canViewAll)) notFound();
 
   const notes = await getConsultationNotes(id);
 

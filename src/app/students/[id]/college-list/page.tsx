@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getCollegeList } from "@/lib/data";
+import { getStudent, getStudentAccess, getCollegeList } from "@/lib/data";
 import { addCollegeToList } from "@/lib/actions";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CollegeBoard } from "@/components/students/CollegeBoard";
@@ -16,6 +16,8 @@ export default async function CollegeListPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!(access?.canViewAll || access?.canViewApplication)) notFound();
 
   const colleges = await getCollegeList(id);
 

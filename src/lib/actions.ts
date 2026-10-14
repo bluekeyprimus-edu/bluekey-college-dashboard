@@ -7,20 +7,28 @@ import { ApplicationChecklist, CollegeCategory, TaskStatus, PROGRESS_CATEGORY_LA
 import { supabaseAdmin, isAdminConfigured } from "./supabase-admin";
 import { bumpGradesForNewSchoolYear } from "./grade-bump";
 import { getCurrentCounselor } from "./current-counselor";
-import { getStudent } from "./data";
+import { getStudentAccess } from "./data";
 
 // Re-checked on every student-scoped write, not just at page-render time:
 // a non-admin counselor's browser could otherwise call a server action
 // directly (devtools, a replayed request) with a studentId that was never
 // actually shown to them and write to — or read back the existence of —
-// a student assigned to someone else. getStudent() already applies the
-// same per-counselor restriction the roster/profile pages rely on, so
-// this just reuses that choke point instead of re-implementing it.
-async function assertStudentAccess(studentId: string): Promise<void> {
+// a student outside their role(s) on it. getStudentAccess() already applies
+// the same per-counselor/per-role restriction the pages rely on, so this
+// just reuses that choke point instead of re-implementing it. requiredScope
+// picks which of the three roles is allowed to call a given action —
+// "all" (general counselor or admin) unless the action is specifically an
+// EC/award action ("ec") or an application/essay action ("application").
+type StudentAccessScope = "all" | "ec" | "application";
+
+async function assertStudentAccess(studentId: string, requiredScope: StudentAccessScope = "all"): Promise<void> {
   const actingCounselor = await getCurrentCounselor();
   if (!actingCounselor || actingCounselor.isAdmin) return;
-  const student = await getStudent(studentId);
-  if (!student) throw new Error("권한이 없어요. 배정된 학생만 수정할 수 있어요.");
+  const access = await getStudentAccess(studentId);
+  if (!access) throw new Error("권한이 없어요. 배정된 학생만 수정할 수 있어요.");
+  const allowed =
+    requiredScope === "all" ? access.canViewAll : requiredScope === "ec" ? access.canViewEc : access.canViewApplication;
+  if (!allowed) throw new Error("권한이 없어요. 이 영역을 담당하는 카운슬러만 수정할 수 있어요.");
 }
 
 function str(formData: FormData, key: string): string | null {
@@ -55,6 +63,17 @@ function studentPayload(formData: FormData) {
   };
 }
 
+// Separate from studentPayload because only an admin may set these — see
+// the isAdmin branches in createStudent/updateStudent below, which merge
+// this in only for an admin submission so a non-admin's edit can never
+// touch who the application lead / EC coordinator is.
+function roleAssignmentPayload(formData: FormData) {
+  return {
+    application_counselor_id: str(formData, "application_counselor_id"),
+    ec_counselor_id: str(formData, "ec_counselor_id"),
+  };
+}
+
 export async function createStudent(formData: FormData) {
   if (!isSupabaseConfigured) {
     throw new Error("Supabase가 아직 연결되지 않았어요. .env.local을 확인해주세요.");
@@ -64,13 +83,17 @@ export async function createStudent(formData: FormData) {
     throw new Error("필수 항목(학생 이름, 현재 학년, 졸업연도, 고등학교, 커리큘럼)을 입력해주세요.");
   }
 
-  // Only an admin may choose who a student is assigned to. A non-admin's
-  // submission is always forced to themselves, whatever the form said —
-  // the UI already hides the picker for them, this is the real enforcement.
+  // Only an admin may choose who a student is assigned to (general
+  // counselor, application lead, or EC coordinator). A non-admin's
+  // submission is always forced to themselves as the general counselor,
+  // whatever the form said, and never sets the other two roles — the UI
+  // already hides those pickers for them, this is the real enforcement.
   const actingCounselor = await getCurrentCounselor();
-  if (actingCounselor && !actingCounselor.isAdmin) {
+  const isAdmin = actingCounselor?.isAdmin ?? false;
+  if (actingCounselor && !isAdmin) {
     payload.counselor_id = actingCounselor.id;
   }
+  const insertPayload = isAdmin ? { ...payload, ...roleAssignmentPayload(formData) } : payload;
 
   // Guard against accidental duplicate submissions (slow network + an extra
   // click, or a resubmit) creating the same student twice. If a student
@@ -94,7 +117,7 @@ export async function createStudent(formData: FormData) {
     redirect(`/students/${recentDuplicate.id}`);
   }
 
-  const { data, error } = await supabase!.from("students").insert(payload).select("id").single();
+  const { data, error } = await supabase!.from("students").insert(insertPayload).select("id").single();
   if (error || !data) {
     throw new Error(`학생 등록 실패: ${error?.message ?? "알 수 없는 오류"}`);
   }
@@ -143,13 +166,18 @@ export async function updateStudent(studentId: string, formData: FormData) {
   // only ever reach this action for a student already assigned to them (the
   // access-scoping choke point in getStudent blocks anything else), so
   // forcing counselor_id back to themselves just means their submission
-  // can't move the student off their own list.
+  // can't move the student off their own list. The two role fields are
+  // simply left out of a non-admin's update payload entirely, so their
+  // submission can't touch (or wipe out) who the application lead / EC
+  // coordinator currently is.
   const actingCounselor = await getCurrentCounselor();
-  if (actingCounselor && !actingCounselor.isAdmin) {
+  const isAdmin = actingCounselor?.isAdmin ?? false;
+  if (actingCounselor && !isAdmin) {
     payload.counselor_id = actingCounselor.id;
   }
+  const updatePayload = isAdmin ? { ...payload, ...roleAssignmentPayload(formData) } : payload;
 
-  const { error } = await supabase!.from("students").update(payload).eq("id", studentId);
+  const { error } = await supabase!.from("students").update(updatePayload).eq("id", studentId);
   if (error) {
     throw new Error(`학생 정보 수정 실패: ${error.message}`);
   }
@@ -259,7 +287,7 @@ export async function deleteCourse(studentId: string, courseId: string) {
 }
 
 export async function addCollegeToList(studentId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -291,7 +319,7 @@ export async function addCollegeToList(studentId: string, formData: FormData) {
 }
 
 export async function deleteCollegeFromList(studentId: string, collegeId: string) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("college_list").delete().eq("id", collegeId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -300,7 +328,7 @@ export async function deleteCollegeFromList(studentId: string, collegeId: string
 }
 
 export async function updateCollegeCategory(studentId: string, collegeId: string, category: CollegeCategory) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("college_list").update({ category }).eq("id", collegeId);
   if (error) throw new Error(`업데이트 실패: ${error.message}`);
@@ -314,7 +342,7 @@ export async function toggleChecklistItem(
   field: keyof Omit<ApplicationChecklist, "college_list_id">,
   value: boolean
 ) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!
     .from("application_checklist")
@@ -326,7 +354,7 @@ export async function toggleChecklistItem(
 }
 
 export async function updateCollegeStatus(studentId: string, collegeId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = {
     application_round: str(formData, "application_round"),
@@ -365,7 +393,7 @@ function extracurricularPayload(formData: FormData) {
 }
 
 export async function addExtracurricular(studentId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = extracurricularPayload(formData);
   if (!payload.activity_name) throw new Error("활동명은 필수예요.");
@@ -378,7 +406,7 @@ export async function addExtracurricular(studentId: string, formData: FormData) 
 }
 
 export async function updateExtracurricular(studentId: string, ecId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = extracurricularPayload(formData);
   if (!payload.activity_name) throw new Error("활동명은 필수예요.");
@@ -391,7 +419,7 @@ export async function updateExtracurricular(studentId: string, ecId: string, for
 }
 
 export async function deleteExtracurricular(studentId: string, ecId: string) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("extracurriculars").delete().eq("id", ecId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -418,7 +446,7 @@ function awardPayload(formData: FormData) {
 }
 
 export async function addAward(studentId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = awardPayload(formData);
   if (!payload.award_name) throw new Error("수상명은 필수예요.");
@@ -431,7 +459,7 @@ export async function addAward(studentId: string, formData: FormData) {
 }
 
 export async function updateAward(studentId: string, awardId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = awardPayload(formData);
   if (!payload.award_name) throw new Error("수상명은 필수예요.");
@@ -444,7 +472,7 @@ export async function updateAward(studentId: string, awardId: string, formData: 
 }
 
 export async function deleteAward(studentId: string, awardId: string) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "ec");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("awards").delete().eq("id", awardId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
@@ -564,7 +592,7 @@ export async function uploadAttachment(
   formData: FormData
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, entityType === "extracurricular" || entityType === "award" ? "ec" : "application");
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -610,7 +638,7 @@ export async function deleteAttachment(
   storagePath: string
 ) {
   if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, entityType === "extracurricular" || entityType === "award" ? "ec" : "application");
 
   await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([storagePath]);
   const { error } = await supabaseAdmin!.from("attachments").delete().eq("id", attachmentId);
@@ -750,7 +778,7 @@ export async function deleteTask(taskId: string) {
 // Essay Management (Section 9)
 // ============================================================
 export async function upsertPersonalStatement(studentId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
   const payload = {
@@ -783,7 +811,7 @@ function supplementalEssayPayload(formData: FormData) {
 }
 
 export async function addSupplementalEssay(studentId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = supplementalEssayPayload(formData);
   if (!payload.university_name) throw new Error("대학명은 필수예요.");
@@ -796,7 +824,7 @@ export async function addSupplementalEssay(studentId: string, formData: FormData
 }
 
 export async function updateSupplementalEssay(studentId: string, essayId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const payload = supplementalEssayPayload(formData);
   if (!payload.university_name) throw new Error("대학명은 필수예요.");
@@ -809,7 +837,7 @@ export async function updateSupplementalEssay(studentId: string, essayId: string
 }
 
 export async function deleteSupplementalEssay(studentId: string, essayId: string) {
-  await assertStudentAccess(studentId);
+  await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
   const { error } = await supabase!.from("supplemental_essays").delete().eq("id", essayId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);

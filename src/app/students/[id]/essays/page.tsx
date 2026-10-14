@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getPersonalStatement, getSupplementalEssays, getAttachments } from "@/lib/data";
+import { getStudent, getStudentAccess, getPersonalStatement, getSupplementalEssays, getAttachments } from "@/lib/data";
 import { upsertPersonalStatement, addSupplementalEssay, updateSupplementalEssay, deleteSupplementalEssay } from "@/lib/actions";
 import { SupplementalEssay } from "@/lib/types";
 import { AttachmentsSection } from "@/components/students/AttachmentsSection";
@@ -68,6 +68,8 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const student = await getStudent(id);
   if (!student) notFound();
+  const access = await getStudentAccess(id);
+  if (!(access?.canViewAll || access?.canViewApplication)) notFound();
 
   const [personalStatement, essays, attachments] = await Promise.all([
     getPersonalStatement(id),
