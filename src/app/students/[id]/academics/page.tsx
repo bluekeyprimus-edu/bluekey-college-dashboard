@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses, getSatScores, getActScores, getAttachments } from "@/lib/data";
 import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse, addSatScore, deleteSatScore, addActScore, deleteActScore } from "@/lib/actions";
-import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
+import { computeCourseLevelCounts, computeGpaTrend } from "@/lib/rigor";
 import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -45,7 +45,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
     getAttachments(id),
   ]);
 
-  const rigor = computeRigorSummary(courses);
+  const levelCounts = computeCourseLevelCounts(courses);
   const trend = computeGpaTrend(gpaRows);
 
   const gpaMap: Record<string, number | null> = {};
@@ -65,10 +65,11 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <SummaryCard label="전체 커리큘럼 강도" value={rigor.overallLabel} />
-        <SummaryCard label="STEM 강도" value={rigor.stemLabel} />
-        <SummaryCard label="Humanities 강도" value={rigor.humanitiesLabel} />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        <SummaryCard label="AP" value={`${levelCounts.ap}개`} />
+        <SummaryCard label="IB High Level" value={`${levelCounts.ibHl}개`} />
+        <SummaryCard label="IB Standard Level" value={`${levelCounts.ibSl}개`} />
+        <SummaryCard label="Honors" value={`${levelCounts.honors}개`} />
         <SummaryCard label="GPA 추세" value={trend} />
       </div>
 
@@ -313,7 +314,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
 
       <Card>
         <CardHeader>
-          <CardTitle>수강 과목 (Course Rigor)</CardTitle>
+          <CardTitle>수강 과목</CardTitle>
         </CardHeader>
         <CardBody className="space-y-4">
           {courses.length === 0 && <p className="text-sm text-navy-400">등록된 과목이 아직 없어요.</p>}

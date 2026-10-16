@@ -21,7 +21,7 @@ import {
   getAttachments,
 } from "@/lib/data";
 import { checklistCompletion } from "@/lib/progress";
-import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
+import { computeCourseLevelCounts, computeGpaTrend } from "@/lib/rigor";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 import {
@@ -113,7 +113,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
 
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const bestAct = act.length ? Math.max(...act.map((a) => a.composite)) : null;
-  const rigor = computeRigorSummary(courses);
+  const levelCounts = computeCourseLevelCounts(courses);
   const trend = computeGpaTrend(gpaRows);
   const pendingTasks = tasks.filter((t) => t.status !== "Completed");
 
@@ -509,12 +509,12 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
             </div>
           </div>
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">전체 커리큘럼 강도</div>
-            <div className="mt-0.5 text-sm text-navy-900">{rigor.overallLabel}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">AP / IB High Level</div>
+            <div className="mt-0.5 text-sm text-navy-900">{levelCounts.ap}개 / {levelCounts.ibHl}개</div>
           </div>
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">STEM / Humanities 강도</div>
-            <div className="mt-0.5 text-sm text-navy-900">{rigor.stemLabel} / {rigor.humanitiesLabel}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">IB Standard Level / Honors</div>
+            <div className="mt-0.5 text-sm text-navy-900">{levelCounts.ibSl}개 / {levelCounts.honors}개</div>
           </div>
         </CardBody>
       </Card>

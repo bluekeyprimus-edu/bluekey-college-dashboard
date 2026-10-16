@@ -1,48 +1,26 @@
-import { Course, GpaByGrade, CourseLevel } from "./types";
+import { Course, GpaByGrade } from "./types";
 
-const LEVEL_WEIGHT: Record<CourseLevel, number> = {
-  Regular: 1,
-  Honors: 2,
-  AP: 4,
-  "IB HL": 4,
-  "IB SL": 3,
-  "A-Level": 4,
-  "Dual Enrollment": 4,
-  "College Level": 4,
-};
-
-function bucketLabel(avg: number | null): string {
-  if (avg === null) return "데이터 없음";
-  if (avg >= 3.5) return "매우 강함";
-  if (avg >= 2.5) return "강함";
-  if (avg >= 1.5) return "보통";
-  return "약함";
-}
-
-function avgWeight(courses: Course[]): number | null {
-  if (courses.length === 0) return null;
-  const sum = courses.reduce((a, c) => a + (LEVEL_WEIGHT[c.course_level] ?? 1), 0);
-  return sum / courses.length;
-}
-
-export interface RigorSummary {
-  overallLabel: string;
-  stemLabel: string;
-  humanitiesLabel: string;
-  topRigorCount: number;
+export interface CourseLevelCounts {
+  ap: number;
+  ibHl: number;
+  ibSl: number;
+  honors: number;
   totalCourses: number;
 }
 
-export function computeRigorSummary(courses: Course[]): RigorSummary {
-  const stem = courses.filter((c) => c.subject_area === "STEM");
-  const humanities = courses.filter((c) => c.subject_area === "Humanities");
-  const topRigorCount = courses.filter((c) => (LEVEL_WEIGHT[c.course_level] ?? 1) >= 4).length;
-
+/**
+ * Replaces the old "Course Rigor" strength buckets (매우 강함/강함/보통/약함),
+ * which averaged an internal difficulty weight per course and didn't map to
+ * anything a school or college actually reports. Instead we just count how
+ * many AP / IB HL / IB SL / Honors courses the student has on record — an
+ * objective number counselors actually use, with no scale to argue about.
+ */
+export function computeCourseLevelCounts(courses: Course[]): CourseLevelCounts {
   return {
-    overallLabel: bucketLabel(avgWeight(courses)),
-    stemLabel: bucketLabel(avgWeight(stem)),
-    humanitiesLabel: bucketLabel(avgWeight(humanities)),
-    topRigorCount,
+    ap: courses.filter((c) => c.course_level === "AP").length,
+    ibHl: courses.filter((c) => c.course_level === "IB HL").length,
+    ibSl: courses.filter((c) => c.course_level === "IB SL").length,
+    honors: courses.filter((c) => c.course_level === "Honors").length,
     totalCourses: courses.length,
   };
 }
