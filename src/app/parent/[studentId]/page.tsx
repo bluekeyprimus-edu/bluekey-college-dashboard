@@ -23,7 +23,7 @@ import {
 import { checklistCompletion } from "@/lib/progress";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
 import { Attachment } from "@/lib/types";
-import { buildActivityFeed, relativeKorean } from "@/lib/activity";
+import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 import {
   EC_STATUS_LABEL,
   AWARD_LEVEL_LABEL,
@@ -171,6 +171,224 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
     </div>
   );
 
+  function activityDetail(item: ActivityItem) {
+    if (item.id === "personal-statement") {
+      const ps = personalStatement;
+      if (!ps) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          {ps.topic && (
+            <div>
+              <dt className="inline font-medium text-navy-600">주제 · </dt>
+              <dd className="inline">{ps.topic}</dd>
+            </div>
+          )}
+          <div>
+            <dt className="inline font-medium text-navy-600">상태 · </dt>
+            <dd className="inline">{ESSAY_STATUS_LABEL[ps.status] ?? ps.status}</dd>
+          </div>
+        </dl>
+      );
+    }
+    if (item.id.startsWith("task-")) {
+      const t = tasks.find((x) => x.id === item.id.slice(5));
+      if (!t) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          <div>
+            <dt className="inline font-medium text-navy-600">우선순위 · </dt>
+            <dd className="inline">{TASK_PRIORITY_LABEL[t.priority] ?? t.priority}</dd>
+          </div>
+          <div>
+            <dt className="inline font-medium text-navy-600">상태 · </dt>
+            <dd className="inline">{TASK_STATUS_LABEL[t.status] ?? t.status}</dd>
+          </div>
+          {t.deadline && (
+            <div>
+              <dt className="inline font-medium text-navy-600">마감일 · </dt>
+              <dd className="inline">{t.deadline}</dd>
+            </div>
+          )}
+          {t.assigned_to && (
+            <div>
+              <dt className="inline font-medium text-navy-600">담당 · </dt>
+              <dd className="inline">{t.assigned_to}</dd>
+            </div>
+          )}
+        </dl>
+      );
+    }
+    if (item.id.startsWith("ec-")) {
+      const e = ecs.find((x) => x.id === item.id.slice(3));
+      if (!e) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          {e.category && (
+            <div>
+              <dt className="inline font-medium text-navy-600">분야 · </dt>
+              <dd className="inline">{e.category}</dd>
+            </div>
+          )}
+          {e.position_role && (
+            <div>
+              <dt className="inline font-medium text-navy-600">역할 · </dt>
+              <dd className="inline">{e.position_role}</dd>
+            </div>
+          )}
+          {e.grades_participated && (
+            <div>
+              <dt className="inline font-medium text-navy-600">참여 학년 · </dt>
+              <dd className="inline">{e.grades_participated}</dd>
+            </div>
+          )}
+          {e.major_relevance && (
+            <div>
+              <dt className="inline font-medium text-navy-600">전공 연관성 · </dt>
+              <dd className="inline">{e.major_relevance}</dd>
+            </div>
+          )}
+          {e.description && (
+            <div>
+              <dt className="font-medium text-navy-600">상세 설명</dt>
+              <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{e.description}</dd>
+            </div>
+          )}
+        </dl>
+      );
+    }
+    if (item.id.startsWith("award-")) {
+      const a = awards.find((x) => x.id === item.id.slice(6));
+      if (!a) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          {a.organization && (
+            <div>
+              <dt className="inline font-medium text-navy-600">주관 기관 · </dt>
+              <dd className="inline">{a.organization}</dd>
+            </div>
+          )}
+          {a.academic_area && (
+            <div>
+              <dt className="inline font-medium text-navy-600">분야 · </dt>
+              <dd className="inline">{a.academic_area}</dd>
+            </div>
+          )}
+          {a.selectivity && (
+            <div>
+              <dt className="inline font-medium text-navy-600">경쟁률/선발성 · </dt>
+              <dd className="inline">{a.selectivity}</dd>
+            </div>
+          )}
+          {a.description && (
+            <div>
+              <dt className="font-medium text-navy-600">상세 설명</dt>
+              <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{a.description}</dd>
+            </div>
+          )}
+        </dl>
+      );
+    }
+    if (item.id.startsWith("college-")) {
+      const c = colleges.find((x) => x.id === item.id.slice(8));
+      if (!c) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          <div>
+            <dt className="inline font-medium text-navy-600">분류 · </dt>
+            <dd className="inline">{COLLEGE_CATEGORY_LABEL[c.category] ?? c.category}</dd>
+          </div>
+          {c.intended_major && (
+            <div>
+              <dt className="inline font-medium text-navy-600">희망 전공 · </dt>
+              <dd className="inline">{c.intended_major}</dd>
+            </div>
+          )}
+          {c.application_round && (
+            <div>
+              <dt className="inline font-medium text-navy-600">지원 라운드 · </dt>
+              <dd className="inline">{c.application_round}</dd>
+            </div>
+          )}
+          {c.application_deadline && (
+            <div>
+              <dt className="inline font-medium text-navy-600">마감일 · </dt>
+              <dd className="inline">{c.application_deadline}</dd>
+            </div>
+          )}
+        </dl>
+      );
+    }
+    if (item.id.startsWith("essay-")) {
+      const e = essays.find((x) => x.id === item.id.slice(6));
+      if (!e) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          {e.university_name && (
+            <div>
+              <dt className="inline font-medium text-navy-600">대학 · </dt>
+              <dd className="inline">{e.university_name}</dd>
+            </div>
+          )}
+          {e.prompt && (
+            <div>
+              <dt className="font-medium text-navy-600">프롬프트</dt>
+              <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{e.prompt}</dd>
+            </div>
+          )}
+          {e.word_limit && (
+            <div>
+              <dt className="inline font-medium text-navy-600">글자 제한 · </dt>
+              <dd className="inline">{e.word_limit}자</dd>
+            </div>
+          )}
+          <div>
+            <dt className="inline font-medium text-navy-600">상태 · </dt>
+            <dd className="inline">{ESSAY_STATUS_LABEL[e.status] ?? e.status}</dd>
+          </div>
+        </dl>
+      );
+    }
+    if (item.id.startsWith("note-")) {
+      const n = consultationNotes.find((x) => x.id === item.id.slice(5));
+      if (!n) return null;
+      return (
+        <dl className="space-y-1 text-xs text-navy-500">
+          {n.attendees && (
+            <div>
+              <dt className="inline font-medium text-navy-600">참석자 · </dt>
+              <dd className="inline">{n.attendees}</dd>
+            </div>
+          )}
+          {n.counselor_name && (
+            <div>
+              <dt className="inline font-medium text-navy-600">담당 카운슬러 · </dt>
+              <dd className="inline">{n.counselor_name}</dd>
+            </div>
+          )}
+          <div>
+            <dt className="font-medium text-navy-600">내용</dt>
+            <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{n.content}</dd>
+          </div>
+        </dl>
+      );
+    }
+    if (item.id.startsWith("attachment-")) {
+      const att = attachments.find((x) => x.id === item.id.slice(11));
+      if (!att) return null;
+      return (
+        <a
+          href={att.file_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-gold-600 hover:text-gold-700"
+        >
+          📎 {att.file_name} 열기
+        </a>
+      );
+    }
+    return null;
+  }
+
   const activityCard = (
     <Card>
       <CardHeader>
@@ -181,20 +399,30 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           <p className="text-sm text-navy-400">아직 업데이트된 내용이 없어요.</p>
         ) : (
           <ul className="space-y-3">
-            {activityFeed.map((item) => (
-              <li key={item.id} className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Pill tone={item.state === "completed" ? "green" : item.state === "in_progress" ? "amber" : "neutral"}>
-                      {item.state === "completed" ? "완료" : item.state === "in_progress" ? "진행 중" : "업데이트"}
-                    </Pill>
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-navy-400">{item.category}</span>
-                  </div>
-                  <div className="mt-1 text-sm text-navy-900">{item.title}</div>
-                </div>
-                <span className="shrink-0 whitespace-nowrap text-xs text-navy-400">{relativeKorean(item.at)}</span>
-              </li>
-            ))}
+            {activityFeed.map((item) => {
+              const detail = activityDetail(item);
+              return (
+                <Disclosure
+                  key={item.id}
+                  summary={
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Pill tone={item.state === "completed" ? "green" : item.state === "in_progress" ? "amber" : "neutral"}>
+                            {item.state === "completed" ? "완료" : item.state === "in_progress" ? "진행 중" : "업데이트"}
+                          </Pill>
+                          <span className="text-[11px] font-medium uppercase tracking-wide text-navy-400">{item.category}</span>
+                        </div>
+                        <div className="mt-1 text-sm text-navy-900">{item.title}</div>
+                      </div>
+                      <span className="shrink-0 whitespace-nowrap text-xs text-navy-400">{relativeKorean(item.at)}</span>
+                    </div>
+                  }
+                >
+                  {detail ?? <p className="text-xs text-navy-400">추가로 볼 수 있는 정보가 없어요.</p>}
+                </Disclosure>
+              );
+            })}
           </ul>
         )}
       </CardBody>
