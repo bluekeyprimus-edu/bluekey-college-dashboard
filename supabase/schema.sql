@@ -99,7 +99,7 @@ create table if not exists gpa_by_grade (
   -- schools weight/scale GPA differently and a computed number could
   -- disagree with the school's own official GPA and confuse parents.
   semester int,
-  unique(student_id, grade_level, subject)
+  unique(student_id, grade_level, subject, semester)
 );
 create index if not exists idx_gpa_by_grade_student on gpa_by_grade(student_id);
 

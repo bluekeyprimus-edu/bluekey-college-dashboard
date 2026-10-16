@@ -117,9 +117,17 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const trend = computeGpaTrend(gpaRows);
   const pendingTasks = tasks.filter((t) => t.status !== "Completed");
 
+  // Headline number per grade is the latest semester's overall GPA on file
+  // (rows saved before per-semester entry have semester = null, treated as 1학기).
   const gpaOverallByGrade: Record<number, number | null> = { 9: null, 10: null, 11: null, 12: null };
+  const gpaOverallSemesterSeen: Record<number, number> = {};
   for (const row of gpaRows) {
-    if (row.subject === "overall") gpaOverallByGrade[row.grade_level] = row.gpa;
+    if (row.subject !== "overall" || row.gpa === null) continue;
+    const rowSemester = row.semester ?? 1;
+    if (gpaOverallSemesterSeen[row.grade_level] === undefined || rowSemester >= gpaOverallSemesterSeen[row.grade_level]) {
+      gpaOverallSemesterSeen[row.grade_level] = rowSemester;
+      gpaOverallByGrade[row.grade_level] = row.gpa;
+    }
   }
 
   const activityFeed = buildActivityFeed({
@@ -474,20 +482,28 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                     </summary>
                     {hasDetail && (
                       <div className="w-56 space-y-2 border-t border-navy-100 px-3 py-2 sm:w-64">
-                        {gradeSubjectRows.some((r) => r.gpa !== null) && (
-                          <div className="space-y-0.5">
-                            {GPA_DETAIL_SUBJECTS.map((subject) => {
-                              const row = gradeSubjectRows.find((r) => r.subject === subject);
-                              if (!row || row.gpa === null) return null;
+                        {gradeSubjectRows.some((r) => r.gpa !== null) &&
+                          Array.from(new Set(gradeSubjectRows.map((r) => r.semester ?? 1)))
+                            .sort((a, b) => a - b)
+                            .map((s) => {
+                              const semesterRows = gradeSubjectRows.filter((r) => (r.semester ?? 1) === s);
+                              if (!semesterRows.some((r) => r.gpa !== null)) return null;
                               return (
-                                <div key={subject} className="flex items-center justify-between text-xs">
-                                  <span className="text-navy-500">{GPA_SUBJECT_LABEL[subject]}</span>
-                                  <span className="font-medium text-navy-900">{row.gpa}</span>
+                                <div key={s} className="space-y-0.5">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-navy-400">{s}학기</div>
+                                  {GPA_DETAIL_SUBJECTS.map((subject) => {
+                                    const row = semesterRows.find((r) => r.subject === subject);
+                                    if (!row || row.gpa === null) return null;
+                                    return (
+                                      <div key={subject} className="flex items-center justify-between text-xs">
+                                        <span className="text-navy-500">{GPA_SUBJECT_LABEL[subject]}</span>
+                                        <span className="font-medium text-navy-900">{row.gpa}</span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               );
                             })}
-                          </div>
-                        )}
                         {gradeCourses.length > 0 && (
                           <div className="space-y-1 border-t border-navy-50 pt-2">
                             {gradeCourses.map((c) => (
@@ -512,14 +528,26 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
               })}
             </div>
           </div>
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">AP / IB High Level</div>
-            <div className="mt-0.5 text-sm text-navy-900">{levelCounts.ap}개 / {levelCounts.ibHl}개</div>
-          </div>
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">IB Standard Level / Honors</div>
-            <div className="mt-0.5 text-sm text-navy-900">{levelCounts.ibSl}개 / {levelCounts.honors}개</div>
-          </div>
+          {(() => {
+            // Only list the levels this student's school actually has courses
+            // in — an AP-only school showing "IB HL: 0개" reads as something
+            // missing rather than simply not applicable there.
+            const present = [
+              levelCounts.ap > 0 && { label: "AP", count: levelCounts.ap },
+              levelCounts.ibHl > 0 && { label: "IB High Level", count: levelCounts.ibHl },
+              levelCounts.ibSl > 0 && { label: "IB Standard Level", count: levelCounts.ibSl },
+              levelCounts.honors > 0 && { label: "Honors", count: levelCounts.honors },
+            ].filter((x): x is { label: string; count: number } => Boolean(x));
+            if (present.length === 0) return null;
+            return (
+              <div className="col-span-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">AP / IB / Honors</div>
+                <div className="mt-0.5 text-sm text-navy-900">
+                  {present.map((p) => `${p.label} ${p.count}개`).join(" · ")}
+                </div>
+              </div>
+            );
+          })()}
         </CardBody>
       </Card>
 

@@ -29,8 +29,19 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function AcademicsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AcademicsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ semester?: string }>;
+}) {
   const { id } = await params;
+  const { semester: semesterParam } = await searchParams;
+  const SEMESTERS = [1, 2, 3, 4] as const;
+  const semester = SEMESTERS.includes(Number(semesterParam) as (typeof SEMESTERS)[number])
+    ? (Number(semesterParam) as (typeof SEMESTERS)[number])
+    : 1;
   const student = await getStudent(id);
   if (!student) notFound();
   const access = await getStudentAccess(id);
@@ -50,6 +61,10 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
 
   const gpaMap: Record<string, number | null> = {};
   for (const row of gpaRows) {
+    // Rows saved before per-semester entry have semester = null — treat
+    // those as 1학기 so old data doesn't just disappear from the grid.
+    const rowSemester = row.semester ?? 1;
+    if (rowSemester !== semester) continue;
     gpaMap[`${row.grade_level}_${row.subject}`] = row.gpa;
   }
 
@@ -65,11 +80,14 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-        <SummaryCard label="AP" value={`${levelCounts.ap}개`} />
-        <SummaryCard label="IB High Level" value={`${levelCounts.ibHl}개`} />
-        <SummaryCard label="IB Standard Level" value={`${levelCounts.ibSl}개`} />
-        <SummaryCard label="Honors" value={`${levelCounts.honors}개`} />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {/* Only cards for levels this student actually has courses in — an
+            AP-only school showing "IB HL: 0개" reads as missing data rather
+            than simply not applicable to that school's curriculum. */}
+        {levelCounts.ap > 0 && <SummaryCard label="AP" value={`${levelCounts.ap}개`} />}
+        {levelCounts.ibHl > 0 && <SummaryCard label="IB High Level" value={`${levelCounts.ibHl}개`} />}
+        {levelCounts.ibSl > 0 && <SummaryCard label="IB Standard Level" value={`${levelCounts.ibSl}개`} />}
+        {levelCounts.honors > 0 && <SummaryCard label="Honors" value={`${levelCounts.honors}개`} />}
         <SummaryCard label="GPA 추세" value={trend} />
       </div>
 
@@ -121,7 +139,21 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
           <CardTitle>학년별 GPA</CardTitle>
         </CardHeader>
         <CardBody>
+          <div className="mb-4 flex gap-1.5">
+            {SEMESTERS.map((s) => (
+              <Link
+                key={s}
+                href={`/students/${id}/academics?semester=${s}`}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  s === semester ? "bg-navy-900 text-white" : "bg-navy-50 text-navy-500 hover:bg-navy-100"
+                }`}
+              >
+                {s}학기
+              </Link>
+            ))}
+          </div>
           <form action={upsertGpaGrid.bind(null, id)} className="space-y-6">
+            <input type="hidden" name="semester" value={semester} />
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] border-collapse text-sm">
                 <thead>

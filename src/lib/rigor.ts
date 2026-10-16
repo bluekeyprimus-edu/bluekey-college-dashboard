@@ -28,7 +28,7 @@ export function computeCourseLevelCounts(courses: Course[]): CourseLevelCounts {
 export function computeGpaTrend(rows: GpaByGrade[]): string {
   const overall = rows
     .filter((r) => r.subject === "overall" && r.gpa !== null)
-    .sort((a, b) => a.grade_level - b.grade_level);
+    .sort((a, b) => a.grade_level - b.grade_level || (a.semester ?? 1) - (b.semester ?? 1));
   if (overall.length < 2) return "데이터 부족";
   const first = overall[0].gpa as number;
   const last = overall[overall.length - 1].gpa as number;

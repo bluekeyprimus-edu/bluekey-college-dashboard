@@ -239,17 +239,19 @@ export async function upsertGpaGrid(studentId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
+  const semester = num(formData, "semester") ?? 1;
+
   const rows = [];
   for (const grade of GRADE_LEVELS) {
     for (const subject of GPA_SUBJECTS) {
       const gpa = num(formData, `gpa_${grade}_${subject}`);
-      rows.push({ student_id: studentId, grade_level: grade, subject, gpa });
+      rows.push({ student_id: studentId, grade_level: grade, subject, gpa, semester });
     }
   }
 
   const { error } = await supabase!
     .from("gpa_by_grade")
-    .upsert(rows, { onConflict: "student_id,grade_level,subject" });
+    .upsert(rows, { onConflict: "student_id,grade_level,subject,semester" });
   if (error) throw new Error(`저장 실패: ${error.message}`);
 
   revalidatePath(`/students/${studentId}/academics`);
