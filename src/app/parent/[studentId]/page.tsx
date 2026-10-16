@@ -5,7 +5,6 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isParentLinkedToStudent } from "@/lib/parent";
 import {
   getStudent,
-  getProgress,
   getAcademicOverview,
   getGpaByGrade,
   getCourses,
@@ -21,9 +20,9 @@ import {
   getConsultationNotes,
   getAttachments,
 } from "@/lib/data";
-import { overallProgress, checklistCompletion } from "@/lib/progress";
+import { checklistCompletion } from "@/lib/progress";
 import { computeRigorSummary, computeGpaTrend } from "@/lib/rigor";
-import { Attachment, PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
+import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean } from "@/lib/activity";
 import {
   EC_STATUS_LABEL,
@@ -93,9 +92,8 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const student = await getStudent(studentId);
   if (!student) notFound();
 
-  const [progress, academic, gpaRows, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
+  const [academic, gpaRows, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
     await Promise.all([
-      getProgress(studentId),
       getAcademicOverview(studentId),
       getGpaByGrade(studentId),
       getCourses(studentId),
@@ -112,8 +110,6 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       getAttachments(studentId),
     ]);
 
-  const overall = progress ? overallProgress(progress) : 0;
-  const categories = Object.keys(PROGRESS_CATEGORY_LABELS) as (keyof Omit<StudentProgress, "student_id">)[];
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const bestAct = act.length ? Math.max(...act.map((a) => a.composite)) : null;
   const rigor = computeRigorSummary(courses);
@@ -172,34 +168,6 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         <LogoutButton />
       </div>
     </div>
-  );
-
-  const progressCard = (
-    <Card>
-      <CardBody>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-navy-400">전체 지원 진행률</div>
-            <div className="font-serif text-4xl font-semibold text-navy-900">{overall}%</div>
-          </div>
-          <div className="w-full sm:w-1/2">
-            <ProgressBar value={overall} size="lg" />
-          </div>
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
-          {progress &&
-            categories.map((key) => (
-              <div key={key}>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-navy-600">{PROGRESS_CATEGORY_LABELS[key]}</span>
-                  <span className="text-navy-400">{progress[key]}%</span>
-                </div>
-                <ProgressBar value={progress[key]} size="sm" />
-              </div>
-            ))}
-        </div>
-      </CardBody>
-    </Card>
   );
 
   const activityCard = (
@@ -517,7 +485,6 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       {header}
-      {progressCard}
       {activityCard}
       {academicsRow}
       {ecAwardsCard}
