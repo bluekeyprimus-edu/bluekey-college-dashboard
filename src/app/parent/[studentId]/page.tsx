@@ -38,6 +38,7 @@ import {
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export const dynamic = "force-dynamic";
@@ -327,34 +328,126 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       </CardHeader>
       <CardBody className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-navy-400">과외활동</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-navy-400">과외활동 (클릭하면 상세 정보)</div>
           {ecs.length === 0 && <p className="text-sm text-navy-400">등록된 활동이 아직 없어요.</p>}
           {ecs.map((e) => (
-            <div key={e.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-navy-900">{e.activity_name}</span>
-                <Pill tone="neutral">{EC_STATUS_LABEL[e.status] ?? e.status}</Pill>
-              </div>
-              <div className="text-xs text-navy-400">
-                {e.position_role}
-                {e.start_date && ` · ${e.start_date} ~ ${e.end_date || "현재"}`}
-              </div>
-              <AttachmentLinks items={attachmentsFor(attachments, e.id)} />
-            </div>
+            <Disclosure
+              key={e.id}
+              summary={
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-navy-900">{e.activity_name}</span>
+                    <Pill tone="neutral">{EC_STATUS_LABEL[e.status] ?? e.status}</Pill>
+                  </div>
+                  <div className="text-xs text-navy-400">
+                    {e.position_role}
+                    {e.start_date && ` · ${e.start_date} ~ ${e.end_date || "현재"}`}
+                  </div>
+                  <AttachmentLinks items={attachmentsFor(attachments, e.id)} />
+                </div>
+              }
+            >
+              <dl className="space-y-1 text-xs text-navy-500">
+                {e.category && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">분야 · </dt>
+                    <dd className="inline">{e.category}</dd>
+                  </div>
+                )}
+                {e.grades_participated && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">참여 학년 · </dt>
+                    <dd className="inline">{e.grades_participated}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="inline font-medium text-navy-600">Common App 활동 · </dt>
+                  <dd className="inline">{e.common_app_activity ? "예" : "아니오"}</dd>
+                </div>
+                {e.major_relevance && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">전공 연관성 · </dt>
+                    <dd className="inline">{e.major_relevance}</dd>
+                  </div>
+                )}
+                {e.description && (
+                  <div>
+                    <dt className="font-medium text-navy-600">상세 설명</dt>
+                    <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{e.description}</dd>
+                  </div>
+                )}
+                {!e.category && !e.grades_participated && !e.major_relevance && !e.description && (
+                  <p>추가로 등록된 상세 정보가 없어요.</p>
+                )}
+              </dl>
+            </Disclosure>
           ))}
         </div>
         <div className="space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-navy-400">수상 경력</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-navy-400">수상 경력 (클릭하면 상세 정보)</div>
           {awards.length === 0 && <p className="text-sm text-navy-400">등록된 수상 내역이 아직 없어요.</p>}
           {awards.map((a) => (
-            <div key={a.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
-              <div className="text-sm font-medium text-navy-900">{a.award_name}</div>
-              <div className="text-xs text-navy-400">
-                {AWARD_LEVEL_LABEL[a.award_level] ?? a.award_level}
-                {a.placement && ` · ${a.placement}`}
-              </div>
-              <AttachmentLinks items={attachmentsFor(attachments, a.id)} />
-            </div>
+            <Disclosure
+              key={a.id}
+              summary={
+                <div>
+                  <div className="text-sm font-medium text-navy-900">{a.award_name}</div>
+                  <div className="text-xs text-navy-400">
+                    {AWARD_LEVEL_LABEL[a.award_level] ?? a.award_level}
+                    {a.placement && ` · ${a.placement}`}
+                  </div>
+                  <AttachmentLinks items={attachmentsFor(attachments, a.id)} />
+                </div>
+              }
+            >
+              <dl className="space-y-1 text-xs text-navy-500">
+                {a.organization && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">주관 기관 · </dt>
+                    <dd className="inline">{a.organization}</dd>
+                  </div>
+                )}
+                {a.grade_level && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">수상 학년 · </dt>
+                    <dd className="inline">{a.grade_level}학년</dd>
+                  </div>
+                )}
+                {a.academic_area && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">분야 · </dt>
+                    <dd className="inline">{a.academic_area}</dd>
+                  </div>
+                )}
+                {a.selectivity && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">경쟁률/선발성 · </dt>
+                    <dd className="inline">{a.selectivity}</dd>
+                  </div>
+                )}
+                {a.num_participants && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">참가 인원 · </dt>
+                    <dd className="inline">{a.num_participants}명</dd>
+                  </div>
+                )}
+                {a.major_relevance && (
+                  <div>
+                    <dt className="inline font-medium text-navy-600">전공 연관성 · </dt>
+                    <dd className="inline">{a.major_relevance}</dd>
+                  </div>
+                )}
+                {a.description && (
+                  <div>
+                    <dt className="font-medium text-navy-600">상세 설명</dt>
+                    <dd className="mt-0.5 whitespace-pre-wrap text-navy-600">{a.description}</dd>
+                  </div>
+                )}
+                {!a.organization && !a.grade_level && !a.academic_area && !a.selectivity && !a.num_participants && !a.major_relevance && !a.description && (
+                  <p>추가로 등록된 상세 정보가 없어요.</p>
+                )}
+              </dl>
+            </Disclosure>
           ))}
         </div>
       </CardBody>
