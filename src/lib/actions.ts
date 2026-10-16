@@ -267,6 +267,8 @@ export async function addCourse(studentId: string, formData: FormData) {
     academic_year: str(formData, "academic_year"),
     course_level: str(formData, "course_level"),
     subject_area: str(formData, "subject_area"),
+    term_number: num(formData, "term_number"),
+    letter_grade: str(formData, "letter_grade"),
   };
   if (!payload.course_name || !payload.course_level) {
     throw new Error("과목명과 Course Level은 필수예요.");

@@ -92,6 +92,13 @@ create table if not exists gpa_by_grade (
   subject text check (subject in ('english','math','science','social_studies','foreign_language','other','overall')),
   gpa numeric(4,3),
   notes text,
+  -- Which semester within the grade this GPA row is for. Nullable — rows
+  -- entered before per-semester tracking are treated as the whole-year
+  -- value. GPA itself is always entered by a person reading the school's
+  -- transcript, never auto-calculated from course letter grades, because
+  -- schools weight/scale GPA differently and a computed number could
+  -- disagree with the school's own official GPA and confuse parents.
+  semester int,
   unique(student_id, grade_level, subject)
 );
 create index if not exists idx_gpa_by_grade_student on gpa_by_grade(student_id);
@@ -104,6 +111,11 @@ create table if not exists courses (
   academic_year text,
   course_level text check (course_level in ('Regular','Honors','AP','IB HL','IB SL','A-Level','Dual Enrollment','College Level')),
   subject_area text check (subject_area in ('STEM','Humanities','Other')),
+  -- Which semester within grade_level this course was taken.
+  term_number int,
+  -- Actual grade earned, shown as-is for transparency — never used to
+  -- auto-calculate GPA (see gpa_by_grade.semester comment above).
+  letter_grade text,
   created_at timestamptz default now()
 );
 create index if not exists idx_courses_student on courses(student_id);

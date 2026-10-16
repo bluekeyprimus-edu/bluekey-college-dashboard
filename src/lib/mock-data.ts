@@ -217,16 +217,16 @@ export const mockAcademicOverview: Record<string, AcademicOverview> = {
 };
 
 export const mockGpaByGrade: GpaByGrade[] = [
-  { id: "g1", student_id: "s1", grade_level: 9, subject: "overall", gpa: 3.8, notes: null },
-  { id: "g2", student_id: "s1", grade_level: 10, subject: "overall", gpa: 3.9, notes: null },
-  { id: "g3", student_id: "s1", grade_level: 11, subject: "overall", gpa: 3.97, notes: null },
-  { id: "g4", student_id: "s1", grade_level: 12, subject: "overall", gpa: 4.0, notes: "First semester" },
+  { id: "g1", student_id: "s1", grade_level: 9, subject: "overall", gpa: 3.8, notes: null, semester: null },
+  { id: "g2", student_id: "s1", grade_level: 10, subject: "overall", gpa: 3.9, notes: null, semester: null },
+  { id: "g3", student_id: "s1", grade_level: 11, subject: "overall", gpa: 3.97, notes: null, semester: null },
+  { id: "g4", student_id: "s1", grade_level: 12, subject: "overall", gpa: 4.0, notes: "First semester", semester: 1 },
 ];
 
 export const mockCourses: Course[] = [
-  { id: "co1", student_id: "s1", course_name: "AP Calculus BC", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM" },
-  { id: "co2", student_id: "s1", course_name: "AP Computer Science A", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM" },
-  { id: "co3", student_id: "s1", course_name: "AP English Literature", grade_level: 12, academic_year: "2026-2027", course_level: "AP", subject_area: "Humanities" },
+  { id: "co1", student_id: "s1", course_name: "AP Calculus BC", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM", term_number: null, letter_grade: "A" },
+  { id: "co2", student_id: "s1", course_name: "AP Computer Science A", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM", term_number: null, letter_grade: "A-" },
+  { id: "co3", student_id: "s1", course_name: "AP English Literature", grade_level: 12, academic_year: "2026-2027", course_level: "AP", subject_area: "Humanities", term_number: 1, letter_grade: "A" },
 ];
 
 export const mockSat: SatScore[] = [

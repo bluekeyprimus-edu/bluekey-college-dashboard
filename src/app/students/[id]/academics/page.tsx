@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getStudent, getStudentAccess, getAcademicOverview, getGpaByGrade, getCourses, getSatScores, getActScores, getAttachments } from "@/lib/data";
 import { upsertAcademicOverview, upsertGpaGrid, addCourse, deleteCourse, addSatScore, deleteSatScore, addActScore, deleteActScore } from "@/lib/actions";
 import { computeCourseLevelCounts, computeGpaTrend } from "@/lib/rigor";
-import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS } from "@/lib/labels";
+import { GPA_SUBJECT_LABEL, SUBJECT_AREA_LABEL, COURSE_LEVEL_OPTIONS, LETTER_GRADE_OPTIONS } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -325,9 +325,11 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                   <tr className="text-xs font-medium uppercase tracking-wide text-navy-400">
                     <th className="border-b border-navy-100 px-2 py-2 text-left">과목명</th>
                     <th className="border-b border-navy-100 px-2 py-2 text-left">학년</th>
+                    <th className="border-b border-navy-100 px-2 py-2 text-left">학기</th>
                     <th className="border-b border-navy-100 px-2 py-2 text-left">학년도</th>
                     <th className="border-b border-navy-100 px-2 py-2 text-left">Level</th>
                     <th className="border-b border-navy-100 px-2 py-2 text-left">영역</th>
+                    <th className="border-b border-navy-100 px-2 py-2 text-left">성적</th>
                     <th className="border-b border-navy-100 px-2 py-2"></th>
                   </tr>
                 </thead>
@@ -336,6 +338,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                     <tr key={c.id} className="border-b border-navy-50 last:border-0">
                       <td className="px-2 py-2 text-navy-900">{c.course_name}</td>
                       <td className="px-2 py-2 text-navy-600">{c.grade_level}학년</td>
+                      <td className="px-2 py-2 text-navy-600">{c.term_number ? `${c.term_number}학기` : "—"}</td>
                       <td className="px-2 py-2 text-navy-600">{c.academic_year}</td>
                       <td className="px-2 py-2">
                         <Pill tone={["AP", "IB HL", "A-Level", "Dual Enrollment", "College Level"].includes(c.course_level) ? "gold" : "neutral"}>
@@ -343,6 +346,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                         </Pill>
                       </td>
                       <td className="px-2 py-2 text-navy-600">{SUBJECT_AREA_LABEL[c.subject_area ?? "Other"]}</td>
+                      <td className="px-2 py-2 font-medium text-navy-900">{c.letter_grade ?? "—"}</td>
                       <td className="px-2 py-2 text-right">
                         <form action={deleteCourse.bind(null, id, c.id)}>
                           <SubmitButton label="삭제" variant="ghost-danger" toastMessage="삭제되었습니다" />
@@ -355,7 +359,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
             </div>
           )}
 
-          <form action={addCourse.bind(null, id)} className="grid grid-cols-1 gap-3 border-t border-navy-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
+          <form action={addCourse.bind(null, id)} className="grid grid-cols-1 gap-3 border-t border-navy-100 pt-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className={labelClass}>과목명 *</label>
               <input name="course_name" required className={inputClass} />
@@ -366,6 +370,15 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                 <option value="" disabled>선택</option>
                 {GRADE_LEVELS.map((g) => (
                   <option key={g} value={g}>{g}학년</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>학기</label>
+              <select name="term_number" defaultValue="" className={inputClass}>
+                <option value="">미지정</option>
+                {[1, 2, 3, 4].map((t) => (
+                  <option key={t} value={t}>{t}학기</option>
                 ))}
               </select>
             </div>
@@ -391,7 +404,16 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                 <option value="Other">기타</option>
               </select>
             </div>
-            <div className="flex items-end sm:col-span-2 lg:col-span-5">
+            <div>
+              <label className={labelClass}>성적 (Letter Grade)</label>
+              <select name="letter_grade" defaultValue="" className={inputClass}>
+                <option value="">미지정</option>
+                {LETTER_GRADE_OPTIONS.map((lg) => (
+                  <option key={lg} value={lg}>{lg}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end sm:col-span-2 lg:col-span-4">
               <SubmitButton label="+ 과목 추가" variant="secondary" toastMessage="추가되었습니다" />
             </div>
           </form>

@@ -492,8 +492,12 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                           <div className="space-y-1 border-t border-navy-50 pt-2">
                             {gradeCourses.map((c) => (
                               <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
-                                <span className="truncate text-navy-700">{c.course_name}</span>
+                                <span className="truncate text-navy-700">
+                                  {c.course_name}
+                                  {c.term_number ? ` (${c.term_number}학기)` : ""}
+                                </span>
                                 <span className="shrink-0 text-[10px] text-navy-400">
+                                  {c.letter_grade ? `${c.letter_grade} · ` : ""}
                                   {c.course_level}
                                   {c.subject_area ? ` · ${SUBJECT_AREA_LABEL[c.subject_area]}` : ""}
                                 </span>

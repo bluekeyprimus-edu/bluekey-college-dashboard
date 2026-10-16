@@ -67,6 +67,15 @@ export const COURSE_LEVEL_OPTIONS = [
   "College Level",
 ] as const;
 
+export const LETTER_GRADE_OPTIONS = [
+  "A+", "A", "A-",
+  "B+", "B", "B-",
+  "C+", "C", "C-",
+  "D+", "D", "D-",
+  "F",
+  "P", "CR", "NC",
+] as const;
+
 export const CHECKLIST_ITEM_LABEL: Record<string, string> = {
   college_added: "대학 등록",
   major_selected: "전공 선택",

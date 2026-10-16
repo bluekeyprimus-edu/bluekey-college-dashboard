@@ -118,6 +118,9 @@ export interface GpaByGrade {
   subject: "english" | "math" | "science" | "social_studies" | "foreign_language" | "other" | "overall";
   gpa: number | null;
   notes: string | null;
+  // Which semester within the grade this GPA is for. Nullable — existing
+  // rows predate per-semester entry and are treated as the whole-year value.
+  semester: number | null;
 }
 
 export interface Course {
@@ -128,6 +131,12 @@ export interface Course {
   academic_year: string;
   course_level: CourseLevel;
   subject_area: "STEM" | "Humanities" | "Other" | null;
+  // Actual grade earned, shown as-is — never used to auto-calculate GPA
+  // (schools weight/scale GPA differently, so a computed number could
+  // disagree with the school's official transcript GPA and confuse parents).
+  letter_grade: string | null;
+  // Which semester within grade_level this course was taken.
+  term_number: number | null;
 }
 
 export interface SatScore {
