@@ -85,39 +85,64 @@ create table if not exists academic_overview (
   updated_at timestamptz default now()
 );
 
-create table if not exists gpa_by_grade (
+-- ============================================================
+-- Academic Record: Grade -> Term (semester/trimester/quarter) -> Course.
+-- GPA is COMPUTED from each course's grade + credit (see src/lib/gpa.ts),
+-- never typed in as a bare number — but every computed level (term, grade,
+-- cumulative) has a manual override column that wins when set, because
+-- schools weight/scale GPA differently and a computed number could
+-- disagree with the school's own official transcript GPA. academic_overview
+-- (below) still holds class rank/percentile, and its unweighted_gpa /
+-- weighted_gpa columns now double as the manual override for the
+-- student's CUMULATIVE GPA specifically.
+-- ============================================================
+create table if not exists grade_records (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id) on delete cascade,
-  grade_level int check (grade_level between 9 and 12),
-  subject text check (subject in ('english','math','science','social_studies','foreign_language','other','overall')),
-  gpa numeric(4,3),
-  notes text,
-  -- Which semester within the grade this GPA row is for. Nullable — rows
-  -- entered before per-semester tracking are treated as the whole-year
-  -- value. GPA itself is always entered by a person reading the school's
-  -- transcript, never auto-calculated from course letter grades, because
-  -- schools weight/scale GPA differently and a computed number could
-  -- disagree with the school's own official GPA and confuse parents.
-  semester int,
-  unique(student_id, grade_level, subject, semester)
+  grade_level int not null check (grade_level between 9 and 12),
+  academic_year text,
+  term_system text not null check (term_system in ('2_semesters','3_trimesters','4_quarters','custom')),
+  -- Only used when term_system = 'custom'.
+  custom_term_count int,
+  status text not null default 'in_progress' check (status in ('in_progress','completed')),
+  manual_unweighted_gpa numeric(4,3),
+  manual_weighted_gpa numeric(4,3),
+  created_at timestamptz default now(),
+  unique(student_id, grade_level)
 );
-create index if not exists idx_gpa_by_grade_student on gpa_by_grade(student_id);
+create index if not exists idx_grade_records_student on grade_records(student_id);
+
+create table if not exists terms (
+  id uuid primary key default gen_random_uuid(),
+  grade_record_id uuid references grade_records(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  term_number int not null,
+  manual_unweighted_gpa numeric(4,3),
+  manual_weighted_gpa numeric(4,3),
+  created_at timestamptz default now(),
+  unique(grade_record_id, term_number)
+);
+create index if not exists idx_terms_student on terms(student_id);
+create index if not exists idx_terms_grade_record on terms(grade_record_id);
 
 create table if not exists courses (
   id uuid primary key default gen_random_uuid(),
+  term_id uuid references terms(id) on delete cascade,
   student_id uuid references students(id) on delete cascade,
   course_name text not null,
-  grade_level int check (grade_level between 9 and 12),
-  academic_year text,
-  course_level text check (course_level in ('Regular','Honors','AP','IB HL','IB SL','A-Level','Dual Enrollment','College Level')),
-  subject_area text check (subject_area in ('STEM','Humanities','Other')),
-  -- Which semester within grade_level this course was taken.
-  term_number int,
-  -- Actual grade earned, shown as-is for transparency — never used to
-  -- auto-calculate GPA (see gpa_by_grade.semester comment above).
+  subject_category text check (subject_category in ('English','Math','Science','Social Studies','Foreign Language','Arts','Computer Science','Other')),
+  course_level text not null check (course_level in ('Regular','Honors','Advanced','AP','IB SL','IB HL','A-Level','Dual Enrollment','College Level','Other')),
+  credit numeric(4,2) not null default 1,
+  grade_scale text not null default 'letter' check (grade_scale in ('letter','100_point','custom')),
+  -- Exactly one of these three is populated, matching grade_scale.
+  -- 'custom' grades (e.g. Pass/Fail) are shown as-is but excluded from
+  -- the GPA calculation entirely.
   letter_grade text,
+  point_score numeric(5,2),
+  custom_grade text,
   created_at timestamptz default now()
 );
+create index if not exists idx_courses_term on courses(term_id);
 create index if not exists idx_courses_student on courses(student_id);
 
 -- ============================================================

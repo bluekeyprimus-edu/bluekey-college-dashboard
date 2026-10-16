@@ -5,6 +5,9 @@ import {
   getStudentAccess,
   getProgress,
   getAcademicOverview,
+  getGradeRecords,
+  getTerms,
+  getCourses,
   getSatScores,
   getExtracurriculars,
   getAwards,
@@ -17,6 +20,7 @@ import {
 import { getParentAccountsForStudent } from "@/lib/parent";
 import { createParentAccount, deleteParentAccount, updateStudentProgress } from "@/lib/actions";
 import { overallProgress } from "@/lib/progress";
+import { computeCumulativeGpa } from "@/lib/gpa";
 import { PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
 import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -46,10 +50,13 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const canViewEc = access.canViewAll || access.canViewEc;
   const canViewApplication = access.canViewAll || access.canViewApplication;
 
-  const [progress, academic, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts, consultationNotes] =
+  const [progress, academic, gradeRecords, terms, courses, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts, consultationNotes] =
     await Promise.all([
       getProgress(id),
       getAcademicOverview(id),
+      getGradeRecords(id),
+      getTerms(id),
+      getCourses(id),
       getSatScores(id),
       getExtracurriculars(id),
       getAwards(id),
@@ -63,6 +70,12 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   const overall = progress ? overallProgress(progress) : 0;
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
+  const cumulativeGpa = computeCumulativeGpa(
+    gradeRecords,
+    terms,
+    courses,
+    academic ? { unweighted: academic.unweighted_gpa, weighted: academic.weighted_gpa } : undefined
+  );
   const categories = Object.keys(PROGRESS_CATEGORY_LABELS) as (keyof Omit<StudentProgress, "student_id">)[];
 
   const categoriesByCollege: Record<string, typeof colleges> = {};
@@ -185,8 +198,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           <Card>
             <CardHeader><CardTitle>학업·시험 요약</CardTitle></CardHeader>
             <CardBody className="space-y-3">
-              <ProfileField label="비가중 GPA" value={academic?.unweighted_gpa ?? "—"} />
-              <ProfileField label="가중 GPA" value={academic?.weighted_gpa ?? "—"} />
+              <ProfileField label="비가중 GPA" value={cumulativeGpa.unweighted?.toFixed(2) ?? "—"} />
+              <ProfileField label="가중 GPA" value={cumulativeGpa.weighted?.toFixed(2) ?? "—"} />
               <ProfileField
                 label="석차"
                 value={academic?.school_does_not_rank ? "석차 미산정 학교" : academic?.class_rank ? `${academic.class_rank} / ${academic.class_size}` : "—"}

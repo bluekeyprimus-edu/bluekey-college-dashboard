@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudent, getStudentAccess, getAcademicOverview, getSatScores, getCollegeList, getHistoricalAdmissionsByUniversity } from "@/lib/data";
+import { getStudent, getStudentAccess, getAcademicOverview, getGradeRecords, getTerms, getCourses, getSatScores, getCollegeList, getHistoricalAdmissionsByUniversity } from "@/lib/data";
+import { computeCumulativeGpa } from "@/lib/gpa";
 import { computeAdmissionsPositioning, PositioningResult } from "@/lib/positioning";
 import { COLLEGE_CATEGORY_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -22,9 +23,22 @@ export default async function RecommendationsPage({ params }: { params: Promise<
   const access = await getStudentAccess(id);
   if (!(access?.canViewAll || access?.canViewApplication)) notFound();
 
-  const [academic, sat, colleges] = await Promise.all([getAcademicOverview(id), getSatScores(id), getCollegeList(id)]);
+  const [academic, gradeRecords, terms, courses, sat, colleges] = await Promise.all([
+    getAcademicOverview(id),
+    getGradeRecords(id),
+    getTerms(id),
+    getCourses(id),
+    getSatScores(id),
+    getCollegeList(id),
+  ]);
 
-  const studentGpa = academic?.unweighted_gpa ?? academic?.weighted_gpa ?? null;
+  const cumulativeGpa = computeCumulativeGpa(
+    gradeRecords,
+    terms,
+    courses,
+    academic ? { unweighted: academic.unweighted_gpa, weighted: academic.weighted_gpa } : undefined
+  );
+  const studentGpa = cumulativeGpa.unweighted ?? cumulativeGpa.weighted ?? null;
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
 
   const rows: { collegeId: string; category: string; universityName: string; result: PositioningResult }[] = [];

@@ -210,13 +210,13 @@ export async function deleteStudent(studentId: string) {
   revalidatePath("/tasks");
 }
 
-const GPA_SUBJECTS = ["english", "math", "science", "social_studies", "foreign_language", "other", "overall"] as const;
-const GRADE_LEVELS = [9, 10, 11, 12] as const;
-
 export async function upsertAcademicOverview(studentId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
+  // unweighted_gpa/weighted_gpa here are the manual override of the
+  // student's CUMULATIVE GPA — null (left blank) means "use the value
+  // computed from grade_records" (see src/lib/gpa.ts).
   const payload = {
     student_id: studentId,
     unweighted_gpa: num(formData, "unweighted_gpa"),
@@ -235,42 +235,120 @@ export async function upsertAcademicOverview(studentId: string, formData: FormDa
   revalidatePath(`/students/${studentId}`);
 }
 
-export async function upsertGpaGrid(studentId: string, formData: FormData) {
+// ============================================================
+// Academic Record: Grade -> Term -> Course. GPA is computed from courses
+// (src/lib/gpa.ts), not typed in — these actions manage the structure and
+// the manual-override escape hatch at the Term/Grade level.
+// ============================================================
+
+export async function createGradeRecord(studentId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
-  const semester = num(formData, "semester") ?? 1;
+  const gradeLevel = num(formData, "grade_level");
+  const termSystem = str(formData, "term_system") ?? "2_semesters";
+  if (!gradeLevel) throw new Error("학년을 선택해주세요.");
 
-  const rows = [];
-  for (const grade of GRADE_LEVELS) {
-    for (const subject of GPA_SUBJECTS) {
-      const gpa = num(formData, `gpa_${grade}_${subject}`);
-      rows.push({ student_id: studentId, grade_level: grade, subject, gpa, semester });
-    }
+  const customTermCount = termSystem === "custom" ? num(formData, "custom_term_count") : null;
+  if (termSystem === "custom" && !customTermCount) {
+    throw new Error("직접 설정을 선택했으면 학기 수를 입력해주세요.");
   }
 
-  const { error } = await supabase!
-    .from("gpa_by_grade")
-    .upsert(rows, { onConflict: "student_id,grade_level,subject,semester" });
-  if (error) throw new Error(`저장 실패: ${error.message}`);
+  const { data: gradeRecord, error } = await supabase!
+    .from("grade_records")
+    .insert({
+      student_id: studentId,
+      grade_level: gradeLevel,
+      academic_year: str(formData, "academic_year"),
+      term_system: termSystem,
+      custom_term_count: customTermCount,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(`추가 실패: ${error.message}`);
 
+  const termCount =
+    termSystem === "2_semesters" ? 2 : termSystem === "3_trimesters" ? 3 : termSystem === "4_quarters" ? 4 : customTermCount ?? 1;
+  const termRows = Array.from({ length: termCount }, (_, i) => ({
+    grade_record_id: gradeRecord.id,
+    student_id: studentId,
+    term_number: i + 1,
+  }));
+  const { error: termError } = await supabase!.from("terms").insert(termRows);
+  if (termError) throw new Error(`학기 생성 실패: ${termError.message}`);
+
+  revalidatePath(`/students/${studentId}/academics`);
+}
+
+export async function completeGradeRecord(studentId: string, gradeRecordId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("grade_records").update({ status: "completed" }).eq("id", gradeRecordId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/academics`);
   revalidatePath(`/students/${studentId}`);
 }
 
-export async function addCourse(studentId: string, formData: FormData) {
+export async function reopenGradeRecord(studentId: string, gradeRecordId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("grade_records").update({ status: "in_progress" }).eq("id", gradeRecordId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteGradeRecord(studentId: string, gradeRecordId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("grade_records").delete().eq("id", gradeRecordId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function setGradeGpaOverride(studentId: string, gradeRecordId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    manual_unweighted_gpa: num(formData, "manual_unweighted_gpa"),
+    manual_weighted_gpa: num(formData, "manual_weighted_gpa"),
+  };
+  const { error } = await supabase!.from("grade_records").update(payload).eq("id", gradeRecordId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function setTermGpaOverride(studentId: string, termId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    manual_unweighted_gpa: num(formData, "manual_unweighted_gpa"),
+    manual_weighted_gpa: num(formData, "manual_weighted_gpa"),
+  };
+  const { error } = await supabase!.from("terms").update(payload).eq("id", termId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function addCourse(studentId: string, termId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
+  const gradeScale = str(formData, "grade_scale") ?? "letter";
   const payload = {
+    term_id: termId,
     student_id: studentId,
     course_name: str(formData, "course_name"),
-    grade_level: num(formData, "grade_level"),
-    academic_year: str(formData, "academic_year"),
+    subject_category: str(formData, "subject_category"),
     course_level: str(formData, "course_level"),
-    subject_area: str(formData, "subject_area"),
-    term_number: num(formData, "term_number"),
-    letter_grade: str(formData, "letter_grade"),
+    credit: num(formData, "credit") ?? 1,
+    grade_scale: gradeScale,
+    letter_grade: gradeScale === "letter" ? str(formData, "letter_grade") : null,
+    point_score: gradeScale === "100_point" ? num(formData, "point_score") : null,
+    custom_grade: gradeScale === "custom" ? str(formData, "custom_grade") : null,
   };
   if (!payload.course_name || !payload.course_level) {
     throw new Error("과목명과 Course Level은 필수예요.");

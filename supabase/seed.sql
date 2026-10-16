@@ -34,17 +34,28 @@ insert into academic_overview (student_id, unweighted_gpa, weighted_gpa, gpa_sca
   ('22222222-2222-2222-2222-222222222225', 3.85, 3.85, 4.0, null, null, null, true)
 on conflict (student_id) do nothing;
 
-insert into gpa_by_grade (student_id, grade_level, subject, gpa, notes) values
-  ('22222222-2222-2222-2222-222222222221', 9, 'overall', 3.80, null),
-  ('22222222-2222-2222-2222-222222222221', 10, 'overall', 3.90, null),
-  ('22222222-2222-2222-2222-222222222221', 11, 'overall', 3.97, null),
-  ('22222222-2222-2222-2222-222222222221', 12, 'overall', 4.00, 'First semester')
-on conflict (student_id, grade_level, subject) do nothing;
+-- Academic Record: Grade -> Term -> Course (GPA is computed, see src/lib/gpa.ts).
+insert into grade_records (id, student_id, grade_level, academic_year, term_system, status) values
+  ('33333333-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222221', 9, '2022-2023', '2_semesters', 'completed'),
+  ('33333333-0000-0000-0000-000000000010', '22222222-2222-2222-2222-222222222221', 10, '2023-2024', '2_semesters', 'completed'),
+  ('33333333-0000-0000-0000-000000000011', '22222222-2222-2222-2222-222222222221', 11, '2024-2025', '2_semesters', 'completed'),
+  ('33333333-0000-0000-0000-000000000012', '22222222-2222-2222-2222-222222222221', 12, '2025-2026', '2_semesters', 'in_progress')
+on conflict (student_id, grade_level) do nothing;
 
-insert into courses (student_id, course_name, grade_level, academic_year, course_level, subject_area) values
-  ('22222222-2222-2222-2222-222222222221', 'AP Calculus BC', 11, '2025-2026', 'AP', 'STEM'),
-  ('22222222-2222-2222-2222-222222222221', 'AP Computer Science A', 11, '2025-2026', 'AP', 'STEM'),
-  ('22222222-2222-2222-2222-222222222221', 'AP English Literature', 12, '2026-2027', 'AP', 'Humanities');
+insert into terms (id, grade_record_id, student_id, term_number) values
+  ('44444444-0000-0000-0000-000000000091', '33333333-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222221', 1),
+  ('44444444-0000-0000-0000-000000000092', '33333333-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222221', 2),
+  ('44444444-0000-0000-0000-000000000101', '33333333-0000-0000-0000-000000000010', '22222222-2222-2222-2222-222222222221', 1),
+  ('44444444-0000-0000-0000-000000000102', '33333333-0000-0000-0000-000000000010', '22222222-2222-2222-2222-222222222221', 2),
+  ('44444444-0000-0000-0000-000000000111', '33333333-0000-0000-0000-000000000011', '22222222-2222-2222-2222-222222222221', 1),
+  ('44444444-0000-0000-0000-000000000112', '33333333-0000-0000-0000-000000000011', '22222222-2222-2222-2222-222222222221', 2),
+  ('44444444-0000-0000-0000-000000000121', '33333333-0000-0000-0000-000000000012', '22222222-2222-2222-2222-222222222221', 1)
+on conflict (grade_record_id, term_number) do nothing;
+
+insert into courses (term_id, student_id, course_name, subject_category, course_level, credit, grade_scale, letter_grade) values
+  ('44444444-0000-0000-0000-000000000111', '22222222-2222-2222-2222-222222222221', 'AP Calculus BC', 'Math', 'AP', 1, 'letter', 'A'),
+  ('44444444-0000-0000-0000-000000000111', '22222222-2222-2222-2222-222222222221', 'AP Computer Science A', 'Computer Science', 'AP', 1, 'letter', 'A-'),
+  ('44444444-0000-0000-0000-000000000121', '22222222-2222-2222-2222-222222222221', 'AP English Literature', 'English', 'AP', 1, 'letter', 'A');
 
 insert into sat_scores (student_id, test_date, total_score, reading_writing, math) values
   ('22222222-2222-2222-2222-222222222221', '2025-11-01', 1540, 760, 780),

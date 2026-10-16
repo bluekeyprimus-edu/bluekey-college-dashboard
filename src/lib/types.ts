@@ -4,12 +4,26 @@ export type Curriculum = "AP" | "IB" | "A-Level" | "Korean" | "Other";
 export type CourseLevel =
   | "Regular"
   | "Honors"
+  | "Advanced"
   | "AP"
-  | "IB HL"
   | "IB SL"
+  | "IB HL"
   | "A-Level"
   | "Dual Enrollment"
-  | "College Level";
+  | "College Level"
+  | "Other";
+export type TermSystem = "2_semesters" | "3_trimesters" | "4_quarters" | "custom";
+export type GradeRecordStatus = "in_progress" | "completed";
+export type GradeScale = "letter" | "100_point" | "custom";
+export type SubjectCategory =
+  | "English"
+  | "Math"
+  | "Science"
+  | "Social Studies"
+  | "Foreign Language"
+  | "Arts"
+  | "Computer Science"
+  | "Other";
 export type ECStatus = "Developing" | "Completed" | "Common App Ready";
 export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";
 export type AwardLevel = "School" | "Regional" | "State" | "National" | "International";
@@ -102,6 +116,9 @@ export const PROGRESS_CATEGORY_LABELS: Record<keyof Omit<StudentProgress, "stude
 
 export interface AcademicOverview {
   student_id: string;
+  // Manual override of the student's CUMULATIVE GPA (across all grades).
+  // Null = use the value computed from grade_records (see src/lib/gpa.ts).
+  // Set = counselor checked the school's official transcript and this wins.
   unweighted_gpa: number | null;
   weighted_gpa: number | null;
   gpa_scale: number;
@@ -111,32 +128,53 @@ export interface AcademicOverview {
   school_does_not_rank: boolean;
 }
 
-export interface GpaByGrade {
+// One row per grade level (9-12) for a student. Created once the counselor
+// picks how many terms that grade is split into; GPA for the grade is
+// computed by rolling up its terms' GPA (see src/lib/gpa.ts), never typed
+// in directly — manual_unweighted_gpa/manual_weighted_gpa are an escape
+// hatch for when the computed number doesn't match the school's own
+// transcript.
+export interface GradeRecord {
   id: string;
   student_id: string;
   grade_level: 9 | 10 | 11 | 12;
-  subject: "english" | "math" | "science" | "social_studies" | "foreign_language" | "other" | "overall";
-  gpa: number | null;
-  notes: string | null;
-  // Which semester within the grade this GPA is for. Nullable — existing
-  // rows predate per-semester entry and are treated as the whole-year value.
-  semester: number | null;
+  academic_year: string | null;
+  term_system: TermSystem;
+  // Only set when term_system = "custom".
+  custom_term_count: number | null;
+  status: GradeRecordStatus;
+  manual_unweighted_gpa: number | null;
+  manual_weighted_gpa: number | null;
+}
+
+// One row per term (semester/trimester/quarter) within a GradeRecord,
+// auto-created from its term_system. GPA for the term is computed by
+// averaging its courses' grade points, weighted by credit — same
+// manual-override escape hatch as GradeRecord.
+export interface Term {
+  id: string;
+  grade_record_id: string;
+  student_id: string;
+  term_number: number;
+  manual_unweighted_gpa: number | null;
+  manual_weighted_gpa: number | null;
 }
 
 export interface Course {
   id: string;
+  term_id: string;
   student_id: string;
   course_name: string;
-  grade_level: number;
-  academic_year: string;
+  subject_category: SubjectCategory | null;
   course_level: CourseLevel;
-  subject_area: "STEM" | "Humanities" | "Other" | null;
-  // Actual grade earned, shown as-is — never used to auto-calculate GPA
-  // (schools weight/scale GPA differently, so a computed number could
-  // disagree with the school's official transcript GPA and confuse parents).
+  credit: number;
+  grade_scale: GradeScale;
+  // Exactly one of these three is populated, matching grade_scale.
+  // "custom" grades (e.g. Pass/Fail) show as-is but are excluded from the
+  // GPA calculation.
   letter_grade: string | null;
-  // Which semester within grade_level this course was taken.
-  term_number: number | null;
+  point_score: number | null;
+  custom_grade: string | null;
 }
 
 export interface SatScore {

@@ -6,7 +6,8 @@ import { isParentLinkedToStudent } from "@/lib/parent";
 import {
   getStudent,
   getAcademicOverview,
-  getGpaByGrade,
+  getGradeRecords,
+  getTerms,
   getCourses,
   getSatScores,
   getActScores,
@@ -21,7 +22,7 @@ import {
   getAttachments,
 } from "@/lib/data";
 import { checklistCompletion } from "@/lib/progress";
-import { computeCourseLevelCounts, computeGpaTrend } from "@/lib/rigor";
+import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades } from "@/lib/gpa";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 import {
@@ -32,8 +33,8 @@ import {
   ESSAY_STATUS_LABEL,
   TASK_PRIORITY_LABEL,
   TASK_STATUS_LABEL,
-  GPA_SUBJECT_LABEL,
-  SUBJECT_AREA_LABEL,
+  SUBJECT_CATEGORY_LABEL,
+  TERM_NOUN,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -52,7 +53,6 @@ export const dynamic = "force-dynamic";
 // unlike the counselor-facing activities/essays pages.
 
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
-const GPA_DETAIL_SUBJECTS = ["english", "math", "science", "social_studies", "foreign_language", "other"] as const;
 
 function attachmentsFor(all: Attachment[], entityId: string): Attachment[] {
   return all.filter((a) => a.entity_id === entityId);
@@ -93,10 +93,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const student = await getStudent(studentId);
   if (!student) notFound();
 
-  const [academic, gpaRows, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
+  const [academic, gradeRecords, terms, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
     await Promise.all([
       getAcademicOverview(studentId),
-      getGpaByGrade(studentId),
+      getGradeRecords(studentId),
+      getTerms(studentId),
       getCourses(studentId),
       getSatScores(studentId),
       getActScores(studentId),
@@ -114,20 +115,18 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const bestAct = act.length ? Math.max(...act.map((a) => a.composite)) : null;
   const levelCounts = computeCourseLevelCounts(courses);
-  const trend = computeGpaTrend(gpaRows);
+  const trend = computeGpaTrendFromGrades(gradeRecords, terms, courses);
+  const cumulativeGpa = computeCumulativeGpa(
+    gradeRecords,
+    terms,
+    courses,
+    academic ? { unweighted: academic.unweighted_gpa, weighted: academic.weighted_gpa } : undefined
+  );
   const pendingTasks = tasks.filter((t) => t.status !== "Completed");
 
-  // Headline number per grade is the latest semester's overall GPA on file
-  // (rows saved before per-semester entry have semester = null, treated as 1학기).
-  const gpaOverallByGrade: Record<number, number | null> = { 9: null, 10: null, 11: null, 12: null };
-  const gpaOverallSemesterSeen: Record<number, number> = {};
-  for (const row of gpaRows) {
-    if (row.subject !== "overall" || row.gpa === null) continue;
-    const rowSemester = row.semester ?? 1;
-    if (gpaOverallSemesterSeen[row.grade_level] === undefined || rowSemester >= gpaOverallSemesterSeen[row.grade_level]) {
-      gpaOverallSemesterSeen[row.grade_level] = rowSemester;
-      gpaOverallByGrade[row.grade_level] = row.gpa;
-    }
+  const gpaByGradeLevel: Record<number, ReturnType<typeof computeGradeGpa> | null> = { 9: null, 10: null, 11: null, 12: null };
+  for (const gr of gradeRecords) {
+    gpaByGradeLevel[gr.grade_level] = computeGradeGpa(gr, terms, courses);
   }
 
   const activityFeed = buildActivityFeed({
@@ -446,11 +445,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         <CardBody className="grid grid-cols-2 gap-x-6 gap-y-4">
           <div>
             <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">비가중 GPA</div>
-            <div className="mt-0.5 text-sm text-navy-900">{academic?.unweighted_gpa ?? "—"}</div>
+            <div className="mt-0.5 text-sm text-navy-900">{cumulativeGpa.unweighted?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
             <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">가중 GPA</div>
-            <div className="mt-0.5 text-sm text-navy-900">{academic?.weighted_gpa ?? "—"}</div>
+            <div className="mt-0.5 text-sm text-navy-900">{cumulativeGpa.weighted?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
             <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">석차</div>
@@ -466,61 +465,51 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
             <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-navy-400">학년별 GPA</div>
             <div className="flex flex-wrap gap-2">
               {GRADE_LEVELS.map((g) => {
-                const gradeSubjectRows = gpaRows.filter((r) => r.grade_level === g && r.subject !== "overall");
-                const gradeCourses = courses.filter((c) => c.grade_level === g);
-                const hasDetail = gradeSubjectRows.some((r) => r.gpa !== null) || gradeCourses.length > 0;
+                const gradeRecord = gradeRecords.find((gr) => gr.grade_level === g);
+                const eff = gpaByGradeLevel[g];
+                const gradeTerms = gradeRecord
+                  ? terms.filter((t) => t.grade_record_id === gradeRecord.id).sort((a, b) => a.term_number - b.term_number)
+                  : [];
+                const hasDetail = gradeTerms.some((t) => courses.some((c) => c.term_id === t.id));
                 return (
                   <details key={g} className="group rounded-lg border border-navy-100 open:bg-navy-50/50">
                     <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-1.5 text-center select-none">
                       <div>
                         <div className="text-[10px] text-navy-400">{g}학년</div>
-                        <div className="text-sm font-semibold text-navy-900">{gpaOverallByGrade[g] ?? "—"}</div>
+                        <div className="text-sm font-semibold text-navy-900">{eff?.unweighted?.toFixed(2) ?? "—"}</div>
                       </div>
                       {hasDetail && (
                         <span className="text-[10px] text-navy-300 group-open:rotate-180">▾</span>
                       )}
                     </summary>
-                    {hasDetail && (
+                    {hasDetail && gradeRecord && (
                       <div className="w-56 space-y-2 border-t border-navy-100 px-3 py-2 sm:w-64">
-                        {gradeSubjectRows.some((r) => r.gpa !== null) &&
-                          Array.from(new Set(gradeSubjectRows.map((r) => r.semester ?? 1)))
-                            .sort((a, b) => a - b)
-                            .map((s) => {
-                              const semesterRows = gradeSubjectRows.filter((r) => (r.semester ?? 1) === s);
-                              if (!semesterRows.some((r) => r.gpa !== null)) return null;
-                              return (
-                                <div key={s} className="space-y-0.5">
-                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-navy-400">{s}학기</div>
-                                  {GPA_DETAIL_SUBJECTS.map((subject) => {
-                                    const row = semesterRows.find((r) => r.subject === subject);
-                                    if (!row || row.gpa === null) return null;
-                                    return (
-                                      <div key={subject} className="flex items-center justify-between text-xs">
-                                        <span className="text-navy-500">{GPA_SUBJECT_LABEL[subject]}</span>
-                                        <span className="font-medium text-navy-900">{row.gpa}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })}
-                        {gradeCourses.length > 0 && (
-                          <div className="space-y-1 border-t border-navy-50 pt-2">
-                            {gradeCourses.map((c) => (
-                              <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
-                                <span className="truncate text-navy-700">
-                                  {c.course_name}
-                                  {c.term_number ? ` (${c.term_number}학기)` : ""}
+                        {gradeTerms.map((term) => {
+                          const termCourses = courses.filter((c) => c.term_id === term.id);
+                          if (termCourses.length === 0) return null;
+                          const termEff = computeTermGpa(term, courses);
+                          return (
+                            <div key={term.id} className="space-y-0.5">
+                              <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-navy-400">
+                                <span>
+                                  {TERM_NOUN[gradeRecord.term_system]} {term.term_number}
                                 </span>
-                                <span className="shrink-0 text-[10px] text-navy-400">
-                                  {c.letter_grade ? `${c.letter_grade} · ` : ""}
-                                  {c.course_level}
-                                  {c.subject_area ? ` · ${SUBJECT_AREA_LABEL[c.subject_area]}` : ""}
-                                </span>
+                                <span>{termEff.unweighted?.toFixed(2) ?? "—"}</span>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              {termCourses.map((c) => (
+                                <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
+                                  <span className="truncate text-navy-700">{c.course_name}</span>
+                                  <span className="shrink-0 text-[10px] text-navy-400">
+                                    {(c.grade_scale === "letter" ? c.letter_grade : c.grade_scale === "100_point" ? c.point_score : c.custom_grade) ?? "—"}
+                                    {" · "}
+                                    {c.course_level}
+                                    {c.subject_category ? ` · ${SUBJECT_CATEGORY_LABEL[c.subject_category]}` : ""}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </details>

@@ -40,32 +40,76 @@ export const CURRICULUM_LABEL: Record<string, string> = {
   Other: "기타",
 };
 
-export const GPA_SUBJECT_LABEL: Record<string, string> = {
-  english: "영어",
-  math: "수학",
-  science: "과학",
-  social_studies: "사회",
-  foreign_language: "외국어",
-  other: "기타",
-  overall: "전체 GPA",
-};
+export const SUBJECT_CATEGORY_OPTIONS = [
+  "English",
+  "Math",
+  "Science",
+  "Social Studies",
+  "Foreign Language",
+  "Arts",
+  "Computer Science",
+  "Other",
+] as const;
 
-export const SUBJECT_AREA_LABEL: Record<string, string> = {
-  STEM: "STEM",
-  Humanities: "Humanities",
+export const SUBJECT_CATEGORY_LABEL: Record<string, string> = {
+  English: "영어",
+  Math: "수학",
+  Science: "과학",
+  "Social Studies": "사회",
+  "Foreign Language": "외국어",
+  Arts: "예술",
+  "Computer Science": "컴퓨터공학",
   Other: "기타",
 };
 
 export const COURSE_LEVEL_OPTIONS = [
   "Regular",
   "Honors",
+  "Advanced",
   "AP",
-  "IB HL",
   "IB SL",
+  "IB HL",
   "A-Level",
   "Dual Enrollment",
   "College Level",
+  "Other",
 ] as const;
+
+// term_system -> how many Term rows to auto-create, and what to call each
+// one. "custom" has no fixed count — the counselor types it in.
+export const TERM_SYSTEM_OPTIONS = [
+  { value: "2_semesters", label: "2학기제 (Semester)", count: 2 },
+  { value: "3_trimesters", label: "3학기제 (Trimester)", count: 3 },
+  { value: "4_quarters", label: "4학기제 (Quarter)", count: 4 },
+  { value: "custom", label: "직접 설정", count: null },
+] as const;
+
+export const TERM_SYSTEM_LABEL: Record<string, string> = {
+  "2_semesters": "2학기제",
+  "3_trimesters": "3학기제",
+  "4_quarters": "4학기제",
+  custom: "직접 설정",
+};
+
+// What to call an individual term for a given term_system, e.g. "Semester 2".
+export const TERM_NOUN: Record<string, string> = {
+  "2_semesters": "Semester",
+  "3_trimesters": "Trimester",
+  "4_quarters": "Quarter",
+  custom: "Term",
+};
+
+export const GRADE_SCALE_OPTIONS = [
+  { value: "letter", label: "Letter Grade" },
+  { value: "100_point", label: "100점 만점" },
+  { value: "custom", label: "직접 입력" },
+] as const;
+
+export const GRADE_SCALE_LABEL: Record<string, string> = {
+  letter: "Letter Grade",
+  "100_point": "100점 만점",
+  custom: "직접 입력",
+};
 
 export const LETTER_GRADE_OPTIONS = [
   "A+", "A", "A-",

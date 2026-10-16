@@ -2,7 +2,8 @@ import {
   Student,
   StudentProgress,
   AcademicOverview,
-  GpaByGrade,
+  GradeRecord,
+  Term,
   Course,
   SatScore,
   ActScore,
@@ -216,17 +217,38 @@ export const mockAcademicOverview: Record<string, AcademicOverview> = {
   s5: { student_id: "s5", unweighted_gpa: 3.85, weighted_gpa: 3.85, gpa_scale: 4.0, class_rank: null, class_size: null, percentile: null, school_does_not_rank: true },
 };
 
-export const mockGpaByGrade: GpaByGrade[] = [
-  { id: "g1", student_id: "s1", grade_level: 9, subject: "overall", gpa: 3.8, notes: null, semester: null },
-  { id: "g2", student_id: "s1", grade_level: 10, subject: "overall", gpa: 3.9, notes: null, semester: null },
-  { id: "g3", student_id: "s1", grade_level: 11, subject: "overall", gpa: 3.97, notes: null, semester: null },
-  { id: "g4", student_id: "s1", grade_level: 12, subject: "overall", gpa: 4.0, notes: "First semester", semester: 1 },
+export const mockGradeRecords: GradeRecord[] = [
+  { id: "gr1", student_id: "s1", grade_level: 9, academic_year: "2022-2023", term_system: "2_semesters", custom_term_count: null, status: "completed", manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "gr2", student_id: "s1", grade_level: 10, academic_year: "2023-2024", term_system: "2_semesters", custom_term_count: null, status: "completed", manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "gr3", student_id: "s1", grade_level: 11, academic_year: "2024-2025", term_system: "2_semesters", custom_term_count: null, status: "completed", manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "gr4", student_id: "s1", grade_level: 12, academic_year: "2025-2026", term_system: "2_semesters", custom_term_count: null, status: "in_progress", manual_unweighted_gpa: null, manual_weighted_gpa: null },
+];
+
+export const mockTerms: Term[] = [
+  { id: "t1", grade_record_id: "gr1", student_id: "s1", term_number: 1, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t2", grade_record_id: "gr1", student_id: "s1", term_number: 2, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t3", grade_record_id: "gr2", student_id: "s1", term_number: 1, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t4", grade_record_id: "gr2", student_id: "s1", term_number: 2, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t5", grade_record_id: "gr3", student_id: "s1", term_number: 1, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t6", grade_record_id: "gr3", student_id: "s1", term_number: 2, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t7", grade_record_id: "gr4", student_id: "s1", term_number: 1, manual_unweighted_gpa: null, manual_weighted_gpa: null },
+  { id: "t8", grade_record_id: "gr4", student_id: "s1", term_number: 2, manual_unweighted_gpa: null, manual_weighted_gpa: null },
 ];
 
 export const mockCourses: Course[] = [
-  { id: "co1", student_id: "s1", course_name: "AP Calculus BC", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM", term_number: null, letter_grade: "A" },
-  { id: "co2", student_id: "s1", course_name: "AP Computer Science A", grade_level: 11, academic_year: "2025-2026", course_level: "AP", subject_area: "STEM", term_number: null, letter_grade: "A-" },
-  { id: "co3", student_id: "s1", course_name: "AP English Literature", grade_level: 12, academic_year: "2026-2027", course_level: "AP", subject_area: "Humanities", term_number: 1, letter_grade: "A" },
+  { id: "co1", term_id: "t1", student_id: "s1", course_name: "English 9", subject_category: "English", course_level: "Regular", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co2", term_id: "t1", student_id: "s1", course_name: "Algebra II", subject_category: "Math", course_level: "Honors", credit: 1, grade_scale: "letter", letter_grade: "A-", point_score: null, custom_grade: null },
+  { id: "co3", term_id: "t2", student_id: "s1", course_name: "English 9", subject_category: "English", course_level: "Regular", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co4", term_id: "t2", student_id: "s1", course_name: "Algebra II", subject_category: "Math", course_level: "Honors", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co5", term_id: "t3", student_id: "s1", course_name: "Chemistry", subject_category: "Science", course_level: "Honors", credit: 1, grade_scale: "letter", letter_grade: "A-", point_score: null, custom_grade: null },
+  { id: "co6", term_id: "t3", student_id: "s1", course_name: "World History", subject_category: "Social Studies", course_level: "Regular", credit: 1, grade_scale: "100_point", letter_grade: null, point_score: 94, custom_grade: null },
+  { id: "co7", term_id: "t4", student_id: "s1", course_name: "Chemistry", subject_category: "Science", course_level: "Honors", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co8", term_id: "t4", student_id: "s1", course_name: "World History", subject_category: "Social Studies", course_level: "Regular", credit: 1, grade_scale: "100_point", letter_grade: null, point_score: 96, custom_grade: null },
+  { id: "co9", term_id: "t5", student_id: "s1", course_name: "AP Calculus BC", subject_category: "Math", course_level: "AP", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co10", term_id: "t5", student_id: "s1", course_name: "AP Computer Science A", subject_category: "Computer Science", course_level: "AP", credit: 1, grade_scale: "letter", letter_grade: "A-", point_score: null, custom_grade: null },
+  { id: "co11", term_id: "t6", student_id: "s1", course_name: "AP Calculus BC", subject_category: "Math", course_level: "AP", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co12", term_id: "t6", student_id: "s1", course_name: "AP Computer Science A", subject_category: "Computer Science", course_level: "AP", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
+  { id: "co13", term_id: "t7", student_id: "s1", course_name: "AP English Literature", subject_category: "English", course_level: "AP", credit: 1, grade_scale: "letter", letter_grade: "A", point_score: null, custom_grade: null },
 ];
 
 export const mockSat: SatScore[] = [

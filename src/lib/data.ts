@@ -5,7 +5,8 @@ import {
   Student,
   StudentProgress,
   AcademicOverview,
-  GpaByGrade,
+  GradeRecord,
+  Term,
   Course,
   SatScore,
   ActScore,
@@ -135,10 +136,16 @@ export async function getAcademicOverview(studentId: string): Promise<AcademicOv
   return (data as AcademicOverview) ?? null;
 }
 
-export async function getGpaByGrade(studentId: string): Promise<GpaByGrade[]> {
-  if (!isSupabaseConfigured) return mock.mockGpaByGrade.filter((g) => g.student_id === studentId);
-  const { data } = await supabase!.from("gpa_by_grade").select("*").eq("student_id", studentId).order("grade_level");
-  return (data as GpaByGrade[]) ?? [];
+export async function getGradeRecords(studentId: string): Promise<GradeRecord[]> {
+  if (!isSupabaseConfigured) return mock.mockGradeRecords.filter((g) => g.student_id === studentId);
+  const { data } = await supabase!.from("grade_records").select("*").eq("student_id", studentId).order("grade_level");
+  return (data as GradeRecord[]) ?? [];
+}
+
+export async function getTerms(studentId: string): Promise<Term[]> {
+  if (!isSupabaseConfigured) return mock.mockTerms.filter((t) => t.student_id === studentId);
+  const { data } = await supabase!.from("terms").select("*").eq("student_id", studentId).order("term_number");
+  return (data as Term[]) ?? [];
 }
 
 export async function getCourses(studentId: string): Promise<Course[]> {
