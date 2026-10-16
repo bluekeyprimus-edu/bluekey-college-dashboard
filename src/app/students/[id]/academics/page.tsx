@@ -32,6 +32,7 @@ import {
   computeTermGpa,
   computeCumulativeGpa,
   computeGpaTrendFromGrades,
+  isLowGrade,
 } from "@/lib/gpa";
 import {
   COURSE_LEVEL_OPTIONS,
@@ -281,7 +282,9 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                                       {c.subject_category ? SUBJECT_CATEGORY_LABEL[c.subject_category] : "—"}
                                     </td>
                                     <td className="px-2 py-1.5 text-navy-600">{c.credit}</td>
-                                    <td className="px-2 py-1.5 font-medium text-navy-900">{courseGradeDisplay(c)}</td>
+                                    <td className={`px-2 py-1.5 font-medium ${isLowGrade(c) ? "text-rose-600" : "text-navy-900"}`}>
+                                      {courseGradeDisplay(c)}
+                                    </td>
                                     <td className="px-2 py-1.5 text-right">
                                       <form action={deleteCourse.bind(null, id, c.id)}>
                                         <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />

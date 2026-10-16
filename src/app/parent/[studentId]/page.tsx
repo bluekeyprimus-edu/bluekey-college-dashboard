@@ -22,7 +22,7 @@ import {
   getAttachments,
 } from "@/lib/data";
 import { checklistCompletion } from "@/lib/progress";
-import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades } from "@/lib/gpa";
+import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades, isLowGrade } from "@/lib/gpa";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 import {
@@ -500,7 +500,9 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                                 <div key={c.id} className="flex items-center justify-between gap-2 text-xs">
                                   <span className="truncate text-navy-700">{c.course_name}</span>
                                   <span className="shrink-0 text-[10px] text-navy-400">
-                                    {(c.grade_scale === "letter" ? c.letter_grade : c.grade_scale === "100_point" ? c.point_score : c.custom_grade) ?? "—"}
+                                    <span className={isLowGrade(c) ? "font-semibold text-rose-600" : undefined}>
+                                      {(c.grade_scale === "letter" ? c.letter_grade : c.grade_scale === "100_point" ? c.point_score : c.custom_grade) ?? "—"}
+                                    </span>
                                     {" · "}
                                     {c.course_level}
                                     {c.subject_category ? ` · ${SUBJECT_CATEGORY_LABEL[c.subject_category]}` : ""}
