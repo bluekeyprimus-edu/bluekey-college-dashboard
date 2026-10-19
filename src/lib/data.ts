@@ -304,10 +304,17 @@ export interface RosterRow {
   // counselor), or null if none logged yet — shown as "Last Counseling
   // Date" on the Dashboard's My Students table.
   lastCounselingDate: string | null;
+  // Plain-language reasons this student needs attention right now (empty
+  // when none apply) — feeds the Dashboard's Attention Needed panel.
+  attentionFlags: import("./progress").AttentionFlag[];
+  // Every upcoming application/task deadline for this student — feeds the
+  // Dashboard's Upcoming Deadlines panel (flattened across the roster).
+  deadlineItems: import("./progress").DeadlineItem[];
 }
 
 export async function getRosterRows(): Promise<RosterRow[]> {
-  const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress } = await import("./progress");
+  const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress, computeAttentionFlags, overdueTaskCount, collectDeadlineItems } =
+    await import("./progress");
   const students = await getStudents();
   // Fetch every student's progress/colleges/tasks/notes in parallel instead
   // of one student, one field at a time — with N students this was 3*N+1
@@ -327,13 +334,22 @@ export async function getRosterRows(): Promise<RosterRow[]> {
         (latest, n) => (!latest || n.meeting_date > latest ? n.meeting_date : latest),
         null
       );
+      const pendingTasks = pendingTaskCount(tasks);
+      const overdueTasks = overdueTaskCount(tasks);
       return {
         student,
         progress: progressPct,
         status: trackStatusFromProgress(progressPct, deadline?.days ?? null),
         nextDeadline: deadline,
-        pendingTasks: pendingTaskCount(tasks),
+        pendingTasks,
         lastCounselingDate,
+        attentionFlags: computeAttentionFlags({
+          nextDeadlineDays: deadline?.days ?? null,
+          progress: progressPct,
+          pendingTasks,
+          overdueTasks,
+        }),
+        deadlineItems: collectDeadlineItems(student.id, student.english_name ?? student.student_name, colleges, tasks),
       };
     })
   );

@@ -8,6 +8,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { Pill } from "@/components/ui/Pill";
 import { NextActionCell } from "@/components/dashboard/NextActionCell";
+import { AttentionNeededPanel } from "@/components/dashboard/AttentionNeededPanel";
+import { UpcomingDeadlinesPanel } from "@/components/dashboard/UpcomingDeadlinesPanel";
 import { cn } from "@/lib/cn";
 import { TrackStatus } from "@/lib/types";
 
@@ -158,6 +160,7 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
         <StatCard label="미완료 할일" value={totalPendingTasks} active={quickFilter === "pendingTasks"} onClick={() => toggleQuickFilter("pendingTasks")} />
       </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] lg:items-start">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-navy-100 px-5 py-4">
           <h2 className="font-serif text-lg font-semibold text-navy-900">My Students</h2>
@@ -271,6 +274,12 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
           </table>
         </div>
       </Card>
+
+      <div className="space-y-6">
+        <AttentionNeededPanel rows={rows} />
+        <UpcomingDeadlinesPanel items={rows.flatMap((r) => r.deadlineItems)} />
+      </div>
+      </div>
     </div>
   );
 }
