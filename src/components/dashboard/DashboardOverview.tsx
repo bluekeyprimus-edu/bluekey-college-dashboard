@@ -162,7 +162,6 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
         <StatCard label="미완료 할일" value={totalPendingTasks} active={quickFilter === "pendingTasks"} onClick={() => toggleQuickFilter("pendingTasks")} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] lg:items-start">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-navy-100 px-5 py-4">
           <h2 className="font-serif text-lg font-semibold text-navy-900">My Students</h2>
@@ -297,10 +296,9 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
         </div>
       </Card>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <AttentionNeededPanel rows={rows} />
         <UpcomingDeadlinesPanel items={rows.flatMap((r) => r.deadlineItems)} />
-      </div>
       </div>
     </div>
   );
