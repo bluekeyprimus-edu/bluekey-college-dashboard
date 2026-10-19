@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Link from "next/link";
 import { RosterRow } from "@/lib/data";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -10,6 +10,7 @@ import { Pill } from "@/components/ui/Pill";
 import { NextActionCell } from "@/components/dashboard/NextActionCell";
 import { AttentionNeededPanel } from "@/components/dashboard/AttentionNeededPanel";
 import { UpcomingDeadlinesPanel } from "@/components/dashboard/UpcomingDeadlinesPanel";
+import { StudentDrilldown } from "@/components/dashboard/StudentDrilldown";
 import { cn } from "@/lib/cn";
 import { TrackStatus } from "@/lib/types";
 
@@ -59,6 +60,7 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
   const [classOfFilter, setClassOfFilter] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [sortAsc, setSortAsc] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const total = rows.length;
   const onTrack = rows.filter((r) => r.status === "green").length;
@@ -211,6 +213,7 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
           <table className="w-full min-w-[1200px] border-collapse">
             <thead className="border-b border-navy-100 bg-navy-50/60">
               <tr>
+                <th className="w-8 px-2 py-3"></th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-400">상태</th>
                 {th("name", "학생")}
                 {th("grade", "학년")}
@@ -227,11 +230,22 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
             <tbody className="divide-y divide-navy-100">
               {sorted.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-5 py-6 text-sm text-navy-400">조건에 맞는 학생이 없어요.</td>
+                  <td colSpan={12} className="px-5 py-6 text-sm text-navy-400">조건에 맞는 학생이 없어요.</td>
                 </tr>
               )}
               {sorted.map((row) => (
-                <tr key={row.student.id} className="hover:bg-navy-50/40">
+                <Fragment key={row.student.id}>
+                <tr className="hover:bg-navy-50/40">
+                  <td className="px-2 py-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId((cur) => (cur === row.student.id ? null : row.student.id))}
+                      className="text-navy-400 hover:text-gold-600"
+                      aria-label="자세히 보기"
+                    >
+                      {expandedId === row.student.id ? "▾" : "▸"}
+                    </button>
+                  </td>
                   <td className="px-4 py-3"><StatusDot status={row.status} /></td>
                   <td className="px-4 py-3">
                     <Link href={`/students/${row.student.id}`} className="font-medium text-navy-900 hover:text-gold-600">
@@ -269,6 +283,14 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
                   </td>
                   <td className="px-4 py-3 text-sm text-navy-600">{formatDate(row.lastCounselingDate)}</td>
                 </tr>
+                {expandedId === row.student.id && (
+                  <tr>
+                    <td colSpan={12} className="p-0">
+                      <StudentDrilldown row={row} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

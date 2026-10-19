@@ -310,23 +310,36 @@ export interface RosterRow {
   // Every upcoming application/task deadline for this student — feeds the
   // Dashboard's Upcoming Deadlines panel (flattened across the roster).
   deadlineItems: import("./progress").DeadlineItem[];
+  // Summary-only snapshots for the My Students table's per-row drill-down
+  // — full detail always stays on the student's own page.
+  academicSnapshot: import("./snapshots").AcademicSnapshot;
+  ecSnapshot: import("./snapshots").EcSnapshot;
+  collegeListSnapshot: import("./snapshots").CollegeListSnapshot;
+  // Only meaningful (and only computed) for grade 12 — null otherwise.
+  applicationStatusSnapshot: import("./snapshots").ApplicationStatusSnapshot | null;
 }
 
 export async function getRosterRows(): Promise<RosterRow[]> {
   const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress, computeAttentionFlags, overdueTaskCount, collectDeadlineItems } =
     await import("./progress");
+  const { computeAcademicSnapshot, computeEcSnapshot, computeCollegeListSnapshot, computeApplicationStatusSnapshot } = await import("./snapshots");
   const students = await getStudents();
-  // Fetch every student's progress/colleges/tasks/notes in parallel instead
-  // of one student, one field at a time — with N students this was 3*N+1
-  // sequential round trips to Supabase, which is what made this page (and
+  // Fetch every student's progress/colleges/tasks/notes/academics/ECs in
+  // parallel instead of one student, one field at a time — with N
+  // students this was already 3*N+1 sequential round trips to Supabase
+  // before the snapshot fields below, which is what made this page (and
   // the dashboard, which reads the same roster) feel slow once deployed.
   const rows = await Promise.all(
     students.map(async (student) => {
-      const [progressRow, colleges, tasks, notes] = await Promise.all([
+      const [progressRow, colleges, tasks, notes, gradeRecords, terms, courses, ecs] = await Promise.all([
         getProgress(student.id),
         getCollegeList(student.id),
         getTasks(student.id),
         getConsultationNotes(student.id),
+        getGradeRecords(student.id),
+        getTerms(student.id),
+        getCourses(student.id),
+        getExtracurriculars(student.id),
       ]);
       const progressPct = progressRow ? overallProgress(progressRow, student.current_grade) : 0;
       const deadline = nextDeadline(colleges);
@@ -336,6 +349,21 @@ export async function getRosterRows(): Promise<RosterRow[]> {
       );
       const pendingTasks = pendingTaskCount(tasks);
       const overdueTasks = overdueTaskCount(tasks);
+      const collegeListSnapshot = computeCollegeListSnapshot(colleges, student.current_grade);
+
+      const attentionFlags = computeAttentionFlags({
+        nextDeadlineDays: deadline?.days ?? null,
+        progress: progressPct,
+        pendingTasks,
+        overdueTasks,
+      });
+      // College-list alerts (no safety school, too reach-heavy, no early
+      // round picked) are exactly the kind of problem this panel exists
+      // to surface, so fold them in alongside the deadline/progress flags.
+      for (const alert of collegeListSnapshot.alerts) {
+        attentionFlags.push({ severity: "yellow", label: alert });
+      }
+
       return {
         student,
         progress: progressPct,
@@ -343,13 +371,12 @@ export async function getRosterRows(): Promise<RosterRow[]> {
         nextDeadline: deadline,
         pendingTasks,
         lastCounselingDate,
-        attentionFlags: computeAttentionFlags({
-          nextDeadlineDays: deadline?.days ?? null,
-          progress: progressPct,
-          pendingTasks,
-          overdueTasks,
-        }),
+        attentionFlags,
         deadlineItems: collectDeadlineItems(student.id, student.english_name ?? student.student_name, colleges, tasks),
+        academicSnapshot: computeAcademicSnapshot(gradeRecords, terms, courses),
+        ecSnapshot: computeEcSnapshot(ecs),
+        collegeListSnapshot,
+        applicationStatusSnapshot: student.current_grade === 12 ? computeApplicationStatusSnapshot(colleges) : null,
       };
     })
   );
