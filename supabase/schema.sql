@@ -46,6 +46,9 @@ create table if not exists students (
   ec_counselor_id uuid references counselors(id) on delete set null,
   status text default 'active' check (status in ('active','inactive','graduated')),
   photo_url text,
+  -- Counselor-set free text: "what to do next" for this student, shown on
+  -- the main Dashboard's My Students table (Section: Counselor Dashboard).
+  next_action text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

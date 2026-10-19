@@ -300,30 +300,40 @@ export interface RosterRow {
   status: TrackStatus;
   nextDeadline: { name: string; date: string; days: number } | null;
   pendingTasks: number;
+  // Latest consultation_notes.meeting_date for this student (any
+  // counselor), or null if none logged yet — shown as "Last Counseling
+  // Date" on the Dashboard's My Students table.
+  lastCounselingDate: string | null;
 }
 
 export async function getRosterRows(): Promise<RosterRow[]> {
   const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress } = await import("./progress");
   const students = await getStudents();
-  // Fetch every student's progress/colleges/tasks in parallel instead of
-  // one student, one field at a time — with N students this was 3*N+1
+  // Fetch every student's progress/colleges/tasks/notes in parallel instead
+  // of one student, one field at a time — with N students this was 3*N+1
   // sequential round trips to Supabase, which is what made this page (and
   // the dashboard, which reads the same roster) feel slow once deployed.
   const rows = await Promise.all(
     students.map(async (student) => {
-      const [progressRow, colleges, tasks] = await Promise.all([
+      const [progressRow, colleges, tasks, notes] = await Promise.all([
         getProgress(student.id),
         getCollegeList(student.id),
         getTasks(student.id),
+        getConsultationNotes(student.id),
       ]);
       const progressPct = progressRow ? overallProgress(progressRow) : 0;
       const deadline = nextDeadline(colleges);
+      const lastCounselingDate = notes.reduce<string | null>(
+        (latest, n) => (!latest || n.meeting_date > latest ? n.meeting_date : latest),
+        null
+      );
       return {
         student,
         progress: progressPct,
         status: trackStatusFromProgress(progressPct, deadline?.days ?? null),
         nextDeadline: deadline,
         pendingTasks: pendingTaskCount(tasks),
+        lastCounselingDate,
       };
     })
   );

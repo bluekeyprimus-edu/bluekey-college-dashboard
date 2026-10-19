@@ -74,6 +74,11 @@ export interface Student {
   ec_counselor_id: string | null;
   status: "active" | "inactive" | "graduated";
   photo_url: string | null;
+  // Free-text, counselor-set "what to do next for this student" shown on
+  // the Dashboard's My Students table — deliberately manual (see
+  // DashboardOverview), since picking the single most important next step
+  // takes human judgment a checklist can't automate.
+  next_action: string | null;
 }
 
 // What the acting counselor may see/edit for one particular student.

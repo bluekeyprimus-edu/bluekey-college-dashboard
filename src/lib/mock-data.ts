@@ -50,6 +50,7 @@ export const mockStudents: Student[] = [
     ec_counselor_id: null,
     status: "active",
     photo_url: null,
+    next_action: "Finalize Cornell Supplement essay draft",
   },
   {
     id: "s2",
@@ -72,6 +73,7 @@ export const mockStudents: Student[] = [
     ec_counselor_id: null,
     status: "active",
     photo_url: null,
+    next_action: "Review SAT retake schedule with parents",
   },
   {
     id: "s3",
@@ -94,6 +96,7 @@ export const mockStudents: Student[] = [
     ec_counselor_id: null,
     status: "active",
     photo_url: null,
+    next_action: "Select ED school and confirm with family",
   },
   {
     id: "s4",
@@ -116,6 +119,7 @@ export const mockStudents: Student[] = [
     ec_counselor_id: null,
     status: "active",
     photo_url: null,
+    next_action: null,
   },
   {
     id: "s5",
@@ -138,6 +142,7 @@ export const mockStudents: Student[] = [
     ec_counselor_id: null,
     status: "active",
     photo_url: null,
+    next_action: null,
   },
 ];
 

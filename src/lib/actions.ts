@@ -210,6 +210,27 @@ export async function deleteStudent(studentId: string) {
   revalidatePath("/tasks");
 }
 
+// Dashboard "Next Action" — a free-text, counselor-set note on what to do
+// next for this student (see Student.next_action). Deliberately a single
+// plain write, not a form bound to studentPayload: it's edited inline from
+// the Dashboard's My Students table (NextActionCell), not the student edit
+// form, and any counselor with access to the student can update it.
+export async function setNextAction(studentId: string, nextAction: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const trimmed = nextAction.trim();
+  const { error } = await supabase!
+    .from("students")
+    .update({ next_action: trimmed.length > 0 ? trimmed : null })
+    .eq("id", studentId);
+  if (error) throw new Error(`Next Action 수정 실패: ${error.message}`);
+
+  revalidatePath("/");
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+}
+
 export async function upsertAcademicOverview(studentId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
