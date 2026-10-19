@@ -140,8 +140,8 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
         {levelCounts.ibHl > 0 && <SummaryCard label="IB High Level" value={`${levelCounts.ibHl}개`} />}
         {levelCounts.ibSl > 0 && <SummaryCard label="IB Standard Level" value={`${levelCounts.ibSl}개`} />}
         {levelCounts.honors > 0 && <SummaryCard label="Honors" value={`${levelCounts.honors}개`} />}
-        <SummaryCard label="누적 비가중 GPA" value={gpaText(cumulative.unweighted)} />
-        <SummaryCard label="누적 가중 GPA" value={gpaText(cumulative.weighted)} />
+        <SummaryCard label="Cumulative Unweighted GPA" value={gpaText(cumulative.unweighted)} />
+        <SummaryCard label="Cumulative Weighted GPA" value={gpaText(cumulative.weighted)} />
         <SummaryCard label="GPA 추세" value={trend} />
       </div>
 
@@ -153,7 +153,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
           <form action={upsertAcademicOverview.bind(null, id)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               <div>
-                <label className={labelClass}>비가중 GPA (수동 덮어쓰기)</label>
+                <label className={labelClass}>Unweighted GPA (수동 덮어쓰기)</label>
                 <input
                   type="number"
                   step="0.001"
@@ -164,7 +164,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                 />
               </div>
               <div>
-                <label className={labelClass}>가중 GPA (수동 덮어쓰기)</label>
+                <label className={labelClass}>Weighted GPA (수동 덮어쓰기)</label>
                 <input
                   type="number"
                   step="0.001"
@@ -345,7 +345,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                             className="mt-2 flex flex-wrap items-end gap-2"
                           >
                             <div>
-                              <label className={labelClass}>비가중 GPA</label>
+                              <label className={labelClass}>Unweighted GPA</label>
                               <input
                                 type="number"
                                 step="0.001"
@@ -356,7 +356,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                               />
                             </div>
                             <div>
-                              <label className={labelClass}>가중 GPA</label>
+                              <label className={labelClass}>Weighted GPA</label>
                               <input
                                 type="number"
                                 step="0.001"
@@ -397,7 +397,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                   <summary className="cursor-pointer text-[11px] text-navy-400">이 학년 GPA 수동 조정</summary>
                   <form action={setGradeGpaOverride.bind(null, id, gr.id)} className="mt-2 flex flex-wrap items-end gap-2">
                     <div>
-                      <label className={labelClass}>비가중 GPA</label>
+                      <label className={labelClass}>Unweighted GPA</label>
                       <input
                         type="number"
                         step="0.001"
@@ -408,7 +408,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>가중 GPA</label>
+                      <label className={labelClass}>Weighted GPA</label>
                       <input
                         type="number"
                         step="0.001"

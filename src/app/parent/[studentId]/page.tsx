@@ -21,7 +21,6 @@ import {
   getConsultationNotes,
   getAttachments,
 } from "@/lib/data";
-import { checklistCompletion } from "@/lib/progress";
 import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades, isLowGrade } from "@/lib/gpa";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
@@ -29,7 +28,6 @@ import {
   EC_STATUS_LABEL,
   AWARD_LEVEL_LABEL,
   COLLEGE_CATEGORY_LABEL,
-  APPLICATION_STATUS_LABEL,
   ESSAY_STATUS_LABEL,
   TASK_PRIORITY_LABEL,
   TASK_STATUS_LABEL,
@@ -37,7 +35,6 @@ import {
   TERM_NOUN,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -444,11 +441,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         </CardHeader>
         <CardBody className="grid grid-cols-2 gap-x-6 gap-y-4">
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">비가중 GPA</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Unweighted GPA</div>
             <div className="mt-0.5 text-sm text-navy-900">{cumulativeGpa.unweighted?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">가중 GPA</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Weighted GPA</div>
             <div className="mt-0.5 text-sm text-navy-900">{cumulativeGpa.weighted?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
@@ -771,10 +768,6 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                       {c.application_round ?? "라운드 미정"}
                       {c.application_deadline && ` · ${c.application_deadline}`}
                     </div>
-                    <div className="mt-1.5">
-                      <ProgressBar value={checklistCompletion(c.checklist)} size="sm" showLabel />
-                    </div>
-                    <Pill tone="neutral" className="mt-1.5">{APPLICATION_STATUS_LABEL[c.application_status] ?? c.application_status}</Pill>
                   </div>
                 ))}
                 {(categoriesByCollege[cat] ?? []).length === 0 && (

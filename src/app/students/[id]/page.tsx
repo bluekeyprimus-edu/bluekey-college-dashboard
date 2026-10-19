@@ -198,8 +198,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           <Card>
             <CardHeader><CardTitle>학업·시험 요약</CardTitle></CardHeader>
             <CardBody className="space-y-3">
-              <ProfileField label="비가중 GPA" value={cumulativeGpa.unweighted?.toFixed(2) ?? "—"} />
-              <ProfileField label="가중 GPA" value={cumulativeGpa.weighted?.toFixed(2) ?? "—"} />
+              <ProfileField label="Unweighted GPA" value={cumulativeGpa.unweighted?.toFixed(2) ?? "—"} />
+              <ProfileField label="Weighted GPA" value={cumulativeGpa.weighted?.toFixed(2) ?? "—"} />
               <ProfileField
                 label="석차"
                 value={academic?.school_does_not_rank ? "석차 미산정 학교" : academic?.class_rank ? `${academic.class_rank} / ${academic.class_size}` : "—"}
