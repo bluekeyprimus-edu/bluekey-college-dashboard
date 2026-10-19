@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { RosterRow } from "@/lib/data";
 import { Pill } from "@/components/ui/Pill";
 import { COLLEGE_CATEGORY_LABEL } from "@/lib/labels";
@@ -6,12 +7,29 @@ import { cn } from "@/lib/cn";
 
 const CATEGORY_ORDER: CollegeCategory[] = ["Reach", "High Target", "Target", "Likely", "Safety"];
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-navy-100 bg-navy-50/40 p-3">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">{title}</div>
+// Every block links through to the page with the real detail (academics /
+// activities / college-list) — this stays a summary, the click is how you
+// get from "is there a problem" to actually fixing it.
+function Block({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
+  const inner = (
+    <>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-navy-400">{title}</span>
+        {href && <span className="text-xs text-gold-600 opacity-0 transition-opacity group-hover:opacity-100">자세히 →</span>}
+      </div>
       {children}
-    </div>
+    </>
+  );
+  if (!href) {
+    return <div className="rounded-lg border border-navy-100 bg-navy-50/40 p-3">{inner}</div>;
+  }
+  return (
+    <Link
+      href={href}
+      className="group block rounded-lg border border-navy-100 bg-navy-50/40 p-3 transition-colors hover:border-gold-300 hover:bg-white"
+    >
+      {inner}
+    </Link>
   );
 }
 
@@ -27,13 +45,15 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 // The My Students table's row expansion — summary-only snapshots across
 // Academics / EC / College List (and, for 12th graders, Application
 // Status), so a counselor can see "is there a problem here" without
-// leaving the Dashboard. Full detail stays on the student's own page.
+// leaving the Dashboard. Full detail stays on the student's own page —
+// each block below links straight there.
 export function StudentDrilldown({ row }: { row: RosterRow }) {
   const { academicSnapshot: a, ecSnapshot: ec, collegeListSnapshot: cl, applicationStatusSnapshot: app } = row;
+  const id = row.student.id;
 
   return (
     <div className="grid grid-cols-1 gap-3 bg-navy-50/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Block title="Academic Snapshot">
+      <Block title="Academic Snapshot" href={`/students/${id}/academics`}>
         <div className="grid grid-cols-2 gap-2">
           <Stat label="Unweighted GPA" value={a.unweightedGpa?.toFixed(2) ?? "—"} />
           <Stat label="Weighted GPA" value={a.weightedGpa?.toFixed(2) ?? "—"} />
@@ -47,7 +67,7 @@ export function StudentDrilldown({ row }: { row: RosterRow }) {
         )}
       </Block>
 
-      <Block title="EC Progress">
+      <Block title="EC Progress" href={`/students/${id}/activities`}>
         <div className="grid grid-cols-3 gap-2">
           <Stat label="활동 수" value={ec.totalActivities} />
           <Stat label="전공 연계" value={ec.majorRelatedCount} />
@@ -60,7 +80,7 @@ export function StudentDrilldown({ row }: { row: RosterRow }) {
         )}
       </Block>
 
-      <Block title="College List Status">
+      <Block title="College List Status" href={`/students/${id}/college-list`}>
         {cl.total === 0 ? (
           <div className="text-sm text-navy-400">컬리지 리스트 없음</div>
         ) : (
@@ -84,7 +104,7 @@ export function StudentDrilldown({ row }: { row: RosterRow }) {
       </Block>
 
       {app ? (
-        <Block title="Grade 12 Application Status">
+        <Block title="Grade 12 Application Status" href={`/students/${id}/college-list`}>
           <div className="grid grid-cols-2 gap-2">
             <Stat label="시작 전" value={app.notStarted} />
             <Stat label="진행 중" value={app.inProgress} />
