@@ -68,7 +68,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       getConsultationNotes(id),
     ]);
 
-  const overall = progress ? overallProgress(progress) : 0;
+  const overall = progress ? overallProgress(progress, student.current_grade) : 0;
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const cumulativeGpa = computeCumulativeGpa(
     gradeRecords,

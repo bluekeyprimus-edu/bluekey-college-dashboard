@@ -328,7 +328,7 @@ export async function getRosterRows(): Promise<RosterRow[]> {
         getTasks(student.id),
         getConsultationNotes(student.id),
       ]);
-      const progressPct = progressRow ? overallProgress(progressRow) : 0;
+      const progressPct = progressRow ? overallProgress(progressRow, student.current_grade) : 0;
       const deadline = nextDeadline(colleges);
       const lastCounselingDate = notes.reduce<string | null>(
         (latest, n) => (!latest || n.meeting_date > latest ? n.meeting_date : latest),

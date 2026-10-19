@@ -1,20 +1,92 @@
 import { StudentProgress, TrackStatus, TaskItem, CollegeListEntry, ApplicationChecklist } from "./types";
 
-export function overallProgress(p: StudentProgress): number {
-  const values = [
-    p.academic_profile,
-    p.testing,
-    p.extracurricular_activities,
-    p.awards,
-    p.college_list,
-    p.common_application,
-    p.personal_statement,
-    p.supplemental_essays,
-    p.recommendation_letters,
-    p.school_documents,
-  ];
-  const sum = values.reduce((a, b) => a + b, 0);
-  return Math.round(sum / values.length);
+type ProgressCategory = keyof Omit<StudentProgress, "student_id">;
+
+// Grade-band weights over the same 10 progress categories every grade
+// already tracks. A flat average treats "교내 활동" the same for a 9th
+// grader and a 12th grader applying this fall, which is backwards — what
+// should actually move the needle changes by grade band (see Jacob's
+// Dashboard spec, section 10). This is the one place to retune the
+// weights; every row sums to 1.0.
+//
+// Grade 8-9: academic record, course selection, EC exploration, summer
+// planning — application-specific categories barely count yet.
+// Grade 10: GPA/rigor, EC development, awards, SAT prep.
+// Grade 11: GPA, SAT/ACT, EC strength, college research, initial list.
+// Grade 12: college list, ED/EA strategy, Common App, essays,
+// recommendations, submission — this is the one grade where application
+// categories dominate.
+const PROGRESS_WEIGHTS_BY_GRADE_BAND: Record<"8-9" | "10" | "11" | "12", Record<ProgressCategory, number>> = {
+  "8-9": {
+    academic_profile: 0.3,
+    testing: 0.1,
+    extracurricular_activities: 0.25,
+    awards: 0.15,
+    college_list: 0.05,
+    common_application: 0.05,
+    personal_statement: 0.05,
+    supplemental_essays: 0,
+    recommendation_letters: 0,
+    school_documents: 0.05,
+  },
+  "10": {
+    academic_profile: 0.25,
+    testing: 0.2,
+    extracurricular_activities: 0.2,
+    awards: 0.15,
+    college_list: 0.05,
+    common_application: 0.05,
+    personal_statement: 0.05,
+    supplemental_essays: 0,
+    recommendation_letters: 0,
+    school_documents: 0.05,
+  },
+  "11": {
+    academic_profile: 0.2,
+    testing: 0.2,
+    extracurricular_activities: 0.15,
+    awards: 0.1,
+    college_list: 0.15,
+    common_application: 0.05,
+    personal_statement: 0.05,
+    supplemental_essays: 0,
+    recommendation_letters: 0.05,
+    school_documents: 0.05,
+  },
+  "12": {
+    academic_profile: 0.05,
+    testing: 0.05,
+    extracurricular_activities: 0.05,
+    awards: 0.05,
+    college_list: 0.15,
+    common_application: 0.15,
+    personal_statement: 0.15,
+    supplemental_essays: 0.15,
+    recommendation_letters: 0.1,
+    school_documents: 0.1,
+  },
+};
+
+function gradeBandFor(grade: number): "8-9" | "10" | "11" | "12" {
+  if (grade <= 9) return "8-9";
+  if (grade === 10) return "10";
+  if (grade === 11) return "11";
+  return "12";
+}
+
+/** Overall progress %, weighted by the student's current grade band so a
+ * 9th grader and a 12th grader aren't scored on the same mix of
+ * categories. Falls back to an even weight for an out-of-range grade. */
+export function overallProgress(p: StudentProgress, grade: number): number {
+  const weights = PROGRESS_WEIGHTS_BY_GRADE_BAND[gradeBandFor(grade)];
+  let sum = 0;
+  let weightTotal = 0;
+  for (const key of Object.keys(weights) as ProgressCategory[]) {
+    const w = weights[key];
+    sum += p[key] * w;
+    weightTotal += w;
+  }
+  return weightTotal > 0 ? Math.round(sum / weightTotal) : 0;
 }
 
 export function daysUntil(dateStr: string | null): number | null {
