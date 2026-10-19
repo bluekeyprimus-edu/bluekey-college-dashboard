@@ -93,12 +93,12 @@ export function courseBasePoints(course: Course): number | null {
   return null; // custom grades never feed into GPA
 }
 
-// B and below, as a flat warning threshold — not tied to the weighted bump
-// table above, which is about rigor, not risk.
-const LOW_LETTER_GRADES = new Set(["B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]);
-const LOW_POINT_SCORE_CEILING = 87; // B+ starts at 87; "B and below" means under that
+// B+ and below, as a flat warning threshold — not tied to the weighted
+// bump table above, which is about rigor, not risk.
+const LOW_LETTER_GRADES = new Set(["B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]);
+const LOW_POINT_SCORE_CEILING = 90; // A- starts at 90; "B+ and below" means under that
 
-/** True when a course's grade is B or below (B+/A-/A/A+ are fine) — used to
+/** True when a course's grade is B+ or below (A-/A/A+ are fine) — used to
  * flag a course in red as a warning, since this is a risk signal, not a
  * GPA input. Custom grades have no comparable scale, so never flagged. */
 export function isLowGrade(course: Course): boolean {
