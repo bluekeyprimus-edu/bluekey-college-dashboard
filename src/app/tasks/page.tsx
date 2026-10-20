@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getAllTasks, getStudents } from "@/lib/data";
 import { addTask } from "@/lib/actions";
 import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
@@ -24,13 +25,23 @@ function StatCard({ label, value, tone = "neutral" }: { label: string; value: nu
   );
 }
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ student?: string }>;
+}) {
+  const sp = await searchParams;
+  const studentFilter = sp.student ?? null;
+
   const [tasks, students] = await Promise.all([getAllTasks(), getStudents()]);
   const nameById = new Map(students.map((s) => [s.id, s.english_name ?? s.student_name]));
-  const tasksWithStudent: TaskWithStudent[] = tasks.map((t) => ({
-    ...t,
-    studentName: nameById.get(t.student_id) ?? "알 수 없음",
-  }));
+  const tasksWithStudent: TaskWithStudent[] = tasks
+    .map((t) => ({
+      ...t,
+      studentName: nameById.get(t.student_id) ?? "알 수 없음",
+    }))
+    .filter((t) => !studentFilter || t.student_id === studentFilter);
+  const filteredStudentName = studentFilter ? nameById.get(studentFilter) ?? "알 수 없음" : null;
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const in7Days = new Date();
@@ -53,6 +64,13 @@ export default async function TasksPage() {
         </p>
       </div>
 
+      {filteredStudentName && (
+        <div className="flex items-center gap-2 rounded-lg border border-gold-200 bg-gold-50 px-4 py-2.5 text-sm text-navy-700">
+          <span><span className="font-semibold">{filteredStudentName}</span> 학생의 할일만 보는 중이에요.</span>
+          <Link href="/tasks" className="font-medium text-gold-600 hover:text-gold-700">전체 보기 →</Link>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="진행 중인 할일" value={pendingCount} />
         <StatCard label="지연된 할일" value={overdueCount} tone="red" />
@@ -68,7 +86,7 @@ export default async function TasksPage() {
           <form action={addTask} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className={labelClass}>학생 *</label>
-              <select name="student_id" required defaultValue="" className={inputClass}>
+              <select name="student_id" required defaultValue={studentFilter ?? ""} className={inputClass}>
                 <option value="" disabled>선택</option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>{s.english_name ?? s.student_name}</option>

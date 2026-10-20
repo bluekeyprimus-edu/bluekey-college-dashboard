@@ -272,7 +272,7 @@ export function DashboardOverview({ rows, restricted }: { rows: RosterRow[]; res
                   </td>
                   <td className="px-4 py-3">
                     {row.pendingTasks > 0 ? (
-                      <Link href={`/students/${row.student.id}#tasks`} className="inline-block hover:opacity-80">
+                      <Link href={`/tasks?student=${row.student.id}`} className="inline-block hover:opacity-80">
                         <Pill tone={row.pendingTasks >= 3 ? "amber" : "neutral"}>{row.pendingTasks}건</Pill>
                       </Link>
                     ) : (
