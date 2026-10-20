@@ -133,6 +133,9 @@ export function pendingTaskCount(tasks: TaskItem[]): number {
 export interface AttentionFlag {
   severity: "red" | "yellow";
   label: string;
+  // Where clicking this flag should take you — the page that actually
+  // lets you act on it, not just the student's overview.
+  href?: string;
 }
 
 /** Plain-language reasons a student needs a counselor's attention right
@@ -140,25 +143,30 @@ export interface AttentionFlag {
  * just naming the ones that matter out loud so the Dashboard's Attention
  * Needed panel doesn't require reading a status dot and guessing why. */
 export function computeAttentionFlags(input: {
+  studentId: string;
   nextDeadlineDays: number | null;
   progress: number;
   pendingTasks: number;
   overdueTasks: number;
 }): AttentionFlag[] {
   const flags: AttentionFlag[] = [];
+  // nextDeadlineDays comes from the student's college list (see
+  // nextDeadline() below) — that's where the deadline actually lives.
+  const collegeListHref = `/students/${input.studentId}/college-list`;
+  const tasksHref = `/tasks?student=${input.studentId}`;
   if (input.nextDeadlineDays !== null && input.nextDeadlineDays < 14) {
-    flags.push({ severity: "red", label: `마감 ${input.nextDeadlineDays}일 전` });
+    flags.push({ severity: "red", label: `마감 ${input.nextDeadlineDays}일 전`, href: collegeListHref });
   } else if (input.nextDeadlineDays !== null && input.nextDeadlineDays < 45) {
-    flags.push({ severity: "yellow", label: `마감 ${input.nextDeadlineDays}일 전` });
+    flags.push({ severity: "yellow", label: `마감 ${input.nextDeadlineDays}일 전`, href: collegeListHref });
   }
   if (input.overdueTasks > 0) {
-    flags.push({ severity: "red", label: `지연된 할일 ${input.overdueTasks}건` });
+    flags.push({ severity: "red", label: `지연된 할일 ${input.overdueTasks}건`, href: tasksHref });
   }
   if (input.progress < 40) {
-    flags.push({ severity: "yellow", label: `전체 진행률 ${input.progress}%` });
+    flags.push({ severity: "yellow", label: `전체 진행률 ${input.progress}%`, href: `/students/${input.studentId}` });
   }
   if (input.pendingTasks >= 3) {
-    flags.push({ severity: "yellow", label: `미완료 할일 ${input.pendingTasks}건` });
+    flags.push({ severity: "yellow", label: `미완료 할일 ${input.pendingTasks}건`, href: tasksHref });
   }
   return flags;
 }

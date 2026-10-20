@@ -352,6 +352,7 @@ export async function getRosterRows(): Promise<RosterRow[]> {
       const collegeListSnapshot = computeCollegeListSnapshot(colleges, student.current_grade);
 
       const attentionFlags = computeAttentionFlags({
+        studentId: student.id,
         nextDeadlineDays: deadline?.days ?? null,
         progress: progressPct,
         pendingTasks,
@@ -361,7 +362,7 @@ export async function getRosterRows(): Promise<RosterRow[]> {
       // round picked) are exactly the kind of problem this panel exists
       // to surface, so fold them in alongside the deadline/progress flags.
       for (const alert of collegeListSnapshot.alerts) {
-        attentionFlags.push({ severity: "yellow", label: alert });
+        attentionFlags.push({ severity: "yellow", label: alert, href: `/students/${student.id}/college-list` });
       }
 
       return {
