@@ -7,6 +7,7 @@ import { deleteStudent } from "@/lib/actions";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Pill } from "@/components/ui/Pill";
 import { cn } from "@/lib/cn";
 
 type SortKey = "name" | "grade" | "school" | "major" | "counselor" | "progress" | "deadline";
@@ -162,7 +163,15 @@ export function StudentsTable({ rows, isAdmin = false }: { rows: RosterRow[]; is
                     <span className="text-navy-400">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-navy-600">{row.pendingTasks}</td>
+                <td className="px-4 py-3">
+                  {row.pendingTasks > 0 ? (
+                    <Link href={`/tasks?student=${row.student.id}`} className="inline-block hover:opacity-80">
+                      <Pill tone={row.pendingTasks >= 3 ? "amber" : "neutral"}>{row.pendingTasks}건</Pill>
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-navy-400">—</span>
+                  )}
+                </td>
                 {isAdmin && (
                   <td className="px-4 py-3 text-right">
                     <form
