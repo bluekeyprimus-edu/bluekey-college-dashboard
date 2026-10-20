@@ -249,7 +249,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         )}
 
         {canViewAll && (
-          <Card>
+          <Card id="tasks">
             <CardHeader><CardTitle>진행 중인 할일</CardTitle></CardHeader>
             <CardBody className="space-y-3">
               {tasks.length === 0 && <p className="text-sm text-navy-400">등록된 할일이 아직 없어요.</p>}

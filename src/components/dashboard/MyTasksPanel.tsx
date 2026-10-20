@@ -49,7 +49,7 @@ export function MyTasksPanel({ tasks }: { tasks: TaskWithStudent[] }) {
               return (
                 <tr key={t.id} className="hover:bg-navy-50/40">
                   <td className="px-4 py-3">
-                    <Link href={`/students/${t.student_id}`} className="font-medium text-navy-900 hover:text-gold-600">
+                    <Link href={`/students/${t.student_id}#tasks`} className="font-medium text-navy-900 hover:text-gold-600">
                       {t.task}
                     </Link>
                   </td>
