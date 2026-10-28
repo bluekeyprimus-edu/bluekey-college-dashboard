@@ -70,24 +70,31 @@ function CollegeCard({
 
   return (
     <div ref={setNodeRef} style={style} className="rounded-lg border border-navy-100 bg-white p-3 shadow-sm">
-      <div className="flex items-start gap-2">
+      <div className="flex cursor-pointer items-start gap-2" onClick={onToggleExpand}>
         <button
           {...listeners}
           {...attributes}
           type="button"
           className="mt-0.5 shrink-0 cursor-grab touch-none select-none text-sm text-navy-300 hover:text-navy-500 active:cursor-grabbing"
-          title="드래그해서 분류 이동"
+          title="드래그해서 분류 이동 (클릭하면 세부정보가 펼쳐져요)"
         >
           ⠿
         </button>
-        <button type="button" onClick={onToggleExpand} className="flex-1 text-left">
+        <div className="flex-1 text-left">
           <div className="text-sm font-semibold text-navy-900">{college.university_name}</div>
           <div className="text-xs text-navy-400">
             {college.intended_major ?? "전공 미정"}
             {college.application_round && ` · ${college.application_round}`}
           </div>
-        </button>
-        <button type="button" onClick={onDelete} className="shrink-0 text-xs text-navy-300 hover:text-rose-500">
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="shrink-0 text-xs text-navy-300 hover:text-rose-500"
+        >
           ✕
         </button>
       </div>
