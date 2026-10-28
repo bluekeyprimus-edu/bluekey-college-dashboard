@@ -23,6 +23,7 @@ export type SubjectCategory =
   | "Foreign Language"
   | "Arts"
   | "Computer Science"
+  | "Physical Education"
   | "Other";
 export type ECStatus = "Developing" | "Completed" | "Common App Ready";
 export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";

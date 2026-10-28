@@ -133,7 +133,7 @@ create table if not exists courses (
   term_id uuid references terms(id) on delete cascade,
   student_id uuid references students(id) on delete cascade,
   course_name text not null,
-  subject_category text check (subject_category in ('English','Math','Science','Social Studies','Foreign Language','Arts','Computer Science','Other')),
+  subject_category text check (subject_category in ('English','Math','Science','Social Studies','Foreign Language','Arts','Computer Science','Physical Education','Other')),
   course_level text not null check (course_level in ('Regular','Honors','Advanced','AP','IB SL','IB HL','A-Level','Dual Enrollment','College Level','Other')),
   credit numeric(4,2) not null default 1,
   grade_scale text not null default 'letter' check (grade_scale in ('letter','100_point','custom')),

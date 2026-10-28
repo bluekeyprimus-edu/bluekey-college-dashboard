@@ -48,6 +48,7 @@ export const SUBJECT_CATEGORY_OPTIONS = [
   "Foreign Language",
   "Arts",
   "Computer Science",
+  "Physical Education",
   "Other",
 ] as const;
 
@@ -59,6 +60,7 @@ export const SUBJECT_CATEGORY_LABEL: Record<string, string> = {
   "Foreign Language": "외국어",
   Arts: "예술",
   "Computer Science": "컴퓨터공학",
+  "Physical Education": "체육",
   Other: "기타",
 };
 
