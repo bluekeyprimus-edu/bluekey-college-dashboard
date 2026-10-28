@@ -281,7 +281,7 @@ create table if not exists college_preferences (
 create table if not exists college_list (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id) on delete cascade,
-  category text check (category in ('Reach','High Target','Target','Likely','Safety')) not null,
+  category text check (category in ('Reach','Target','Safety')) not null,
   university_name text not null,
   intended_major text,
   application_round text check (application_round in ('ED','ED2','EA','REA','RD')),
@@ -292,6 +292,10 @@ create table if not exists college_list (
   application_status text default 'Not Started',
   notes text,
   sort_order int default 0,
+  -- Whether this school doesn't require SAT/ACT scores (school-level
+  -- policy, tracked per list entry since there's no separate universities
+  -- table) — shown as a badge on the college card.
+  test_optional boolean not null default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

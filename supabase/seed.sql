@@ -74,7 +74,7 @@ insert into awards (student_id, award_name, organization, grade_level, award_lev
 
 insert into college_list (id, student_id, category, university_name, intended_major, application_round, application_deadline, student_preference_level, parent_preference_level, counselor_recommendation, application_status, notes) values
   ('33333333-3333-3333-3333-333333333331', '22222222-2222-2222-2222-222222222221', 'Reach', 'Cornell University', 'Computer Science', 'ED', '2026-11-01', 5, 5, 'Strong reach — apply ED for admissions boost', 'In Progress', 'Engineering supplement needs another revision pass.'),
-  ('33333333-3333-3333-3333-333333333332', '22222222-2222-2222-2222-222222222221', 'High Target', 'University of Michigan', 'Computer Science', 'EA', '2026-11-01', 4, 4, 'Strong EA option', 'Not Started', null),
+  ('33333333-3333-3333-3333-333333333332', '22222222-2222-2222-2222-222222222221', 'Target', 'University of Michigan', 'Computer Science', 'EA', '2026-11-01', 4, 4, 'Strong EA option', 'Not Started', null),
   ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222221', 'Target', 'University of Wisconsin—Madison', 'Computer Science', 'RD', '2027-01-15', 3, 3, null, 'Not Started', null),
   ('33333333-3333-3333-3333-333333333334', '22222222-2222-2222-2222-222222222221', 'Safety', 'Purdue University', 'Computer Science', 'RD', '2027-01-15', 3, 4, 'Solid safety with strong CS program', 'Not Started', null);
 

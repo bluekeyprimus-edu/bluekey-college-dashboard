@@ -49,7 +49,7 @@ export interface CollegeListSnapshot {
   alerts: string[];
 }
 
-const EMPTY_CATEGORY_COUNTS: Record<CollegeCategory, number> = { Reach: 0, "High Target": 0, Target: 0, Likely: 0, Safety: 0 };
+const EMPTY_CATEGORY_COUNTS: Record<CollegeCategory, number> = { Reach: 0, Target: 0, Safety: 0 };
 
 export function computeCollegeListSnapshot(colleges: CollegeListEntry[], grade: number): CollegeListSnapshot {
   const counts = { ...EMPTY_CATEGORY_COUNTS };
@@ -69,35 +69,28 @@ export function computeCollegeListSnapshot(colleges: CollegeListEntry[], grade: 
 }
 
 export interface ApplicationStatusSnapshot {
-  notStarted: number;
   inProgress: number;
-  readyToSubmit: number;
-  submitted: number;
+  completed: number;
   earlyRoundSchools: { universityName: string; round: string; checklistPct: number }[];
 }
 
-// "Ready to Submit" isn't a stored status — it's derived: an application
-// still marked "In Progress" whose checklist is already 100% complete.
-// Everything from "Submitted" onward (Accepted/Waitlisted/Deferred/
-// Rejected) counts as the one "submitted" bucket here; the student's own
-// page still shows the exact outcome.
+// Deliberately just two buckets on the Dashboard (see Jacob's request) —
+// this is a glance-at-it summary, not the real record. The underlying
+// application_status still has the full Not Started/In Progress/
+// Submitted/Accepted/Waitlisted/Deferred/Rejected range on the student's
+// own college-list page; "완료" here just means "Submitted" or anything
+// that came after it.
+const COMPLETED_APPLICATION_STATUSES = new Set(["Submitted", "Accepted", "Waitlisted", "Deferred", "Rejected"]);
+
 export function computeApplicationStatusSnapshot(colleges: CollegeListEntry[]): ApplicationStatusSnapshot {
-  let notStarted = 0;
   let inProgress = 0;
-  let readyToSubmit = 0;
-  let submitted = 0;
+  let completed = 0;
   for (const c of colleges) {
-    if (c.application_status === "Not Started") {
-      notStarted += 1;
-    } else if (c.application_status === "In Progress") {
-      if (checklistCompletion(c.checklist) >= 100) readyToSubmit += 1;
-      else inProgress += 1;
-    } else {
-      submitted += 1;
-    }
+    if (COMPLETED_APPLICATION_STATUSES.has(c.application_status)) completed += 1;
+    else inProgress += 1;
   }
   const earlyRoundSchools = colleges
     .filter((c) => c.application_round === "ED" || c.application_round === "ED2" || c.application_round === "REA" || c.application_round === "EA")
     .map((c) => ({ universityName: c.university_name, round: c.application_round as string, checklistPct: checklistCompletion(c.checklist) }));
-  return { notStarted, inProgress, readyToSubmit, submitted, earlyRoundSchools };
+  return { inProgress, completed, earlyRoundSchools };
 }

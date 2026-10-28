@@ -43,7 +43,7 @@ export default async function CollegeListPage({ params }: { params: Promise<{ id
               <label className={labelClass}>분류 *</label>
               <select name="category" required defaultValue="" className={inputClass}>
                 <option value="" disabled>선택</option>
-                {["Reach", "High Target", "Target", "Likely", "Safety"].map((c) => (
+                {["Reach", "Target", "Safety"].map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -86,6 +86,12 @@ export default async function CollegeListPage({ params }: { params: Promise<{ id
                   <option key={n} value={n}>{n} / 5</option>
                 ))}
               </select>
+            </div>
+            <div className="flex items-end pb-2">
+              <label className="flex items-center gap-2 text-sm text-navy-700">
+                <input type="checkbox" name="test_optional" />
+                Test Optional
+              </label>
             </div>
             <div className="sm:col-span-2 lg:col-span-2">
               <label className={labelClass}>카운슬러 추천 코멘트</label>

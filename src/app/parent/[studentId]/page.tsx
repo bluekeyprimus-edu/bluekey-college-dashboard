@@ -130,7 +130,6 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
     tasks,
     extracurriculars: ecs,
     awards,
-    colleges,
     personalStatement,
     essays,
     consultationNotes,
@@ -756,14 +755,21 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         <CardTitle>컬리지 리스트</CardTitle>
       </CardHeader>
       <CardBody>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {(["Reach", "High Target", "Target", "Likely", "Safety"] as const).map((cat) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {(["Reach", "Target", "Safety"] as const).map((cat) => (
             <div key={cat}>
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">{COLLEGE_CATEGORY_LABEL[cat]}</div>
               <div className="space-y-2">
                 {(categoriesByCollege[cat] ?? []).map((c) => (
                   <div key={c.id} className="rounded-lg border border-navy-100 px-3 py-2">
-                    <div className="text-sm font-medium text-navy-900">{c.university_name}</div>
+                    <div className="text-sm font-medium text-navy-900">
+                      {c.university_name}
+                      {c.test_optional && (
+                        <span className="ml-1.5 rounded-full border border-gold-200 bg-gold-50 px-1.5 py-0.5 text-[10px] font-medium text-gold-700">
+                          Test Optional
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-navy-400">
                       {c.application_round ?? "라운드 미정"}
                       {c.application_deadline && ` · ${c.application_deadline}`}

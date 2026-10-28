@@ -1,14 +1,12 @@
 import {
   Attachment,
   Award,
-  CollegeListEntry,
   ConsultationNote,
   Extracurricular,
   PersonalStatement,
   SupplementalEssay,
   TaskItem,
 } from "./types";
-import { APPLICATION_STATUS_LABEL } from "./labels";
 
 export type ActivityState = "completed" | "in_progress" | "update";
 
@@ -21,7 +19,6 @@ export interface ActivityItem {
 }
 
 const COMPLETED_EC_STATUSES = new Set(["Completed", "Common App Ready"]);
-const COMPLETED_APPLICATION_STATUSES = new Set(["Submitted", "Accepted", "Waitlisted", "Deferred", "Rejected"]);
 
 /**
  * Builds a recency-sorted activity feed for the parent portal from data
@@ -34,7 +31,10 @@ export function buildActivityFeed(input: {
   tasks: TaskItem[];
   extracurriculars: Extracurricular[];
   awards: Award[];
-  colleges: CollegeListEntry[];
+  // Deliberately no `colleges` here (see Jacob's request) — college-list
+  // changes don't surface in this parent-facing feed, so a counselor
+  // reshuffling the list or updating a deadline doesn't read to a parent
+  // as "progress" the way finishing an essay or a task does.
   personalStatement: PersonalStatement | null;
   essays: SupplementalEssay[];
   consultationNotes: ConsultationNote[];
@@ -72,17 +72,6 @@ export function buildActivityFeed(input: {
       category: "수상",
       title: `${a.award_name} 등록됨`,
       state: "completed",
-    });
-  }
-
-  for (const c of input.colleges) {
-    if (!c.updated_at) continue;
-    items.push({
-      id: `college-${c.id}`,
-      at: c.updated_at,
-      category: "컬리지 리스트",
-      title: `${c.university_name} · ${APPLICATION_STATUS_LABEL[c.application_status] ?? c.application_status}`,
-      state: COMPLETED_APPLICATION_STATUSES.has(c.application_status) ? "completed" : "in_progress",
     });
   }
 

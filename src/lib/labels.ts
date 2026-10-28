@@ -139,9 +139,7 @@ export const CHECKLIST_ITEM_LABEL: Record<string, string> = {
 
 export const COLLEGE_CATEGORY_LABEL: Record<string, string> = {
   Reach: "Reach",
-  "High Target": "High Target",
   Target: "Target",
-  Likely: "Likely",
   Safety: "Safety",
 };
 

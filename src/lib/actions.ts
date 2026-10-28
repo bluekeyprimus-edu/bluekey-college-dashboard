@@ -471,6 +471,7 @@ export async function addCollegeToList(studentId: string, formData: FormData) {
     parent_preference_level: num(formData, "parent_preference_level"),
     counselor_recommendation: str(formData, "counselor_recommendation"),
     notes: str(formData, "notes"),
+    test_optional: formData.get("test_optional") === "on",
   };
   if (!payload.category || !payload.university_name) {
     throw new Error("분류와 대학명은 필수예요.");
@@ -534,6 +535,7 @@ export async function updateCollegeStatus(studentId: string, collegeId: string, 
     parent_preference_level: num(formData, "parent_preference_level"),
     counselor_recommendation: str(formData, "counselor_recommendation"),
     notes: str(formData, "notes"),
+    test_optional: formData.get("test_optional") === "on",
   };
   const { error } = await supabase!.from("college_list").update(payload).eq("id", collegeId);
   if (error) throw new Error(`업데이트 실패: ${error.message}`);

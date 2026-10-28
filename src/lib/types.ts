@@ -27,7 +27,7 @@ export type SubjectCategory =
 export type ECStatus = "Developing" | "Completed" | "Common App Ready";
 export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected";
 export type AwardLevel = "School" | "Regional" | "State" | "National" | "International";
-export type CollegeCategory = "Reach" | "High Target" | "Target" | "Likely" | "Safety";
+export type CollegeCategory = "Reach" | "Target" | "Safety";
 export type ApplicationRound = "ED" | "ED2" | "EA" | "REA" | "RD";
 export type EssayStatus =
   | "Brainstorming"
@@ -310,6 +310,7 @@ export interface CollegeListEntry {
   counselor_recommendation: string | null;
   application_status: string;
   notes: string | null;
+  test_optional: boolean;
   checklist?: ApplicationChecklist;
   created_at?: string;
   updated_at?: string;

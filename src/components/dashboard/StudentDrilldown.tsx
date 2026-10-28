@@ -5,7 +5,7 @@ import { COLLEGE_CATEGORY_LABEL } from "@/lib/labels";
 import { CollegeCategory } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
-const CATEGORY_ORDER: CollegeCategory[] = ["Reach", "High Target", "Target", "Likely", "Safety"];
+const CATEGORY_ORDER: CollegeCategory[] = ["Reach", "Target", "Safety"];
 
 // Every block links through to the page with the real detail (academics /
 // activities / college-list) — this stays a summary, the click is how you
@@ -106,10 +106,8 @@ export function StudentDrilldown({ row }: { row: RosterRow }) {
       {app ? (
         <Block title="Grade 12 Application Status" href={`/students/${id}/college-list`}>
           <div className="grid grid-cols-2 gap-2">
-            <Stat label="시작 전" value={app.notStarted} />
             <Stat label="진행 중" value={app.inProgress} />
-            <Stat label="제출 준비 완료" value={app.readyToSubmit} />
-            <Stat label="제출 완료" value={app.submitted} />
+            <Stat label="완료" value={app.completed} />
           </div>
           {app.earlyRoundSchools.length > 0 && (
             <div className="mt-2 space-y-1">

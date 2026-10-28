@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { deleteCollegeFromList, toggleChecklistItem, updateCollegeCategory, updateCollegeStatus } from "@/lib/actions";
 
-const CATEGORIES: CollegeCategory[] = ["Reach", "High Target", "Target", "Likely", "Safety"];
+const CATEGORIES: CollegeCategory[] = ["Reach", "Target", "Safety"];
 
 type ChecklistKey = keyof Omit<ApplicationChecklist, "college_list_id">;
 
@@ -99,6 +99,7 @@ function CollegeCard({
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <Pill tone={pct === 100 ? "green" : "neutral"}>{APPLICATION_STATUS_LABEL[college.application_status] ?? college.application_status}</Pill>
         {college.application_deadline && <Pill tone="amber">마감 {college.application_deadline}</Pill>}
+        {college.test_optional && <Pill tone="gold">Test Optional</Pill>}
       </div>
 
       {expanded && (
@@ -143,6 +144,12 @@ function CollegeCard({
                     <option key={n} value={n}>{n} / 5</option>
                   ))}
                 </select>
+              </div>
+              <div className="flex items-end pb-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-navy-700">
+                  <input type="checkbox" name="test_optional" defaultChecked={college.test_optional} />
+                  Test Optional
+                </label>
               </div>
             </div>
             <div>
@@ -277,7 +284,7 @@ export function CollegeBoard({ studentId, initialColleges }: { studentId: string
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {CATEGORIES.map((cat) => (
           <Column
             key={cat}

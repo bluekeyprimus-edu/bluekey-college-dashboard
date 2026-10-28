@@ -368,6 +368,7 @@ export const mockCollegeList: CollegeListEntry[] = [
     counselor_recommendation: "Strong reach — apply ED for admissions boost",
     application_status: "In Progress",
     notes: "Engineering supplement needs another revision pass.",
+    test_optional: false,
     checklist: {
       college_list_id: "cl1",
       college_added: true,
@@ -389,7 +390,7 @@ export const mockCollegeList: CollegeListEntry[] = [
   {
     id: "cl2",
     student_id: "s1",
-    category: "High Target",
+    category: "Target",
     university_name: "University of Michigan",
     intended_major: "Computer Science",
     application_round: "EA",
@@ -399,6 +400,7 @@ export const mockCollegeList: CollegeListEntry[] = [
     counselor_recommendation: "Strong EA option",
     application_status: "Not Started",
     notes: null,
+    test_optional: true,
   },
   {
     id: "cl3",
@@ -413,6 +415,7 @@ export const mockCollegeList: CollegeListEntry[] = [
     counselor_recommendation: null,
     application_status: "Not Started",
     notes: null,
+    test_optional: false,
   },
   {
     id: "cl4",
@@ -427,6 +430,7 @@ export const mockCollegeList: CollegeListEntry[] = [
     counselor_recommendation: "Solid safety with strong CS program",
     application_status: "Not Started",
     notes: null,
+    test_optional: false,
   },
 ];
 
