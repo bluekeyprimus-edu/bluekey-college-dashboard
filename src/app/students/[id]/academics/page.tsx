@@ -442,6 +442,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                                       <td className="px-2 py-1.5">
                                         <form action={addProgressGrade.bind(null, id, c.id)} className="flex items-center gap-1">
                                           <CurrentGradeField
+                                            key={`${c.id}-${c.letter_grade}-${c.point_score}-${c.custom_grade}`}
                                             course={c}
                                             className={`w-20 rounded-md border px-1.5 py-1 text-xs focus:outline-none ${
                                               isLowGrade(c)
@@ -467,7 +468,11 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                                       </td>
                                       <td className="px-2 py-1.5">
                                         <form action={setCourseFinalGrade.bind(null, id, c.id)} className="flex items-center gap-1">
-                                          <FinalGradeField course={c} className="w-20 rounded-md border border-navy-200 bg-white px-1.5 py-1 text-xs text-navy-900 focus:border-gold-400 focus:outline-none" />
+                                          <FinalGradeField
+                                            key={`${c.id}-${c.final_letter_grade}-${c.final_point_score}-${c.final_custom_grade}`}
+                                            course={c}
+                                            className="w-20 rounded-md border border-navy-200 bg-white px-1.5 py-1 text-xs text-navy-900 focus:border-gold-400 focus:outline-none"
+                                          />
                                           <SubmitButton label="저장" variant="inline-sm" toastMessage="저장되었습니다" />
                                         </form>
                                         {courseHasFinalGrade(c) && (
