@@ -513,6 +513,88 @@ create table if not exists student_expenses (
 create index if not exists idx_student_expenses_student on student_expenses(student_id);
 
 -- ============================================================
+-- Grade 8-11 Goal Setting & Target College management (separate from the
+-- Grade 12 Application List / college_list above). Same structure for
+-- every grade 8-11 — no per-grade variants. See src/lib/goals.ts for the
+-- Time Progress / Goal Progress / on-track computation this feeds.
+-- ============================================================
+
+-- Intended Major — a history, never overwritten. The "current" value for
+-- a student is simply the most recent row (see getCurrentMajorGoal in
+-- src/lib/data.ts); changing it inserts a new row instead of updating one.
+create table if not exists major_goals (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid references students(id) on delete cascade,
+  primary_major text,
+  secondary_major text,
+  career_interest text,
+  counselor_notes text,
+  created_at timestamptz default now()
+);
+create index if not exists idx_major_goals_student on major_goals(student_id);
+
+-- Target Colleges (Grade 8-11) — deliberately NOT the Reach/Target/Safety
+-- classification used by college_list (Grade 12 official applications).
+-- Just a priority. Rows are never deleted when a student reaches Grade 12
+-- (see convertTargetCollegesToCollegeList in actions.ts) — they stay as a
+-- historical record even after some are copied into college_list.
+create table if not exists target_colleges (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid references students(id) on delete cascade,
+  university_name text not null,
+  interested_major text,
+  priority text not null default 'Medium' check (priority in ('High','Medium','Low')),
+  notes text,
+  date_added date not null default current_date,
+  created_at timestamptz default now()
+);
+create index if not exists idx_target_colleges_student on target_colleges(student_id);
+
+-- One Annual Counseling Plan per student per academic year.
+create table if not exists counseling_plans (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid references students(id) on delete cascade,
+  academic_year text not null,
+  created_at timestamptz default now(),
+  unique(student_id, academic_year)
+);
+create index if not exists idx_counseling_plans_student on counseling_plans(student_id);
+
+create table if not exists counseling_goals (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid references counseling_plans(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  title text not null,
+  category text not null check (category in ('Academics','Testing','Extracurricular Activities','Awards/Competitions','Major Exploration','College Exploration','Summer Planning','Leadership','Personal Project','Other')),
+  description text,
+  start_date date,
+  target_completion_date date,
+  priority text not null default 'Medium' check (priority in ('High','Medium','Low')),
+  status text not null default 'Not Started' check (status in ('Not Started','In Progress','Completed','On Hold')),
+  counselor_notes text,
+  -- The 🟢/🟡/🔴 on-track indicator (Time Progress vs Goal Progress) is
+  -- auto-computed; this is the counselor's manual override when set.
+  track_override text check (track_override in ('on_track','behind','needs_attention')),
+  created_at timestamptz default now()
+);
+create index if not exists idx_counseling_goals_plan on counseling_goals(plan_id);
+create index if not exists idx_counseling_goals_student on counseling_goals(student_id);
+
+create table if not exists goal_milestones (
+  id uuid primary key default gen_random_uuid(),
+  goal_id uuid references counseling_goals(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  title text not null,
+  due_date date,
+  status text not null default 'Not Started' check (status in ('Not Started','In Progress','Completed')),
+  completion_date date,
+  notes text,
+  created_at timestamptz default now()
+);
+create index if not exists idx_goal_milestones_goal on goal_milestones(goal_id);
+create index if not exists idx_goal_milestones_student on goal_milestones(student_id);
+
+-- ============================================================
 -- System Settings (Section: misc key/value state for background jobs)
 -- Right now just tracks the school-year label the grade auto-bump last
 -- ran for, so a retry (or the admin's manual "지금 실행" button) can't

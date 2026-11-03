@@ -427,3 +427,88 @@ export interface Attachment {
 }
 
 export type TrackStatus = "green" | "yellow" | "red";
+
+// ============================================================
+// Grade 8-11 Goal Setting & Target Colleges — separate from Grade 12's
+// college_list/application machinery. Same shape for every grade 8-11.
+// ============================================================
+
+export type GoalPriority = "High" | "Medium" | "Low";
+
+// A history row, not a single current record — see getCurrentMajorGoal in
+// src/lib/data.ts. Changing the major inserts a new row.
+export interface MajorGoal {
+  id: string;
+  student_id: string;
+  primary_major: string | null;
+  secondary_major: string | null;
+  career_interest: string | null;
+  counselor_notes: string | null;
+  created_at: string;
+}
+
+export interface TargetCollege {
+  id: string;
+  student_id: string;
+  university_name: string;
+  interested_major: string | null;
+  priority: GoalPriority;
+  notes: string | null;
+  date_added: string;
+  created_at: string;
+}
+
+export interface CounselingPlan {
+  id: string;
+  student_id: string;
+  academic_year: string;
+  created_at: string;
+}
+
+export type GoalCategory =
+  | "Academics"
+  | "Testing"
+  | "Extracurricular Activities"
+  | "Awards/Competitions"
+  | "Major Exploration"
+  | "College Exploration"
+  | "Summer Planning"
+  | "Leadership"
+  | "Personal Project"
+  | "Other";
+
+export type GoalStatus = "Not Started" | "In Progress" | "Completed" | "On Hold";
+
+// Auto-computed from Time Progress vs Goal Progress unless a counselor
+// sets track_override — see src/lib/goals.ts.
+export type TrackIndicator = "on_track" | "behind" | "needs_attention";
+
+export interface CounselingGoal {
+  id: string;
+  plan_id: string;
+  student_id: string;
+  title: string;
+  category: GoalCategory;
+  description: string | null;
+  start_date: string | null;
+  target_completion_date: string | null;
+  priority: GoalPriority;
+  status: GoalStatus;
+  counselor_notes: string | null;
+  track_override: TrackIndicator | null;
+  created_at: string;
+}
+
+export type MilestoneStatus = "Not Started" | "In Progress" | "Completed";
+
+export interface GoalMilestone {
+  id: string;
+  goal_id: string;
+  student_id: string;
+  title: string;
+  due_date: string | null;
+  status: MilestoneStatus;
+  completion_date: string | null;
+  notes: string | null;
+  created_at: string;
+}

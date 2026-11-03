@@ -1488,3 +1488,206 @@ export async function deleteCounselor(counselorId: string) {
   revalidatePath("/students");
   revalidatePath("/");
 }
+
+// ============================================================
+// Grade 8-11 Goal Setting & Target Colleges — same structure for every
+// grade 8-11, kept entirely separate from the Grade 12 college_list
+// Application List machinery above. See src/lib/goals.ts for the
+// Time/Goal Progress math these feed.
+// ============================================================
+
+// Intended Major is a history, never updated in place — this always
+// inserts a new row, so getCurrentMajorGoal() just reads the latest one.
+export async function addMajorGoal(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    student_id: studentId,
+    primary_major: str(formData, "primary_major"),
+    secondary_major: str(formData, "secondary_major"),
+    career_interest: str(formData, "career_interest"),
+    counselor_notes: str(formData, "counselor_notes"),
+  };
+  const { error } = await supabase!.from("major_goals").insert(payload);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function addTargetCollege(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    student_id: studentId,
+    university_name: str(formData, "university_name"),
+    interested_major: str(formData, "interested_major"),
+    priority: str(formData, "priority") ?? "Medium",
+    notes: str(formData, "notes"),
+    date_added: str(formData, "date_added") ?? new Date().toISOString().slice(0, 10),
+  };
+  if (!payload.university_name) throw new Error("대학명은 필수예요.");
+  const { error } = await supabase!.from("target_colleges").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteTargetCollege(studentId: string, targetCollegeId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("target_colleges").delete().eq("id", targetCollegeId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+// Grade 12 transition (Jacob's spec item 13) — copies the selected Target
+// Colleges into college_list (the real Application List) as new "Target"
+// category entries. Never deletes the source target_colleges rows; they
+// stay as a historical record of what the student was considering before
+// senior year. Category defaults to "Target" — a neutral starting point
+// the counselor re-sorts into Reach/Target/Safety from the College Board.
+export async function convertTargetCollegesToCollegeList(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId, "application");
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const selectedIds = formData.getAll("target_college_id").filter((v): v is string => typeof v === "string");
+  if (selectedIds.length === 0) throw new Error("전환할 대학을 선택해주세요.");
+
+  const { data: targets, error: fetchError } = await supabase!
+    .from("target_colleges")
+    .select("id, university_name, interested_major")
+    .in("id", selectedIds);
+  if (fetchError) throw new Error(`조회 실패: ${fetchError.message}`);
+
+  for (const t of targets ?? []) {
+    const { data: inserted, error } = await supabase!
+      .from("college_list")
+      .insert({
+        student_id: studentId,
+        category: "Target",
+        university_name: t.university_name,
+        intended_major: t.interested_major,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`전환 실패: ${error.message}`);
+    const { error: checklistError } = await supabase!.from("application_checklist").insert({ college_list_id: inserted.id });
+    if (checklistError) throw new Error(`체크리스트 생성 실패: ${checklistError.message}`);
+  }
+
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}/college-list`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function createCounselingPlan(studentId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const academicYear = str(formData, "academic_year");
+  if (!academicYear) throw new Error("학년도를 입력해주세요 (예: 2026-2027).");
+  const { error } = await supabase!.from("counseling_plans").insert({ student_id: studentId, academic_year: academicYear });
+  if (error) throw new Error(`생성 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+}
+
+export async function addCounselingGoal(studentId: string, planId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    plan_id: planId,
+    student_id: studentId,
+    title: str(formData, "title"),
+    category: str(formData, "category") ?? "Other",
+    description: str(formData, "description"),
+    start_date: str(formData, "start_date"),
+    target_completion_date: str(formData, "target_completion_date"),
+    priority: str(formData, "priority") ?? "Medium",
+    status: str(formData, "status") ?? "Not Started",
+    counselor_notes: str(formData, "counselor_notes"),
+  };
+  if (!payload.title) throw new Error("Goal Title은 필수예요.");
+  const { error } = await supabase!.from("counseling_goals").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateCounselingGoal(studentId: string, goalId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const trackOverride = str(formData, "track_override");
+  const payload = {
+    title: str(formData, "title"),
+    category: str(formData, "category") ?? "Other",
+    description: str(formData, "description"),
+    start_date: str(formData, "start_date"),
+    target_completion_date: str(formData, "target_completion_date"),
+    priority: str(formData, "priority") ?? "Medium",
+    status: str(formData, "status") ?? "Not Started",
+    counselor_notes: str(formData, "counselor_notes"),
+    track_override: trackOverride, // null clears back to auto-computed
+  };
+  if (!payload.title) throw new Error("Goal Title은 필수예요.");
+  const { error } = await supabase!.from("counseling_goals").update(payload).eq("id", goalId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteCounselingGoal(studentId: string, goalId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("counseling_goals").delete().eq("id", goalId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function addGoalMilestone(studentId: string, goalId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const payload = {
+    goal_id: goalId,
+    student_id: studentId,
+    title: str(formData, "title"),
+    due_date: str(formData, "due_date"),
+    status: str(formData, "status") ?? "Not Started",
+    completion_date: str(formData, "completion_date"),
+    notes: str(formData, "notes"),
+  };
+  if (!payload.title) throw new Error("Milestone Title은 필수예요.");
+  const { error } = await supabase!.from("goal_milestones").insert(payload);
+  if (error) throw new Error(`추가 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function updateGoalMilestone(studentId: string, milestoneId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const status = str(formData, "status") ?? "Not Started";
+  const payload = {
+    title: str(formData, "title"),
+    due_date: str(formData, "due_date"),
+    status,
+    // Auto-stamp completion_date the first time a milestone is marked
+    // Completed, unless the counselor already gave one explicitly.
+    completion_date: str(formData, "completion_date") ?? (status === "Completed" ? new Date().toISOString().slice(0, 10) : null),
+    notes: str(formData, "notes"),
+  };
+  if (!payload.title) throw new Error("Milestone Title은 필수예요.");
+  const { error } = await supabase!.from("goal_milestones").update(payload).eq("id", milestoneId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteGoalMilestone(studentId: string, milestoneId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("goal_milestones").delete().eq("id", milestoneId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}

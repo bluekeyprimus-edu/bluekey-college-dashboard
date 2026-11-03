@@ -6,6 +6,11 @@ import {
   Term,
   Course,
   CourseProgressEntry,
+  MajorGoal,
+  TargetCollege,
+  CounselingPlan,
+  CounselingGoal,
+  GoalMilestone,
   SatScore,
   ActScore,
   ApScore,
@@ -523,3 +528,11 @@ export const mockStudentExpenses: StudentExpense[] = [
   { id: "se1", student_id: "s1", category: "extracurricular", description: "로봇공학 경진대회 참가비", amount: 1200000, expense_date: "2025-06-10", created_at: "2025-06-10T00:00:00Z" },
   { id: "se2", student_id: "s1", category: "essay", description: "에세이 코칭 (외부 강사)", amount: 2500000, expense_date: "2026-08-15", created_at: "2026-08-15T00:00:00Z" },
 ];
+
+// Grade 8-11 Goal Setting — empty in mock/dev mode (no demo data built
+// out yet); the UI shows its normal "아직 없어요" empty states for these.
+export const mockMajorGoals: MajorGoal[] = [];
+export const mockTargetColleges: TargetCollege[] = [];
+export const mockCounselingPlans: CounselingPlan[] = [];
+export const mockCounselingGoals: CounselingGoal[] = [];
+export const mockGoalMilestones: GoalMilestone[] = [];

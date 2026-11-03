@@ -21,8 +21,14 @@ import {
   getTasks,
   getConsultationNotes,
   getAttachments,
+  getCurrentMajorGoal,
+  getTargetColleges,
+  getCounselingPlans,
+  getCounselingGoals,
+  getGoalMilestones,
 } from "@/lib/data";
 import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades, isLowGrade } from "@/lib/gpa";
+import { overallGoalProgress, progressByCategory, monthlyRoadmap, monthLabelKorean } from "@/lib/goals";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 import {
@@ -34,8 +40,10 @@ import {
   TASK_STATUS_LABEL,
   SUBJECT_CATEGORY_LABEL,
   TERM_NOUN,
+  GOAL_CATEGORY_LABEL,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -91,7 +99,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const student = await getStudent(studentId);
   if (!student) notFound();
 
-  const [academic, gradeRecords, terms, courses, courseProgressEntries, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
+  const [academic, gradeRecords, terms, courses, courseProgressEntries, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments, currentMajorGoal, targetColleges, counselingPlans] =
     await Promise.all([
       getAcademicOverview(studentId),
       getGradeRecords(studentId),
@@ -109,7 +117,19 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       getTasks(studentId),
       getConsultationNotes(studentId),
       getAttachments(studentId),
+      getCurrentMajorGoal(studentId),
+      getTargetColleges(studentId),
+      getCounselingPlans(studentId),
     ]);
+
+  // Grade 8-11 only (same gate as the counselor-side /goals page). The
+  // most recent plan (by created_at) stands in for "current year".
+  const isGoalSettingGrade = student.current_grade <= 11;
+  const currentPlan = counselingPlans[0] ?? null;
+  const [counselingGoals, allGoalMilestones] = currentPlan
+    ? await Promise.all([getCounselingGoals(currentPlan.id), getGoalMilestones(studentId)])
+    : [[], []];
+  const goalMilestones = allGoalMilestones.filter((m) => counselingGoals.some((g) => g.id === m.goal_id));
 
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const bestAct = act.length ? Math.max(...act.map((a) => a.composite)) : null;
@@ -834,6 +854,91 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
     </Card>
   );
 
+  const overallGoalPct = overallGoalProgress(counselingGoals, goalMilestones);
+  const goalCategoryBreakdown = progressByCategory(counselingGoals, goalMilestones);
+  const currentFocusGoals = counselingGoals.filter((g) => g.status === "In Progress" || g.status === "Not Started").slice(0, 5);
+  const fullRoadmap = monthlyRoadmap(counselingGoals, goalMilestones);
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonthRoadmap = fullRoadmap.find((r) => r.month === thisMonth);
+
+  const goalsCard = isGoalSettingGrade ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Goals</CardTitle>
+      </CardHeader>
+      <CardBody className="space-y-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Primary Intended Major</div>
+            <div className="mt-0.5 text-sm text-navy-900">{currentMajorGoal?.primary_major ?? "—"}</div>
+          </div>
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Target Colleges</div>
+            <div className="mt-0.5 flex flex-wrap gap-1.5">
+              {targetColleges.length === 0 && <span className="text-sm text-navy-400">—</span>}
+              {targetColleges.map((t) => (
+                <Pill key={t.id} tone="neutral">
+                  {t.university_name}
+                </Pill>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {currentPlan && (
+          <>
+            <div className="border-t border-navy-100 pt-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">
+                Current Year Goals ({currentPlan.academic_year})
+              </div>
+              {goalCategoryBreakdown.length === 0 && <p className="text-sm text-navy-400">등록된 Goal이 아직 없어요.</p>}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {goalCategoryBreakdown.map((c) => (
+                  <div key={c.category}>
+                    <div className="mb-1 flex items-center justify-between text-xs text-navy-500">
+                      <span>{GOAL_CATEGORY_LABEL[c.category]}</span>
+                      <span>{c.progress}%</span>
+                    </div>
+                    <ProgressBar value={c.progress} size="sm" />
+                  </div>
+                ))}
+              </div>
+              {overallGoalPct !== null && (
+                <div className="mt-3 text-xs text-navy-500">Overall — {overallGoalPct}%</div>
+              )}
+            </div>
+
+            {currentFocusGoals.length > 0 && (
+              <div className="border-t border-navy-100 pt-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">Current Focus</div>
+                <ul className="list-disc space-y-1 pl-4 text-sm text-navy-700">
+                  {currentFocusGoals.map((g) => (
+                    <li key={g.id}>{g.title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {thisMonthRoadmap && thisMonthRoadmap.items.length > 0 && (
+              <div className="border-t border-navy-100 pt-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">
+                  Monthly Roadmap · {monthLabelKorean(thisMonth)}
+                </div>
+                <ul className="space-y-1 text-sm text-navy-700">
+                  {thisMonthRoadmap.items.map(({ milestone }) => (
+                    <li key={milestone.id} className={milestone.status === "Completed" ? "text-navy-400 line-through" : undefined}>
+                      {milestone.title}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </CardBody>
+    </Card>
+  ) : null;
+
   const notYetApplyingCard = (
     <Card>
       <CardHeader>
@@ -853,6 +958,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       {activityCard}
       {academicsRow}
       {ecAwardsCard}
+      {goalsCard}
       {isApplicationStage ? (
         <>
           {collegeListCard}
@@ -866,7 +972,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         <>
           {consultationCard}
           {tasksCard}
-          {notYetApplyingCard}
+          {!isGoalSettingGrade && notYetApplyingCard}
         </>
       )}
     </div>

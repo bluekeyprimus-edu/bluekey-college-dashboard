@@ -27,6 +27,11 @@ import {
   StudentFinance,
   StudentExpense,
   StudentAccess,
+  MajorGoal,
+  TargetCollege,
+  CounselingPlan,
+  CounselingGoal,
+  GoalMilestone,
 } from "./types";
 
 // Thin data-access layer. When NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are set
@@ -339,6 +344,7 @@ export async function getRosterRows(): Promise<RosterRow[]> {
   const { overallProgress, nextDeadline, pendingTaskCount, trackStatusFromProgress, computeAttentionFlags, overdueTaskCount, collectDeadlineItems } =
     await import("./progress");
   const { computeAcademicSnapshot, computeEcSnapshot, computeCollegeListSnapshot, computeApplicationStatusSnapshot } = await import("./snapshots");
+  const { trackIndicator, overdueMilestones } = await import("./goals");
   const students = await getStudents();
   // Fetch every student's progress/colleges/tasks/notes/academics/ECs in
   // parallel instead of one student, one field at a time — with N
@@ -357,6 +363,16 @@ export async function getRosterRows(): Promise<RosterRow[]> {
         getCourses(student.id),
         getExtracurriculars(student.id),
       ]);
+      // Grade 8-11 Counseling Plan goals feed the Attention Needed panel
+      // (Jacob's spec item 15) — skip the extra queries for Grade 12,
+      // which doesn't use this system.
+      const isGoalSettingGrade = student.current_grade !== null && student.current_grade <= 11;
+      const counselingPlans = isGoalSettingGrade ? await getCounselingPlans(student.id) : [];
+      const currentPlan = counselingPlans[0] ?? null;
+      const [counselingGoals, allGoalMilestones] = currentPlan
+        ? await Promise.all([getCounselingGoals(currentPlan.id), getGoalMilestones(student.id)])
+        : [[], []];
+      const goalMilestones = allGoalMilestones.filter((m) => counselingGoals.some((g) => g.id === m.goal_id));
       const progressPct = progressRow ? overallProgress(progressRow, student.current_grade) : 0;
       const deadline = nextDeadline(colleges);
       const lastCounselingDate = notes.reduce<string | null>(
@@ -379,6 +395,23 @@ export async function getRosterRows(): Promise<RosterRow[]> {
       // to surface, so fold them in alongside the deadline/progress flags.
       for (const alert of collegeListSnapshot.alerts) {
         attentionFlags.push({ severity: "yellow", label: alert, href: `/students/${student.id}/college-list` });
+      }
+      // Grade 8-11 Counseling Plan goals/milestones running behind.
+      for (const g of counselingGoals) {
+        const track = trackIndicator(g, goalMilestones);
+        if (track === "needs_attention") {
+          attentionFlags.push({ severity: "red", label: `${g.title} Goal needs attention`, href: `/students/${student.id}/goals` });
+        } else if (track === "behind") {
+          attentionFlags.push({ severity: "yellow", label: `${g.title} Goal behind schedule`, href: `/students/${student.id}/goals` });
+        }
+      }
+      const overdueMilestoneCount = overdueMilestones(goalMilestones).length;
+      if (overdueMilestoneCount > 0) {
+        attentionFlags.push({
+          severity: "red",
+          label: `Milestone ${overdueMilestoneCount}개 기한 초과`,
+          href: `/students/${student.id}/goals`,
+        });
       }
 
       return {
@@ -416,4 +449,70 @@ export async function getCounselors(): Promise<Counselor[]> {
   if (!isSupabaseConfigured) return mock.mockCounselors;
   const { data } = await supabase!.from("counselors").select("*").order("name");
   return (data as Counselor[]) ?? mock.mockCounselors;
+}
+
+// ============================================================
+// Grade 8-11 Goal Setting & Target Colleges
+// ============================================================
+
+/** The student's current Intended Major — simply the most recent
+ * major_goals row (changing the major inserts a new row rather than
+ * updating in place; see addMajorGoal in actions.ts). */
+export async function getCurrentMajorGoal(studentId: string): Promise<MajorGoal | null> {
+  const history = await getMajorGoalHistory(studentId);
+  return history[0] ?? null;
+}
+
+export async function getMajorGoalHistory(studentId: string): Promise<MajorGoal[]> {
+  if (!isSupabaseConfigured) return mock.mockMajorGoals.filter((m) => m.student_id === studentId);
+  const { data } = await supabase!
+    .from("major_goals")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  return (data as MajorGoal[]) ?? [];
+}
+
+export async function getTargetColleges(studentId: string): Promise<TargetCollege[]> {
+  if (!isSupabaseConfigured) return mock.mockTargetColleges.filter((c) => c.student_id === studentId);
+  const { data } = await supabase!
+    .from("target_colleges")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("priority")
+    .order("university_name");
+  return (data as TargetCollege[]) ?? [];
+}
+
+export async function getCounselingPlans(studentId: string): Promise<CounselingPlan[]> {
+  if (!isSupabaseConfigured) return mock.mockCounselingPlans.filter((p) => p.student_id === studentId);
+  const { data } = await supabase!
+    .from("counseling_plans")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  return (data as CounselingPlan[]) ?? [];
+}
+
+export async function getCounselingGoals(planId: string): Promise<CounselingGoal[]> {
+  if (!isSupabaseConfigured) return mock.mockCounselingGoals.filter((g) => g.plan_id === planId);
+  const { data } = await supabase!.from("counseling_goals").select("*").eq("plan_id", planId).order("created_at");
+  return (data as CounselingGoal[]) ?? [];
+}
+
+/** Every milestone across every goal this student has — callers filter by
+ * goal_id as needed (same pattern as getCourseProgressEntries). */
+export async function getGoalMilestones(studentId: string): Promise<GoalMilestone[]> {
+  if (!isSupabaseConfigured) return mock.mockGoalMilestones.filter((m) => m.student_id === studentId);
+  const { data } = await supabase!.from("goal_milestones").select("*").eq("student_id", studentId).order("due_date");
+  return (data as GoalMilestone[]) ?? [];
+}
+
+/** Every goal across every one of this student's plans — used where a
+ * single student's goals need to be read without picking a plan first
+ * (e.g. the Dashboard's Attention Needed flags). */
+export async function getAllCounselingGoals(studentId: string): Promise<CounselingGoal[]> {
+  if (!isSupabaseConfigured) return mock.mockCounselingGoals.filter((g) => g.student_id === studentId);
+  const { data } = await supabase!.from("counseling_goals").select("*").eq("student_id", studentId).order("created_at");
+  return (data as CounselingGoal[]) ?? [];
 }

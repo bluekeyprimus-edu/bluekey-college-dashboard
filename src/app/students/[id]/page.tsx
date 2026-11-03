@@ -16,13 +16,15 @@ import {
   getPersonalStatement,
   getSupplementalEssays,
   getConsultationNotes,
+  getCurrentMajorGoal,
+  getTargetColleges,
 } from "@/lib/data";
 import { getParentAccountsForStudent } from "@/lib/parent";
 import { createParentAccount, deleteParentAccount, updateStudentProgress } from "@/lib/actions";
 import { overallProgress } from "@/lib/progress";
 import { computeCumulativeGpa } from "@/lib/gpa";
 import { PROGRESS_CATEGORY_LABELS, StudentProgress } from "@/lib/types";
-import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_LABEL } from "@/lib/labels";
+import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL, EC_STATUS_LABEL, ESSAY_STATUS_LABEL, GOAL_PRIORITY_LABEL } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Pill } from "@/components/ui/Pill";
@@ -50,7 +52,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const canViewEc = access.canViewAll || access.canViewEc;
   const canViewApplication = access.canViewAll || access.canViewApplication;
 
-  const [progress, academic, gradeRecords, terms, courses, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts, consultationNotes] =
+  const [progress, academic, gradeRecords, terms, courses, sat, ecs, awards, colleges, tasks, personalStatement, supplementalEssays, parentAccounts, consultationNotes, currentMajorGoal, targetColleges] =
     await Promise.all([
       getProgress(id),
       getAcademicOverview(id),
@@ -66,7 +68,12 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       getSupplementalEssays(id),
       getParentAccountsForStudent(id),
       getConsultationNotes(id),
+      getCurrentMajorGoal(id),
+      getTargetColleges(id),
     ]);
+  // Grade 8-11 only (spec item 1/3) — Grade 12 uses the real college_list
+  // Application List instead of Target Colleges.
+  const isGoalSettingGrade = student.current_grade !== null && student.current_grade <= 11;
 
   const overall = progress ? overallProgress(progress, student.current_grade) : 0;
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
@@ -332,7 +339,47 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         </Card>
       )}
 
-      {canViewAll && (
+      {canViewApplication && isGoalSettingGrade && (
+        <Card>
+          <CardHeader className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>전공 & 목표 대학 (College & Major Goals)</CardTitle>
+            <Link href={`/students/${student.id}/goals`} className="text-xs font-medium text-gold-600 hover:text-gold-700">
+              목표 & 카운슬링 플랜 관리 →
+            </Link>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <ProfileField label="Primary Intended Major" value={currentMajorGoal?.primary_major} />
+                <ProfileField label="Secondary / Exploring Major" value={currentMajorGoal?.secondary_major} />
+                <ProfileField label="Career Interest" value={currentMajorGoal?.career_interest} />
+              </div>
+              <div>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">Target Colleges</div>
+                {targetColleges.length === 0 && <p className="text-sm text-navy-400">등록된 Target College가 아직 없어요.</p>}
+                <div className="space-y-2">
+                  {targetColleges.slice(0, 5).map((t) => (
+                    <div key={t.id} className="flex items-center justify-between rounded-lg border border-navy-100 px-3 py-2">
+                      <div>
+                        <div className="text-sm font-medium text-navy-900">{t.university_name}</div>
+                        <div className="text-xs text-navy-400">{t.interested_major ?? "전공 미정"}</div>
+                      </div>
+                      <Pill tone={t.priority === "High" ? "red" : t.priority === "Medium" ? "amber" : "neutral"}>
+                        {GOAL_PRIORITY_LABEL[t.priority]}
+                      </Pill>
+                    </div>
+                  ))}
+                  {targetColleges.length > 5 && (
+                    <p className="text-xs text-navy-400">외 {targetColleges.length - 5}개 더 있어요.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+            {canViewAll && (
         <Card>
           <CardHeader className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>상담 내역</CardTitle>
