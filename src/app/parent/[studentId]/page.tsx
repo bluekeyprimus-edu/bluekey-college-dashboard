@@ -500,7 +500,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                                       {(c.grade_scale === "letter" ? c.letter_grade : c.grade_scale === "100_point" ? c.point_score : c.custom_grade) ?? "—"}
                                     </span>
                                     {" · "}
-                                    {c.course_level}
+                                    {c.course_level ?? "미정"}
                                     {c.subject_category ? ` · ${SUBJECT_CATEGORY_LABEL[c.subject_category]}` : ""}
                                   </span>
                                 </div>

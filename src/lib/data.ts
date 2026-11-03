@@ -8,6 +8,7 @@ import {
   GradeRecord,
   Term,
   Course,
+  CourseProgressEntry,
   SatScore,
   ActScore,
   ApScore,
@@ -152,6 +153,21 @@ export async function getCourses(studentId: string): Promise<Course[]> {
   if (!isSupabaseConfigured) return mock.mockCourses.filter((c) => c.student_id === studentId);
   const { data } = await supabase!.from("courses").select("*").eq("student_id", studentId);
   return (data as Course[]) ?? [];
+}
+
+// Progress Grade history, newest first — used by the Academic Record page
+// to show each course's "Grade History" (see src/lib/gpa.ts for how the
+// latest entry always mirrors the course's own letter_grade/point_score/
+// custom_grade cache).
+export async function getCourseProgressEntries(studentId: string): Promise<CourseProgressEntry[]> {
+  if (!isSupabaseConfigured) return mock.mockCourseProgressEntries.filter((e) => e.student_id === studentId);
+  const { data } = await supabase!
+    .from("course_progress_entries")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("recorded_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  return (data as CourseProgressEntry[]) ?? [];
 }
 
 export async function getSatScores(studentId: string): Promise<SatScore[]> {

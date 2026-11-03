@@ -122,6 +122,9 @@ create table if not exists terms (
   term_number int not null,
   manual_unweighted_gpa numeric(4,3),
   manual_weighted_gpa numeric(4,3),
+  -- Set when a counselor explicitly "Finalizes" this term. Null = Planned
+  -- / In Progress (see computeTermStatus in src/lib/gpa.ts). Reversible.
+  finalized_at timestamptz,
   created_at timestamptz default now(),
   unique(grade_record_id, term_number)
 );
@@ -134,19 +137,46 @@ create table if not exists courses (
   student_id uuid references students(id) on delete cascade,
   course_name text not null,
   subject_category text check (subject_category in ('English','Math','Science','Social Studies','Foreign Language','Arts','Computer Science','Physical Education','Other')),
-  course_level text not null check (course_level in ('Regular','Honors','Advanced','AP','IB SL','IB HL','A-Level','Dual Enrollment','College Level','Other')),
+  -- Optional — a course can be registered before its level is decided.
+  course_level text check (course_level in ('Regular','Honors','Advanced','AP','IB SL','IB HL','A-Level','Dual Enrollment','College Level','Other')),
   credit numeric(4,2) not null default 1,
   grade_scale text not null default 'letter' check (grade_scale in ('letter','100_point','custom')),
-  -- Exactly one of these three is populated, matching grade_scale.
-  -- 'custom' grades (e.g. Pass/Fail) are shown as-is but excluded from
-  -- the GPA calculation entirely.
+  -- Progress/Current grade — a cache of the latest course_progress_entries
+  -- row (below). Exactly one of these three is populated, matching
+  -- grade_scale. 'custom' grades (e.g. Pass/Fail) are shown as-is but
+  -- excluded from the GPA calculation entirely.
   letter_grade text,
   point_score numeric(5,2),
   custom_grade text,
+  -- Final grade — set once, separately, after the school posts the
+  -- official grade. Never auto-filled from the Progress grade above.
+  final_letter_grade text,
+  final_point_score numeric(5,2),
+  final_custom_grade text,
   created_at timestamptz default now()
 );
 create index if not exists idx_courses_term on courses(term_id);
 create index if not exists idx_courses_student on courses(student_id);
+
+-- Progress Grade history — one row per weekly (or ad-hoc) check-in, never
+-- overwritten, so a counselor can see whether a grade is trending up or
+-- down over the term. The owning course's letter_grade/point_score/
+-- custom_grade always mirrors the latest entry here (see
+-- updateProgressGradesForTerm in src/lib/actions.ts).
+create table if not exists course_progress_entries (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid references courses(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  recorded_date date not null default current_date,
+  letter_grade text,
+  point_score numeric(5,2),
+  custom_grade text,
+  note text,
+  counselor_id uuid references counselors(id) on delete set null,
+  created_at timestamptz default now()
+);
+create index if not exists idx_course_progress_entries_course on course_progress_entries(course_id);
+create index if not exists idx_course_progress_entries_student on course_progress_entries(student_id);
 
 -- ============================================================
 -- Standardized Testing (Section 3)

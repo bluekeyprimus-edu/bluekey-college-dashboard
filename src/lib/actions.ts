@@ -358,7 +358,9 @@ export async function addCourse(studentId: string, termId: string, formData: For
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
 
-  const gradeScale = str(formData, "grade_scale") ?? "letter";
+  // Course registration is deliberately grade-free — a course can be
+  // planned before the semester even starts. Progress/Final grades are
+  // added later via updateProgressGradesForTerm / setCourseFinalGrade.
   const payload = {
     term_id: termId,
     student_id: studentId,
@@ -366,13 +368,10 @@ export async function addCourse(studentId: string, termId: string, formData: For
     subject_category: str(formData, "subject_category"),
     course_level: str(formData, "course_level"),
     credit: num(formData, "credit") ?? 1,
-    grade_scale: gradeScale,
-    letter_grade: gradeScale === "letter" ? str(formData, "letter_grade") : null,
-    point_score: gradeScale === "100_point" ? num(formData, "point_score") : null,
-    custom_grade: gradeScale === "custom" ? str(formData, "custom_grade") : null,
+    grade_scale: str(formData, "grade_scale") ?? "letter",
   };
-  if (!payload.course_name || !payload.course_level) {
-    throw new Error("과목명과 Course Level은 필수예요.");
+  if (!payload.course_name) {
+    throw new Error("Course Name은 필수예요.");
   }
 
   const { error } = await supabase!.from("courses").insert(payload);
@@ -387,6 +386,126 @@ export async function deleteCourse(studentId: string, courseId: string) {
   const { error } = await supabase!.from("courses").delete().eq("id", courseId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/academics`);
+}
+
+// ============================================================
+// Academic Record — Progress Grade (weekly check-in, history-preserving)
+// and Final Grade (one-time, official, separate from Progress entirely).
+// See src/lib/gpa.ts for how the two feed Current/Progress GPA vs Final
+// GPA without ever mixing.
+// ============================================================
+
+// One Term's worth of Progress grades, updated together in one submit —
+// the counselor's actual weekly workflow (see academics/page.tsx's
+// "진행 성적 일괄 업데이트"). Fields are named grade_<courseId>; a course
+// whose field is left blank is simply skipped (not every course gets a
+// check-in every week), and an optional shared note applies to every
+// entry created in this one batch.
+export async function updateProgressGradesForTerm(studentId: string, termId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const { data: termCourses, error: coursesError } = await supabase!
+    .from("courses")
+    .select("id, grade_scale")
+    .eq("term_id", termId);
+  if (coursesError) throw new Error(`조회 실패: ${coursesError.message}`);
+
+  const counselor = await getCurrentCounselor();
+  const recordedDate = new Date().toISOString().slice(0, 10);
+  const note = str(formData, "note");
+
+  const entries: {
+    course_id: string;
+    student_id: string;
+    recorded_date: string;
+    letter_grade: string | null;
+    point_score: number | null;
+    custom_grade: string | null;
+    note: string | null;
+    counselor_id: string | null;
+  }[] = [];
+  const updates: { id: string; letter_grade: string | null; point_score: number | null; custom_grade: string | null }[] = [];
+
+  for (const c of termCourses ?? []) {
+    const raw = formData.get(`grade_${c.id}`);
+    if (typeof raw !== "string" || raw.trim() === "") continue;
+    const value = raw.trim();
+    const letter_grade = c.grade_scale === "letter" ? value : null;
+    const point_score = c.grade_scale === "100_point" ? Number(value) : null;
+    const custom_grade = c.grade_scale === "custom" ? value : null;
+    entries.push({
+      course_id: c.id,
+      student_id: studentId,
+      recorded_date: recordedDate,
+      letter_grade,
+      point_score,
+      custom_grade,
+      note,
+      counselor_id: counselor?.id ?? null,
+    });
+    updates.push({ id: c.id, letter_grade, point_score, custom_grade });
+  }
+
+  if (entries.length === 0) return; // nothing filled in — silently no-op
+
+  const { error: entryError } = await supabase!.from("course_progress_entries").insert(entries);
+  if (entryError) throw new Error(`저장 실패: ${entryError.message}`);
+
+  for (const u of updates) {
+    const { error: updateError } = await supabase!
+      .from("courses")
+      .update({ letter_grade: u.letter_grade, point_score: u.point_score, custom_grade: u.custom_grade })
+      .eq("id", u.id);
+    if (updateError) throw new Error(`저장 실패: ${updateError.message}`);
+  }
+
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+// A course's one-time official Final Grade. Leaving the field blank clears
+// it back to unconfirmed (never auto-filled from the Progress grade).
+export async function setCourseFinalGrade(studentId: string, courseId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const { data: course, error: courseError } = await supabase!.from("courses").select("grade_scale").eq("id", courseId).single();
+  if (courseError || !course) throw new Error("과목을 찾을 수 없어요.");
+
+  const gradeScale = course.grade_scale as string;
+  const payload = {
+    final_letter_grade: gradeScale === "letter" ? str(formData, "final_grade_value") : null,
+    final_point_score: gradeScale === "100_point" ? num(formData, "final_grade_value") : null,
+    final_custom_grade: gradeScale === "custom" ? str(formData, "final_grade_value") : null,
+  };
+
+  const { error } = await supabase!.from("courses").update(payload).eq("id", courseId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+// Marks a Term "Finalized" (see computeTermStatus) — a pure status flag.
+// Does NOT copy Progress grades into Final grades; a counselor still sets
+// each course's Final Grade separately. Reversible via reopenTerm.
+export async function finalizeTerm(studentId: string, termId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("terms").update({ finalized_at: new Date().toISOString() }).eq("id", termId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function reopenTerm(studentId: string, termId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const { error } = await supabase!.from("terms").update({ finalized_at: null }).eq("id", termId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
 }
 
 // ============================================================

@@ -25,6 +25,12 @@ export function computeCourseLevelCounts(courses: Course[]): CourseLevelCounts {
   };
 }
 
+/** course_level is optional (a course can be registered before its level
+ * is decided) — treat an unset level like "Other" for the weighting below. */
+function effectiveCourseLevel(course: Course): CourseLevel {
+  return course.course_level ?? "Other";
+}
+
 // ============================================================
 // GPA calculation
 //
@@ -131,7 +137,7 @@ export function computeGpaFromCourses(courses: Course[]): ComputedGpa {
     const credit = c.credit || 1;
     creditSum += credit;
     unweightedSum += base * credit;
-    weightedSum += (base + WEIGHT_BUMP[c.course_level]) * credit;
+    weightedSum += (base + WEIGHT_BUMP[effectiveCourseLevel(c)]) * credit;
   }
   return {
     unweighted: creditSum > 0 ? round3(unweightedSum / creditSum) : null,
@@ -239,4 +245,166 @@ export function computeGpaTrendFromGrades(gradeRecords: GradeRecord[], terms: Te
   if (last > first + 0.05) return "상승 추세";
   if (last < first - 0.05) return "하락 추세";
   return "안정적";
+}
+
+// ============================================================
+// Final GPA — strictly from each course's Final Grade, completely
+// separate from the Progress/Current GPA above. A course with no Final
+// Grade yet is excluded from the math (never falls back to its Progress
+// grade), and the result's `status` tells the UI whether to show real
+// numbers, "Pending", or a "Partial" count — never present a Final GPA
+// as settled when some courses in scope still aren't confirmed.
+// ============================================================
+
+/** True once a course's Final Grade has been entered (whatever the grade
+ * scale — including a "custom" grade like Pass, which still counts as
+ * confirmed even though it doesn't feed the GPA number itself). */
+export function courseHasFinalGrade(course: Course): boolean {
+  if (course.grade_scale === "letter") return course.final_letter_grade !== null;
+  if (course.grade_scale === "100_point") return course.final_point_score !== null;
+  return course.final_custom_grade !== null;
+}
+
+/** Final-grade counterpart to courseBasePoints — null if no Final Grade is
+ * set yet, or if it's a "custom" grade excluded from GPA math. */
+export function courseFinalPoints(course: Course): number | null {
+  if (course.grade_scale === "letter") {
+    if (!course.final_letter_grade) return null;
+    return LETTER_GRADE_POINTS[course.final_letter_grade] ?? null;
+  }
+  if (course.grade_scale === "100_point") {
+    if (course.final_point_score === null) return null;
+    return pointScoreToGradePoints(course.final_point_score);
+  }
+  return null;
+}
+
+/** Same "B+ and below" warning signal as isLowGrade, but for the Final
+ * Grade — used once a course is confirmed so a counselor can still spot a
+ * low official grade even after the Progress-grade warning is gone. */
+export function isLowFinalGrade(course: Course): boolean {
+  if (course.grade_scale === "letter") {
+    return course.final_letter_grade !== null && LOW_LETTER_GRADES.has(course.final_letter_grade);
+  }
+  if (course.grade_scale === "100_point") {
+    return course.final_point_score !== null && course.final_point_score < LOW_POINT_SCORE_CEILING;
+  }
+  return false;
+}
+
+export interface FinalGpaResult {
+  unweighted: number | null;
+  weighted: number | null;
+  totalCredits: number;
+  totalCourses: number; // every course in scope, confirmed or not
+  confirmedCount: number; // courses with a Final Grade set
+  status: "no_courses" | "pending" | "partial" | "complete";
+}
+
+function finalStatus(confirmedCount: number, totalCourses: number): FinalGpaResult["status"] {
+  if (totalCourses === 0) return "no_courses";
+  if (confirmedCount === 0) return "pending";
+  if (confirmedCount === totalCourses) return "complete";
+  return "partial";
+}
+
+/** Credit-weighted Final GPA across a flat list of courses — only courses
+ * with courseHasFinalGrade(c) contribute credits/points. */
+export function computeFinalGpaFromCourses(courses: Course[]): FinalGpaResult {
+  let creditSum = 0;
+  let unweightedSum = 0;
+  let weightedSum = 0;
+  let confirmedCount = 0;
+  for (const c of courses) {
+    if (!courseHasFinalGrade(c)) continue;
+    confirmedCount += 1;
+    const base = courseFinalPoints(c);
+    if (base === null) continue; // confirmed but a custom grade — not GPA math
+    const credit = c.credit || 1;
+    creditSum += credit;
+    unweightedSum += base * credit;
+    weightedSum += (base + WEIGHT_BUMP[effectiveCourseLevel(c)]) * credit;
+  }
+  return {
+    unweighted: creditSum > 0 ? round3(unweightedSum / creditSum) : null,
+    weighted: creditSum > 0 ? round3(weightedSum / creditSum) : null,
+    totalCredits: creditSum,
+    totalCourses: courses.length,
+    confirmedCount,
+    status: finalStatus(confirmedCount, courses.length),
+  };
+}
+
+/** A term's Final GPA — no manual override (that escape hatch stays on
+ * the Progress/Current GPA only; see computeTermGpa). */
+export function computeTermFinalGpa(term: Term, courses: Course[]): FinalGpaResult {
+  return computeFinalGpaFromCourses(courses.filter((c) => c.term_id === term.id));
+}
+
+/** A grade (year)'s Final GPA — credit-weighted roll-up of its terms'
+ * Final GPA, with confirmedCount/totalCourses summed across terms so the
+ * "X/Y confirmed" indicator stays accurate at every level. */
+export function computeGradeFinalGpa(gradeRecord: GradeRecord, terms: Term[], courses: Course[]): FinalGpaResult {
+  const gradeTerms = terms.filter((t) => t.grade_record_id === gradeRecord.id);
+  let creditSum = 0;
+  let unweightedSum = 0;
+  let weightedSum = 0;
+  let totalCourses = 0;
+  let confirmedCount = 0;
+  for (const t of gradeTerms) {
+    const eff = computeTermFinalGpa(t, courses);
+    totalCourses += eff.totalCourses;
+    confirmedCount += eff.confirmedCount;
+    if (eff.totalCredits === 0) continue;
+    creditSum += eff.totalCredits;
+    if (eff.unweighted !== null) unweightedSum += eff.unweighted * eff.totalCredits;
+    if (eff.weighted !== null) weightedSum += eff.weighted * eff.totalCredits;
+  }
+  return {
+    unweighted: creditSum > 0 ? round3(unweightedSum / creditSum) : null,
+    weighted: creditSum > 0 ? round3(weightedSum / creditSum) : null,
+    totalCredits: creditSum,
+    totalCourses,
+    confirmedCount,
+    status: finalStatus(confirmedCount, totalCourses),
+  };
+}
+
+/** Cumulative Final GPA across every grade on record. */
+export function computeCumulativeFinalGpa(gradeRecords: GradeRecord[], terms: Term[], courses: Course[]): FinalGpaResult {
+  let creditSum = 0;
+  let unweightedSum = 0;
+  let weightedSum = 0;
+  let totalCourses = 0;
+  let confirmedCount = 0;
+  for (const g of gradeRecords) {
+    const eff = computeGradeFinalGpa(g, terms, courses);
+    totalCourses += eff.totalCourses;
+    confirmedCount += eff.confirmedCount;
+    if (eff.totalCredits === 0) continue;
+    creditSum += eff.totalCredits;
+    if (eff.unweighted !== null) unweightedSum += eff.unweighted * eff.totalCredits;
+    if (eff.weighted !== null) weightedSum += eff.weighted * eff.totalCredits;
+  }
+  return {
+    unweighted: creditSum > 0 ? round3(unweightedSum / creditSum) : null,
+    weighted: creditSum > 0 ? round3(weightedSum / creditSum) : null,
+    totalCredits: creditSum,
+    totalCourses,
+    confirmedCount,
+    status: finalStatus(confirmedCount, totalCourses),
+  };
+}
+
+export type TermStatus = "planned" | "in_progress" | "finalized";
+
+/** Derived term status (see Term.finalized_at) — "finalized" once
+ * explicitly marked so, else "in_progress" as soon as any course in the
+ * term has a Progress grade recorded, else "planned" (courses registered,
+ * nothing graded yet). */
+export function computeTermStatus(term: Term, courses: Course[]): TermStatus {
+  if (term.finalized_at) return "finalized";
+  const termCourses = courses.filter((c) => c.term_id === term.id);
+  const hasProgress = termCourses.some((c) => c.letter_grade !== null || c.point_score !== null || c.custom_grade !== null);
+  return hasProgress ? "in_progress" : "planned";
 }

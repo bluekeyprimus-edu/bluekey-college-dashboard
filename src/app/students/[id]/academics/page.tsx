@@ -7,6 +7,7 @@ import {
   getGradeRecords,
   getTerms,
   getCourses,
+  getCourseProgressEntries,
   getSatScores,
   getActScores,
   getAttachments,
@@ -21,6 +22,10 @@ import {
   setTermGpaOverride,
   addCourse,
   deleteCourse,
+  updateProgressGradesForTerm,
+  setCourseFinalGrade,
+  finalizeTerm,
+  reopenTerm,
   addSatScore,
   deleteSatScore,
   addActScore,
@@ -31,8 +36,15 @@ import {
   computeGradeGpa,
   computeTermGpa,
   computeCumulativeGpa,
+  computeGradeFinalGpa,
+  computeTermFinalGpa,
+  computeCumulativeFinalGpa,
+  computeTermStatus,
   computeGpaTrendFromGrades,
   isLowGrade,
+  courseHasFinalGrade,
+  FinalGpaResult,
+  TermStatus,
 } from "@/lib/gpa";
 import {
   COURSE_LEVEL_OPTIONS,
@@ -41,13 +53,14 @@ import {
   TERM_SYSTEM_OPTIONS,
   TERM_SYSTEM_LABEL,
   TERM_NOUN,
+  LETTER_GRADE_OPTIONS,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AttachmentsSection } from "@/components/students/AttachmentsSection";
 import { CourseGradeInput } from "@/components/students/CourseGradeInput";
-import type { Course } from "@/lib/types";
+import type { Course, CourseProgressEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +92,95 @@ function courseGradeDisplay(c: Course): string {
   return c.custom_grade ?? "—";
 }
 
+function progressEntryGradeDisplay(e: CourseProgressEntry): string {
+  if (e.letter_grade !== null) return e.letter_grade;
+  if (e.point_score !== null) return String(e.point_score);
+  return e.custom_grade ?? "—";
+}
+
+// "Pending" until at least one course is confirmed, "Partial (x/y)" once
+// some but not all are, and the plain number only once every course in
+// scope has a Final Grade — never implies a Final GPA is settled when it
+// isn't (see src/lib/gpa.ts computeFinalGpaFromCourses).
+function finalGpaValueText(r: FinalGpaResult, which: "unweighted" | "weighted"): string {
+  if (r.status === "no_courses") return "—";
+  if (r.status === "pending") return "Pending";
+  const v = which === "unweighted" ? r.unweighted : r.weighted;
+  const base = gpaText(v);
+  return r.status === "partial" ? `${base} (${r.confirmedCount}/${r.totalCourses})` : base;
+}
+
+function finalGpaLine(r: FinalGpaResult): string {
+  if (r.status === "no_courses") return "—";
+  if (r.status === "pending") return "Pending";
+  if (r.status === "partial") return `Partial (${r.confirmedCount}/${r.totalCourses} 확정) · ${gpaText(r.unweighted)} / ${gpaText(r.weighted)}`;
+  return `${gpaText(r.unweighted)} / ${gpaText(r.weighted)}`;
+}
+
+const TERM_STATUS_LABEL: Record<TermStatus, string> = {
+  planned: "Planned",
+  in_progress: "In Progress",
+  finalized: "Finalized",
+};
+
+const TERM_STATUS_TONE: Record<TermStatus, "neutral" | "green" | "gold"> = {
+  planned: "neutral",
+  in_progress: "green",
+  finalized: "gold",
+};
+
+function FinalGradeField({ course, className }: { course: Course; className: string }) {
+  if (course.grade_scale === "letter") {
+    return (
+      <select name="final_grade_value" defaultValue={course.final_letter_grade ?? ""} className={className}>
+        <option value="">—</option>
+        {LETTER_GRADE_OPTIONS.map((lg) => (
+          <option key={lg} value={lg}>
+            {lg}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  if (course.grade_scale === "100_point") {
+    return (
+      <input
+        type="number"
+        step="0.1"
+        min={0}
+        max={100}
+        name="final_grade_value"
+        defaultValue={course.final_point_score ?? ""}
+        className={className}
+        placeholder="예: 94"
+      />
+    );
+  }
+  return (
+    <input name="final_grade_value" defaultValue={course.final_custom_grade ?? ""} className={className} placeholder="예: Pass" />
+  );
+}
+
+function ProgressGradeField({ course, className }: { course: Course; className: string }) {
+  const name = `grade_${course.id}`;
+  if (course.grade_scale === "letter") {
+    return (
+      <select name={name} defaultValue="" className={className}>
+        <option value="">변경 없음</option>
+        {LETTER_GRADE_OPTIONS.map((lg) => (
+          <option key={lg} value={lg}>
+            {lg}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  if (course.grade_scale === "100_point") {
+    return <input type="number" step="0.1" min={0} max={100} name={name} className={className} placeholder="변경 없음" />;
+  }
+  return <input name={name} className={className} placeholder="변경 없음" />;
+}
+
 export default async function AcademicsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const student = await getStudent(id);
@@ -86,11 +188,12 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
   const access = await getStudentAccess(id);
   if (!access?.canViewAll) notFound();
 
-  const [academic, gradeRecords, terms, courses, satScores, actScores, attachments] = await Promise.all([
+  const [academic, gradeRecords, terms, courses, progressEntries, satScores, actScores, attachments] = await Promise.all([
     getAcademicOverview(id),
     getGradeRecords(id),
     getTerms(id),
     getCourses(id),
+    getCourseProgressEntries(id),
     getSatScores(id),
     getActScores(id),
     getAttachments(id),
@@ -105,6 +208,9 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
     courses,
     academic ? { unweighted: academic.unweighted_gpa, weighted: academic.weighted_gpa } : undefined
   );
+  // Final GPA — strictly from confirmed Final Grades, never mixed with the
+  // Progress/Current GPA above (see src/lib/gpa.ts).
+  const cumulativeFinal = computeCumulativeFinalGpa(gradeRecords, terms, courses);
 
   const sortedGradeRecords = [...gradeRecords].sort((a, b) => a.grade_level - b.grade_level);
   const existingGradeLevels = new Set(gradeRecords.map((g) => g.grade_level));
@@ -140,8 +246,10 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
         {levelCounts.ibHl > 0 && <SummaryCard label="IB High Level" value={`${levelCounts.ibHl}개`} />}
         {levelCounts.ibSl > 0 && <SummaryCard label="IB Standard Level" value={`${levelCounts.ibSl}개`} />}
         {levelCounts.honors > 0 && <SummaryCard label="Honors" value={`${levelCounts.honors}개`} />}
-        <SummaryCard label="Cumulative Unweighted GPA" value={gpaText(cumulative.unweighted)} />
-        <SummaryCard label="Cumulative Weighted GPA" value={gpaText(cumulative.weighted)} />
+        <SummaryCard label="Current Cumulative Unweighted GPA" value={gpaText(cumulative.unweighted)} />
+        <SummaryCard label="Current Cumulative Weighted GPA" value={gpaText(cumulative.weighted)} />
+        <SummaryCard label="Final Cumulative Unweighted GPA" value={finalGpaValueText(cumulativeFinal, "unweighted")} />
+        <SummaryCard label="Final Cumulative Weighted GPA" value={finalGpaValueText(cumulativeFinal, "weighted")} />
         <SummaryCard label="GPA 추세" value={trend} />
       </div>
 
@@ -192,8 +300,9 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
             <p className="text-xs text-navy-400">
-              GPA는 비워두면 아래 Academic Record의 과목·성적 입력으로 자동 계산된 값이 쓰여요. 학교 공식 transcript와 다르면 숫자를
-              직접 입력해서 덮어쓸 수 있어요.
+              이 GPA는 Current/Progress 기준이에요 — 비워두면 아래 Academic Record의 과목·성적 입력으로 자동 계산된 값이 쓰여요. 학교
+              공식 transcript와 다르면 숫자를 직접 입력해서 덮어쓸 수 있어요. Final GPA는 각 과목의 Final Grade가 입력되면 별도로
+              자동 계산돼요.
             </p>
             <label className="flex items-center gap-2 text-sm text-navy-700">
               <input type="checkbox" name="school_does_not_rank" defaultChecked={academic?.school_does_not_rank ?? false} />
@@ -219,6 +328,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
             const gradeTerms = terms.filter((t) => t.grade_record_id === gr.id).sort((a, b) => a.term_number - b.term_number);
             const gradeEff = computeGradeGpa(gr, terms, courses);
             const pureGradeComputed = computeGradeGpa({ ...gr, manual_unweighted_gpa: null, manual_weighted_gpa: null }, terms, courses);
+            const gradeFinal = computeGradeFinalGpa(gr, terms, courses);
             const termNoun = TERM_NOUN[gr.term_system];
             const nextAfterThis = gr.grade_level < 12 ? ((gr.grade_level + 1) as 10 | 11 | 12) : null;
 
@@ -233,11 +343,13 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[11px] uppercase tracking-wide text-navy-400">Unweighted / Weighted</div>
+                    <div className="text-[11px] uppercase tracking-wide text-navy-400">Current Unweighted / Weighted</div>
                     <div className="font-serif text-xl font-semibold text-navy-900">
                       {gpaText(gradeEff.unweighted)} / {gpaText(gradeEff.weighted)}
                       {gradeEff.isOverridden && <span className="ml-1 text-[10px] font-medium text-gold-600">수동</span>}
                     </div>
+                    <div className="mt-1 text-[11px] uppercase tracking-wide text-navy-400">Final</div>
+                    <div className="text-sm font-semibold text-navy-700">{finalGpaLine(gradeFinal)}</div>
                   </div>
                 </div>
 
@@ -246,55 +358,125 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                     const termCourses = courses.filter((c) => c.term_id === term.id);
                     const termEff = computeTermGpa(term, courses);
                     const pureTermComputed = computeTermGpa({ ...term, manual_unweighted_gpa: null, manual_weighted_gpa: null }, courses);
+                    const termFinal = computeTermFinalGpa(term, courses);
+                    const termStatus = computeTermStatus(term, courses);
                     return (
                       <div key={term.id} className="rounded-lg border border-navy-100 bg-navy-50/40 p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-semibold text-navy-900">
-                            {termNoun} {term.term_number}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-semibold text-navy-900">
+                              {termNoun} {term.term_number}
+                            </div>
+                            <Pill tone={TERM_STATUS_TONE[termStatus]}>{TERM_STATUS_LABEL[termStatus]}</Pill>
+                            <span className="text-xs text-navy-400">{termCourses.length}개 과목</span>
                           </div>
-                          <div className="text-sm text-navy-900">
-                            {termCourses.length}개 과목 · {gpaText(termEff.unweighted)} / {gpaText(termEff.weighted)}
-                            {termEff.isOverridden && <span className="ml-1 text-[10px] font-medium text-gold-600">수동</span>}
+                          <div className="text-right text-sm text-navy-900">
+                            <div>
+                              Current {gpaText(termEff.unweighted)} / {gpaText(termEff.weighted)}
+                              {termEff.isOverridden && <span className="ml-1 text-[10px] font-medium text-gold-600">수동</span>}
+                            </div>
+                            <div className="text-xs text-navy-500">Final {finalGpaLine(termFinal)}</div>
                           </div>
                         </div>
 
                         {termCourses.length > 0 && (
                           <div className="mt-2 overflow-x-auto">
-                            <table className="w-full min-w-[560px] text-sm">
+                            <table className="w-full min-w-[720px] text-sm">
                               <thead>
                                 <tr className="text-xs font-medium uppercase tracking-wide text-navy-400">
                                   <th className="border-b border-navy-100 px-2 py-1.5 text-left">Course</th>
                                   <th className="border-b border-navy-100 px-2 py-1.5 text-left">Level</th>
                                   <th className="border-b border-navy-100 px-2 py-1.5 text-left">영역</th>
                                   <th className="border-b border-navy-100 px-2 py-1.5 text-left">Credit</th>
-                                  <th className="border-b border-navy-100 px-2 py-1.5 text-left">Grade</th>
+                                  <th className="border-b border-navy-100 px-2 py-1.5 text-left">Progress</th>
+                                  <th className="border-b border-navy-100 px-2 py-1.5 text-left">Final</th>
                                   <th className="border-b border-navy-100 px-2 py-1.5"></th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {termCourses.map((c) => (
-                                  <tr key={c.id} className="border-b border-navy-50 last:border-0">
-                                    <td className="px-2 py-1.5 text-navy-900">{c.course_name}</td>
-                                    <td className="px-2 py-1.5">
-                                      <Pill tone={GOLD_LEVELS.includes(c.course_level) ? "gold" : "neutral"}>{c.course_level}</Pill>
-                                    </td>
-                                    <td className="px-2 py-1.5 text-navy-600">
-                                      {c.subject_category ? SUBJECT_CATEGORY_LABEL[c.subject_category] : "—"}
-                                    </td>
-                                    <td className="px-2 py-1.5 text-navy-600">{c.credit}</td>
-                                    <td className={`px-2 py-1.5 font-medium ${isLowGrade(c) ? "text-rose-600" : "text-navy-900"}`}>
-                                      {courseGradeDisplay(c)}
-                                    </td>
-                                    <td className="px-2 py-1.5 text-right">
-                                      <form action={deleteCourse.bind(null, id, c.id)}>
-                                        <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
-                                      </form>
-                                    </td>
-                                  </tr>
-                                ))}
+                                {termCourses.map((c) => {
+                                  const history = progressEntries
+                                    .filter((e) => e.course_id === c.id)
+                                    .sort((a, b) => (a.recorded_date < b.recorded_date ? 1 : -1));
+                                  return (
+                                    <tr key={c.id} className="border-b border-navy-50 last:border-0 align-top">
+                                      <td className="px-2 py-1.5 text-navy-900">{c.course_name}</td>
+                                      <td className="px-2 py-1.5">
+                                        {c.course_level ? (
+                                          <Pill tone={GOLD_LEVELS.includes(c.course_level) ? "gold" : "neutral"}>{c.course_level}</Pill>
+                                        ) : (
+                                          <span className="text-navy-300">미정</span>
+                                        )}
+                                      </td>
+                                      <td className="px-2 py-1.5 text-navy-600">
+                                        {c.subject_category ? SUBJECT_CATEGORY_LABEL[c.subject_category] : "—"}
+                                      </td>
+                                      <td className="px-2 py-1.5 text-navy-600">{c.credit}</td>
+                                      <td className="px-2 py-1.5">
+                                        <div className={`font-medium ${isLowGrade(c) ? "text-rose-600" : "text-navy-900"}`}>
+                                          {courseGradeDisplay(c)}
+                                        </div>
+                                        {history.length > 0 && (
+                                          <details className="mt-0.5">
+                                            <summary className="cursor-pointer text-[10px] font-normal text-navy-400">히스토리</summary>
+                                            <ul className="mt-1 max-w-[180px] space-y-0.5 text-[10px] font-normal text-navy-500">
+                                              {history.map((h) => (
+                                                <li key={h.id}>
+                                                  {h.recorded_date} — {progressEntryGradeDisplay(h)}
+                                                  {h.note ? ` (${h.note})` : ""}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </details>
+                                        )}
+                                      </td>
+                                      <td className="px-2 py-1.5">
+                                        <form action={setCourseFinalGrade.bind(null, id, c.id)} className="flex items-center gap-1">
+                                          <FinalGradeField course={c} className="w-20 rounded-md border border-navy-200 bg-white px-1.5 py-1 text-xs text-navy-900 focus:border-gold-400 focus:outline-none" />
+                                          <SubmitButton label="저장" variant="inline-sm" toastMessage="저장되었습니다" />
+                                        </form>
+                                        {courseHasFinalGrade(c) && (
+                                          <Pill tone="gold" className="mt-1">
+                                            FINAL
+                                          </Pill>
+                                        )}
+                                      </td>
+                                      <td className="px-2 py-1.5 text-right">
+                                        <form action={deleteCourse.bind(null, id, c.id)}>
+                                          <SubmitButton label="삭제" variant="ghost-danger-sm" toastMessage="삭제되었습니다" />
+                                        </form>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
+                        )}
+
+                        {termCourses.length > 0 && (
+                          <details className="mt-3 border-t border-navy-100 pt-2">
+                            <summary className="cursor-pointer text-xs font-medium text-navy-600">
+                              진행 성적 일괄 업데이트 (Weekly Update)
+                            </summary>
+                            <form action={updateProgressGradesForTerm.bind(null, id, term.id)} className="mt-2 space-y-2">
+                              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {termCourses.map((c) => (
+                                  <div key={c.id}>
+                                    <label className={labelClass}>{c.course_name}</label>
+                                    <ProgressGradeField course={c} className={inputClass} />
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex flex-wrap items-end gap-2">
+                                <div className="min-w-[160px] flex-1">
+                                  <label className={labelClass}>메모 (선택, 이번 업데이트 전체에 적용)</label>
+                                  <input name="note" className={inputClass} placeholder="예: 포털 확인" />
+                                </div>
+                                <SubmitButton label="업데이트 저장" variant="secondary-sm" toastMessage="진행 성적이 업데이트되었습니다" />
+                              </div>
+                            </form>
+                          </details>
                         )}
 
                         <form
@@ -317,8 +499,9 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                             </select>
                           </div>
                           <div>
-                            <label className={labelClass}>Course Level *</label>
-                            <select name="course_level" required defaultValue="Regular" className={inputClass}>
+                            <label className={labelClass}>Course Level</label>
+                            <select name="course_level" defaultValue="" className={inputClass}>
+                              <option value="">선택 안 함</option>
                               {COURSE_LEVEL_OPTIONS.map((l) => (
                                 <option key={l} value={l}>
                                   {l}
@@ -338,7 +521,7 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
 
                         <details className="mt-2">
                           <summary className="cursor-pointer text-[11px] text-navy-400">
-                            이 {termNoun} GPA 수동 조정
+                            이 {termNoun} GPA 수동 조정 (Current/Progress 기준)
                           </summary>
                           <form
                             action={setTermGpaOverride.bind(null, id, term.id)}
@@ -369,12 +552,27 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                             <SubmitButton label="저장" variant="inline-sm" toastMessage="저장되었습니다" />
                           </form>
                         </details>
+
+                        <div className="mt-2 flex items-center justify-between border-t border-navy-100 pt-2">
+                          {termStatus === "finalized" ? (
+                            <form action={reopenTerm.bind(null, id, term.id)}>
+                              <SubmitButton label="다시 열기" variant="secondary-sm" toastMessage="다시 열었어요" />
+                            </form>
+                          ) : (
+                            <form action={finalizeTerm.bind(null, id, term.id)}>
+                              <SubmitButton label="Finalize Term" variant="secondary-sm" toastMessage="Term이 확정되었습니다" />
+                            </form>
+                          )}
+                          <div className="text-[11px] text-navy-400">
+                            Final Grades: {termFinal.confirmedCount} / {termFinal.totalCourses}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-4 border-t border-navy-100 pt-4 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-4 border-t border-navy-100 pt-4 sm:grid-cols-3 lg:grid-cols-6">
                   <div>
                     <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Total Courses</div>
                     <div className="mt-0.5 text-sm font-semibold text-navy-900">{gradeEff.totalCourses}</div>
@@ -384,12 +582,20 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                     <div className="mt-0.5 text-sm font-semibold text-navy-900">{gradeEff.totalCredits}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Unweighted GPA</div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Current Unweighted GPA</div>
                     <div className="mt-0.5 text-sm font-semibold text-navy-900">{gpaText(gradeEff.unweighted)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Weighted GPA</div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Current Weighted GPA</div>
                     <div className="mt-0.5 text-sm font-semibold text-navy-900">{gpaText(gradeEff.weighted)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Final Unweighted GPA</div>
+                    <div className="mt-0.5 text-sm font-semibold text-navy-900">{finalGpaValueText(gradeFinal, "unweighted")}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-navy-400">Final Weighted GPA</div>
+                    <div className="mt-0.5 text-sm font-semibold text-navy-900">{finalGpaValueText(gradeFinal, "weighted")}</div>
                   </div>
                 </div>
 

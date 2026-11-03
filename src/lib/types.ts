@@ -164,6 +164,11 @@ export interface Term {
   term_number: number;
   manual_unweighted_gpa: number | null;
   manual_weighted_gpa: number | null;
+  // Set when a counselor explicitly finalizes this term (see "Finalize
+  // Term" in Academic Record). Null = Planned/In Progress. Finalizing does
+  // NOT copy Progress grades into Final grades — it's purely a status flag
+  // a counselor can also reopen (clear back to null) at any time.
+  finalized_at: string | null;
 }
 
 export interface Course {
@@ -172,15 +177,41 @@ export interface Course {
   student_id: string;
   course_name: string;
   subject_category: SubjectCategory | null;
-  course_level: CourseLevel;
+  // Optional — a course can be registered before the counselor has
+  // decided/confirmed its level.
+  course_level: CourseLevel | null;
   credit: number;
   grade_scale: GradeScale;
-  // Exactly one of these three is populated, matching grade_scale.
-  // "custom" grades (e.g. Pass/Fail) show as-is but are excluded from the
-  // GPA calculation.
+  // Progress/Current grade — the counselor's latest weekly-check-in value.
+  // This is a cache of the most recent CourseProgressEntry (below); exactly
+  // one of these three is populated, matching grade_scale. "custom" grades
+  // (e.g. Pass/Fail) show as-is but are excluded from the GPA calculation.
   letter_grade: string | null;
   point_score: number | null;
   custom_grade: string | null;
+  // Final grade — set once only after the school posts the official grade
+  // for the term. Completely separate from the Progress grade above: never
+  // auto-filled from it, and never overwritten by a later Progress update.
+  final_letter_grade: string | null;
+  final_point_score: number | null;
+  final_custom_grade: string | null;
+}
+
+// One row per weekly (or ad-hoc) Progress Grade check-in for a course —
+// history is never overwritten, so a counselor can see whether a grade is
+// trending up or down over the term. The course's own letter_grade /
+// point_score / custom_grade always mirrors the latest entry here.
+export interface CourseProgressEntry {
+  id: string;
+  course_id: string;
+  student_id: string;
+  recorded_date: string;
+  letter_grade: string | null;
+  point_score: number | null;
+  custom_grade: string | null;
+  note: string | null;
+  counselor_id: string | null;
+  created_at: string;
 }
 
 export interface SatScore {
