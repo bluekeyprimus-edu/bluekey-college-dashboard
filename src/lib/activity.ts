@@ -2,13 +2,16 @@ import {
   Attachment,
   Award,
   ConsultationNote,
+  Course,
+  CourseProgressEntry,
   Extracurricular,
   PersonalStatement,
   SupplementalEssay,
   TaskItem,
 } from "./types";
+import { isLowGrade } from "./gpa";
 
-export type ActivityState = "completed" | "in_progress" | "update";
+export type ActivityState = "completed" | "in_progress" | "update" | "warning";
 
 export interface ActivityItem {
   id: string;
@@ -39,6 +42,12 @@ export function buildActivityFeed(input: {
   essays: SupplementalEssay[];
   consultationNotes: ConsultationNote[];
   attachments: Attachment[];
+  // Current courses + their Progress Grade history, used only to flag a
+  // low (B+ and below) Progress grade in red — every other academic
+  // change (Course added, Final Grade set, Term finalized, ...) stays out
+  // of this feed on purpose, same as colleges above.
+  courses: Course[];
+  courseProgressEntries: CourseProgressEntry[];
 }): ActivityItem[] {
   const items: ActivityItem[] = [];
 
@@ -118,7 +127,30 @@ export function buildActivityFeed(input: {
     });
   }
 
-  return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  // Latest Progress Grade entry per course, used as this item's
+  // timestamp (courses themselves don't carry an updated_at).
+  const latestEntryByCourse = new Map<string, CourseProgressEntry>();
+  for (const e of input.courseProgressEntries) {
+    const existing = latestEntryByCourse.get(e.course_id);
+    if (!existing || `${e.recorded_date}T${e.created_at}` > `${existing.recorded_date}T${existing.created_at}`) {
+      latestEntryByCourse.set(e.course_id, e);
+    }
+  }
+  for (const c of input.courses) {
+    if (!isLowGrade(c)) continue;
+    const latest = latestEntryByCourse.get(c.id);
+    if (!latest) continue;
+    const gradeText = c.grade_scale === "letter" ? c.letter_grade : c.grade_scale === "100_point" ? String(c.point_score) : null;
+    items.push({
+      id: `course-warning-${c.id}`,
+      at: latest.created_at,
+      category: "학업",
+      title: gradeText ? `${c.course_name}: ${gradeText} (진행 성적 주의)` : `${c.course_name} (진행 성적 주의)`,
+      state: "warning",
+    });
+  }
+
+    return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }
 
 export function relativeKorean(iso: string): string {

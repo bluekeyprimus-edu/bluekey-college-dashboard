@@ -9,6 +9,7 @@ import {
   getGradeRecords,
   getTerms,
   getCourses,
+  getCourseProgressEntries,
   getSatScores,
   getActScores,
   getApScores,
@@ -90,12 +91,13 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   const student = await getStudent(studentId);
   if (!student) notFound();
 
-  const [academic, gradeRecords, terms, courses, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
+  const [academic, gradeRecords, terms, courses, courseProgressEntries, sat, act, ap, ecs, awards, colleges, personalStatement, essays, tasks, consultationNotes, attachments] =
     await Promise.all([
       getAcademicOverview(studentId),
       getGradeRecords(studentId),
       getTerms(studentId),
       getCourses(studentId),
+      getCourseProgressEntries(studentId),
       getSatScores(studentId),
       getActScores(studentId),
       getApScores(studentId),
@@ -134,6 +136,8 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
     essays,
     consultationNotes,
     attachments,
+    courses,
+    courseProgressEntries,
   }).slice(0, 10);
 
   const categoriesByCollege: Record<string, typeof colleges> = {};
@@ -411,12 +415,30 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <Pill tone={item.state === "completed" ? "green" : item.state === "in_progress" ? "amber" : "neutral"}>
-                            {item.state === "completed" ? "완료" : item.state === "in_progress" ? "진행 중" : "업데이트"}
+                          <Pill
+                            tone={
+                              item.state === "completed"
+                                ? "green"
+                                : item.state === "in_progress"
+                                  ? "amber"
+                                  : item.state === "warning"
+                                    ? "red"
+                                    : "neutral"
+                            }
+                          >
+                            {item.state === "completed"
+                              ? "완료"
+                              : item.state === "in_progress"
+                                ? "진행 중"
+                                : item.state === "warning"
+                                  ? "주의"
+                                  : "업데이트"}
                           </Pill>
                           <span className="text-[11px] font-medium uppercase tracking-wide text-navy-400">{item.category}</span>
                         </div>
-                        <div className="mt-1 text-sm text-navy-900">{item.title}</div>
+                        <div className={`mt-1 text-sm ${item.state === "warning" ? "font-medium text-rose-600" : "text-navy-900"}`}>
+                          {item.title}
+                        </div>
                       </div>
                       <span className="shrink-0 whitespace-nowrap text-xs text-navy-400">{relativeKorean(item.at)}</span>
                     </div>
