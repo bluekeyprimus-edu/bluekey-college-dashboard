@@ -22,6 +22,7 @@ import {
   setTermGpaOverride,
   addCourse,
   deleteCourse,
+  addProgressGrade,
   updateProgressGradesForTerm,
   setCourseFinalGrade,
   finalizeTerm,
@@ -84,12 +85,6 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 function gpaText(v: number | null): string {
   return v === null ? "—" : v.toFixed(2);
-}
-
-function courseGradeDisplay(c: Course): string {
-  if (c.grade_scale === "letter") return c.letter_grade ?? "—";
-  if (c.grade_scale === "100_point") return c.point_score !== null ? String(c.point_score) : "—";
-  return c.custom_grade ?? "—";
 }
 
 function progressEntryGradeDisplay(e: CourseProgressEntry): string {
@@ -159,6 +154,38 @@ function FinalGradeField({ course, className }: { course: Course; className: str
   return (
     <input name="final_grade_value" defaultValue={course.final_custom_grade ?? ""} className={className} placeholder="예: Pass" />
   );
+}
+
+function CurrentGradeField({ course, className }: { course: Course; className: string }) {
+  if (course.grade_scale === "letter") {
+    return (
+      <select name="grade_value" defaultValue={course.letter_grade ?? ""} className={className}>
+        <option value="" disabled>
+          —
+        </option>
+        {LETTER_GRADE_OPTIONS.map((lg) => (
+          <option key={lg} value={lg}>
+            {lg}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  if (course.grade_scale === "100_point") {
+    return (
+      <input
+        type="number"
+        step="0.1"
+        min={0}
+        max={100}
+        name="grade_value"
+        defaultValue={course.point_score ?? ""}
+        className={className}
+        placeholder="예: 94"
+      />
+    );
+  }
+  return <input name="grade_value" defaultValue={course.custom_grade ?? ""} className={className} placeholder="예: Pass" />;
 }
 
 function ProgressGradeField({ course, className }: { course: Course; className: string }) {
@@ -413,9 +440,17 @@ export default async function AcademicsPage({ params }: { params: Promise<{ id: 
                                       </td>
                                       <td className="px-2 py-1.5 text-navy-600">{c.credit}</td>
                                       <td className="px-2 py-1.5">
-                                        <div className={`font-medium ${isLowGrade(c) ? "text-rose-600" : "text-navy-900"}`}>
-                                          {courseGradeDisplay(c)}
-                                        </div>
+                                        <form action={addProgressGrade.bind(null, id, c.id)} className="flex items-center gap-1">
+                                          <CurrentGradeField
+                                            course={c}
+                                            className={`w-20 rounded-md border px-1.5 py-1 text-xs focus:outline-none ${
+                                              isLowGrade(c)
+                                                ? "border-rose-300 text-rose-600 focus:border-rose-400"
+                                                : "border-navy-200 text-navy-900 focus:border-gold-400"
+                                            }`}
+                                          />
+                                          <SubmitButton label="저장" variant="inline-sm" toastMessage="저장되었습니다" />
+                                        </form>
                                         {history.length > 0 && (
                                           <details className="mt-0.5">
                                             <summary className="cursor-pointer text-[10px] font-normal text-navy-400">히스토리</summary>

@@ -395,6 +395,49 @@ export async function deleteCourse(studentId: string, courseId: string) {
 // GPA without ever mixing.
 // ============================================================
 
+// A single course's Progress grade, updated inline from the Academic
+// Record table (one click, no need to open the Weekly Update batch form
+// below). Same effect as updateProgressGradesForTerm for one course: adds
+// a history entry and refreshes the course's cached current grade.
+export async function addProgressGrade(studentId: string, courseId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const { data: course, error: courseError } = await supabase!.from("courses").select("grade_scale").eq("id", courseId).single();
+  if (courseError || !course) throw new Error("과목을 찾을 수 없어요.");
+
+  const gradeScale = course.grade_scale as string;
+  const raw = str(formData, "grade_value");
+  if (raw === null) throw new Error("성적을 입력해주세요.");
+  const letter_grade = gradeScale === "letter" ? raw : null;
+  const point_score = gradeScale === "100_point" ? Number(raw) : null;
+  const custom_grade = gradeScale === "custom" ? raw : null;
+
+  const counselor = await getCurrentCounselor();
+  const recordedDate = new Date().toISOString().slice(0, 10);
+
+  const { error: entryError } = await supabase!.from("course_progress_entries").insert({
+    course_id: courseId,
+    student_id: studentId,
+    recorded_date: recordedDate,
+    letter_grade,
+    point_score,
+    custom_grade,
+    note: null,
+    counselor_id: counselor?.id ?? null,
+  });
+  if (entryError) throw new Error(`저장 실패: ${entryError.message}`);
+
+  const { error: updateError } = await supabase!
+    .from("courses")
+    .update({ letter_grade, point_score, custom_grade })
+    .eq("id", courseId);
+  if (updateError) throw new Error(`저장 실패: ${updateError.message}`);
+
+  revalidatePath(`/students/${studentId}/academics`);
+  revalidatePath(`/students/${studentId}`);
+}
+
 // One Term's worth of Progress grades, updated together in one submit —
 // the counselor's actual weekly workflow (see academics/page.tsx's
 // "진행 성적 일괄 업데이트"). Fields are named grade_<courseId>; a course
