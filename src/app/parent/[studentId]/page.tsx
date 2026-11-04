@@ -31,11 +31,20 @@ import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumul
 import { overallGoalProgress, progressByCategory, monthlyRoadmap, monthLabelKorean } from "@/lib/goals";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
+
+// Parents only need to know whether an essay is still being worked on or
+// done — the full Brainstorming/Outline/Draft/Revision pipeline is for the
+// counselor's own tracking (see ESSAY_STATUS_LABEL in src/lib/labels.ts).
+function parentEssayStatusLabel(status: string): string {
+  return status === "Completed" ? "완료" : "진행중";
+}
+function parentEssayStatusTone(status: string): "green" | "amber" {
+  return status === "Completed" ? "green" : "amber";
+}
 import {
   EC_STATUS_LABEL,
   AWARD_LEVEL_LABEL,
   COLLEGE_CATEGORY_LABEL,
-  ESSAY_STATUS_LABEL,
   TASK_PRIORITY_LABEL,
   TASK_STATUS_LABEL,
   SUBJECT_CATEGORY_LABEL,
@@ -212,7 +221,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           )}
           <div>
             <dt className="inline font-medium text-navy-600">상태 · </dt>
-            <dd className="inline">{ESSAY_STATUS_LABEL[ps.status] ?? ps.status}</dd>
+            <dd className="inline">{parentEssayStatusLabel(ps.status)}</dd>
           </div>
         </dl>
       );
@@ -370,7 +379,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           )}
           <div>
             <dt className="inline font-medium text-navy-600">상태 · </dt>
-            <dd className="inline">{ESSAY_STATUS_LABEL[e.status] ?? e.status}</dd>
+            <dd className="inline">{parentEssayStatusLabel(e.status)}</dd>
           </div>
         </dl>
       );
@@ -837,7 +846,9 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       <CardBody className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-navy-900">자기소개서</span>
-          <Pill tone="gold">{personalStatement ? ESSAY_STATUS_LABEL[personalStatement.status] : "미작성"}</Pill>
+          <Pill tone={personalStatement ? parentEssayStatusTone(personalStatement.status) : "neutral"}>
+            {personalStatement ? parentEssayStatusLabel(personalStatement.status) : "미작성"}
+          </Pill>
         </div>
         <AttachmentLinks items={attachmentsFor(attachments, studentId)} />
         {essays.length === 0 && <p className="text-sm text-navy-400">등록된 추가 에세이가 아직 없어요.</p>}
@@ -845,7 +856,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           <div key={e.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-navy-900">{e.university_name}</span>
-              <Pill tone="neutral">{ESSAY_STATUS_LABEL[e.status] ?? e.status}</Pill>
+              <Pill tone={parentEssayStatusTone(e.status)}>{parentEssayStatusLabel(e.status)}</Pill>
             </div>
             <AttachmentLinks items={attachmentsFor(attachments, e.id)} />
           </div>
