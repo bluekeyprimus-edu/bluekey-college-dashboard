@@ -16,6 +16,7 @@ import {
   deleteTargetCollege,
   convertTargetCollegesToCollegeList,
   createCounselingPlan,
+  updateCounselingPlan,
   addCounselingGoal,
   updateCounselingGoal,
   deleteCounselingGoal,
@@ -48,6 +49,7 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { DeleteCounselingPlanButton } from "@/components/students/DeleteCounselingPlanButton";
 import type { CounselingGoal, GoalMilestone } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -467,6 +469,24 @@ export default async function GoalsPage({
               <SubmitButton label="+ 생성" variant="secondary-sm" toastMessage="생성되었습니다" />
             </form>
           </details>
+
+          {selectedPlan && (
+            <details>
+              <summary className="cursor-pointer text-xs font-medium text-navy-600">
+                현재 Plan ({selectedPlan.academic_year}) 수정 / 삭제
+              </summary>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <form action={updateCounselingPlan.bind(null, id, selectedPlan.id)} className="flex flex-wrap items-end gap-2">
+                  <div>
+                    <label className={labelClass}>학년도</label>
+                    <input name="academic_year" required defaultValue={selectedPlan.academic_year} className={inputClass} />
+                  </div>
+                  <SubmitButton label="저장" variant="secondary-sm" toastMessage="저장되었습니다" />
+                </form>
+                <DeleteCounselingPlanButton studentId={id} planId={selectedPlan.id} academicYear={selectedPlan.academic_year} />
+              </div>
+            </details>
+          )}
 
           {!selectedPlan && <p className="text-sm text-navy-400">먼저 Counseling Plan을 만들어주세요.</p>}
 

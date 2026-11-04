@@ -1591,6 +1591,27 @@ export async function createCounselingPlan(studentId: string, formData: FormData
   revalidatePath(`/students/${studentId}/goals`);
 }
 
+export async function updateCounselingPlan(studentId: string, planId: string, formData: FormData) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const academicYear = str(formData, "academic_year");
+  if (!academicYear) throw new Error("학년도를 입력해주세요 (예: 2026-2027).");
+  const { error } = await supabase!.from("counseling_plans").update({ academic_year: academicYear }).eq("id", planId);
+  if (error) throw new Error(`저장 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+}
+
+export async function deleteCounselingPlan(studentId: string, planId: string) {
+  await assertStudentAccess(studentId);
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  // Deleting a plan cascades to its counseling_goals and, from there, to
+  // their goal_milestones (both tables use `on delete cascade`).
+  const { error } = await supabase!.from("counseling_plans").delete().eq("id", planId);
+  if (error) throw new Error(`삭제 실패: ${error.message}`);
+  revalidatePath(`/students/${studentId}/goals`);
+  revalidatePath(`/students/${studentId}`);
+}
+
 export async function addCounselingGoal(studentId: string, planId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
