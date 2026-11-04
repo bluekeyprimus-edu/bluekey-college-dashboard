@@ -1185,8 +1185,20 @@ export async function updateSupplementalEssay(studentId: string, essayId: string
 export async function deleteSupplementalEssay(studentId: string, essayId: string) {
   await assertStudentAccess(studentId, "application");
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const { error } = await supabase!.from("supplemental_essays").delete().eq("id", essayId);
+  // Use the service-role client when available so this delete can't be
+  // silently no-op'd by a Row Level Security policy on this table (RLS is
+  // meant to be off project-wide, but a toggle flipped by hand in the
+  // Supabase dashboard would otherwise make a delete affect 0 rows without
+  // ever raising an error). Falls back to the anon client if the service
+  // role key isn't configured, matching the previous behavior.
+  const client = isAdminConfigured ? supabaseAdmin! : supabase!;
+  const { error } = await client.from("supplemental_essays").delete().eq("id", essayId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
+  // Guard against a silent no-op delete (0 rows affected, no error) so a
+  // misconfigured RLS policy surfaces as a real, visible error instead of
+  // the essay just quietly staying in the list.
+  const { data: stillThere } = await client.from("supplemental_essays").select("id").eq("id", essayId).maybeSingle();
+  if (stillThere) throw new Error("삭제가 반영되지 않았어요. Supabase의 supplemental_essays 테이블에 RLS(Row Level Security)가 켜져 있는지 확인해주세요.");
   revalidatePath(`/students/${studentId}/essays`);
   revalidatePath(`/students/${studentId}`);
 }
