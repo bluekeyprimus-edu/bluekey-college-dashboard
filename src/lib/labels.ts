@@ -22,13 +22,10 @@ export const EC_STATUS_LABEL: Record<string, string> = {
 };
 
 export const ESSAY_STATUS_LABEL: Record<string, string> = {
-  Brainstorming: "구상 중",
-  "Topic Selected": "주제 선정",
-  Outline: "개요 작성",
-  "First Draft": "초안",
-  "Revision 1": "1차 수정",
-  "Revision 2": "2차 수정",
-  "Final Review": "최종 검토",
+  "Topic Selected": "주제선정",
+  Draft: "초안",
+  Revision: "수정",
+  Review: "검토",
   Completed: "완료",
 };
 
@@ -177,16 +174,7 @@ export const EC_STATUS_OPTIONS = ["Developing", "Completed", "Common App Ready"]
 
 export const AWARD_LEVEL_OPTIONS = ["School", "Regional", "State", "National", "International"] as const;
 
-export const ESSAY_STATUS_OPTIONS = [
-  "Brainstorming",
-  "Topic Selected",
-  "Outline",
-  "First Draft",
-  "Revision 1",
-  "Revision 2",
-  "Final Review",
-  "Completed",
-] as const;
+export const ESSAY_STATUS_OPTIONS = ["Topic Selected", "Draft", "Revision", "Review", "Completed"] as const;
 
 export const ADMISSION_RESULT_OPTIONS = ["Accepted", "Waitlisted", "Deferred", "Rejected"] as const;
 

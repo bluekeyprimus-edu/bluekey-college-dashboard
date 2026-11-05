@@ -30,15 +30,7 @@ export type AdmissionResult = "Accepted" | "Waitlisted" | "Deferred" | "Rejected
 export type AwardLevel = "School" | "Regional" | "State" | "National" | "International";
 export type CollegeCategory = "Reach" | "Target" | "Safety";
 export type ApplicationRound = "ED" | "ED2" | "EA" | "REA" | "RD";
-export type EssayStatus =
-  | "Brainstorming"
-  | "Topic Selected"
-  | "Outline"
-  | "First Draft"
-  | "Revision 1"
-  | "Revision 2"
-  | "Final Review"
-  | "Completed";
+export type EssayStatus = "Topic Selected" | "Draft" | "Revision" | "Review" | "Completed";
 export type TaskPriority = "High" | "Medium" | "Low";
 export type TaskStatus = "Not Started" | "In Progress" | "Waiting" | "Completed";
 

@@ -32,7 +32,7 @@ import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 
 // Parents only need to know whether an essay is still being worked on or
-// done — the full Brainstorming/Outline/Draft/Revision pipeline is for the
+// done — the full Topic Selected/Draft/Revision/Review pipeline is for the
 // counselor's own tracking (see ESSAY_STATUS_LABEL in src/lib/labels.ts).
 function parentEssayStatusLabel(status: string): string {
   return status === "Completed" ? "완료" : "진행중";

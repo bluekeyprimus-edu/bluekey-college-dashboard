@@ -344,14 +344,14 @@ export const mockAwards: Award[] = [
 export const mockPersonalStatements: Record<string, PersonalStatement> = {
   s1: {
     student_id: "s1",
-    status: "Revision 1",
+    status: "Revision",
     topic: "Growing up between two languages and what it taught me about translation as a form of empathy.",
     draft_link: "https://docs.google.com/document/d/example-s1-ps",
     last_updated: "2026-09-02T00:00:00Z",
   },
   s3: {
     student_id: "s3",
-    status: "First Draft",
+    status: "Draft",
     topic: "How founding the school's coding club shaped my view of teaching as a form of leadership.",
     draft_link: null,
     last_updated: "2026-08-20T00:00:00Z",
@@ -366,7 +366,7 @@ export const mockSupplementalEssays: SupplementalEssay[] = [
     university_name: "Cornell University",
     prompt: "Why are you drawn to studying the major you have selected?",
     word_limit: 650,
-    status: "Revision 1",
+    status: "Revision",
     draft_link: "https://docs.google.com/document/d/example-se1",
     counselor: "Jacob Jeong",
     editor: null,

@@ -1129,7 +1129,7 @@ export async function upsertPersonalStatement(studentId: string, formData: FormD
 
   const payload = {
     student_id: studentId,
-    status: str(formData, "status") ?? "Brainstorming",
+    status: str(formData, "status") ?? "Topic Selected",
     topic: str(formData, "topic"),
     draft_link: str(formData, "draft_link"),
     last_updated: new Date().toISOString(),
@@ -1147,7 +1147,7 @@ function supplementalEssayPayload(formData: FormData) {
     university_name: str(formData, "university_name"),
     prompt: str(formData, "prompt"),
     word_limit: num(formData, "word_limit"),
-    status: str(formData, "status") ?? "Brainstorming",
+    status: str(formData, "status") ?? "Topic Selected",
     draft_link: str(formData, "draft_link"),
     counselor: str(formData, "counselor"),
     editor: str(formData, "editor"),

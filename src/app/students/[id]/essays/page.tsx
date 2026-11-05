@@ -17,7 +17,7 @@ const labelClass = "mb-1 block text-xs font-medium text-navy-500";
 
 function statusTone(status: string): "green" | "amber" | "neutral" | "gold" {
   if (status === "Completed") return "green";
-  if (status === "Brainstorming" || status === "Topic Selected") return "neutral";
+  if (status === "Topic Selected") return "neutral";
   return "amber";
 }
 
@@ -34,7 +34,7 @@ function EssayFields({ d = {} }: { d?: Partial<SupplementalEssay> }) {
       </div>
       <div>
         <label className={labelClass}>진행 상태</label>
-        <select name="status" defaultValue={d.status ?? "Brainstorming"} className={inputClass}>
+        <select name="status" defaultValue={d.status ?? "Topic Selected"} className={inputClass}>
           {ESSAY_STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>{ESSAY_STATUS_LABEL[s]}</option>
           ))}
@@ -101,7 +101,7 @@ export default async function EssaysPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className={labelClass}>진행 상태</label>
-                <select name="status" defaultValue={personalStatement?.status ?? "Brainstorming"} className={inputClass}>
+                <select name="status" defaultValue={personalStatement?.status ?? "Topic Selected"} className={inputClass}>
                   {ESSAY_STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>{ESSAY_STATUS_LABEL[s]}</option>
                   ))}

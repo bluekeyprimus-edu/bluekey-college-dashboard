@@ -355,7 +355,7 @@ create table if not exists application_checklist (
 -- ============================================================
 create table if not exists personal_statement (
   student_id uuid primary key references students(id) on delete cascade,
-  status text check (status in ('Brainstorming','Topic Selected','Outline','First Draft','Revision 1','Revision 2','Final Review','Completed')) default 'Brainstorming',
+  status text check (status in ('Topic Selected','Draft','Revision','Review','Completed')) default 'Topic Selected',
   topic text,
   draft_link text,
   last_updated timestamptz default now()
@@ -368,7 +368,7 @@ create table if not exists supplemental_essays (
   university_name text,
   prompt text,
   word_limit int,
-  status text check (status in ('Brainstorming','Topic Selected','Outline','First Draft','Revision 1','Revision 2','Final Review','Completed')) default 'Brainstorming',
+  status text check (status in ('Topic Selected','Draft','Revision','Review','Completed')) default 'Topic Selected',
   draft_link text,
   counselor text,
   editor text,
