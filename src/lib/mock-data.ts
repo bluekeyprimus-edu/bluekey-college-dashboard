@@ -9,8 +9,7 @@ import {
   MajorGoal,
   TargetCollege,
   CounselingPlan,
-  CounselingGoal,
-  GoalMilestone,
+  PlanTask,
   SatScore,
   ActScore,
   ApScore,
@@ -534,5 +533,4 @@ export const mockStudentExpenses: StudentExpense[] = [
 export const mockMajorGoals: MajorGoal[] = [];
 export const mockTargetColleges: TargetCollege[] = [];
 export const mockCounselingPlans: CounselingPlan[] = [];
-export const mockCounselingGoals: CounselingGoal[] = [];
-export const mockGoalMilestones: GoalMilestone[] = [];
+export const mockPlanTasks: PlanTask[] = [];

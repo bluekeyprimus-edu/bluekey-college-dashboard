@@ -594,6 +594,22 @@ create table if not exists goal_milestones (
 create index if not exists idx_goal_milestones_goal on goal_milestones(goal_id);
 create index if not exists idx_goal_milestones_student on goal_milestones(student_id);
 
+-- Simplified replacement for the counseling_goals/goal_milestones pair
+-- above (kept in place, unused, for safety — no data loss). A Counseling
+-- Plan's progress is now just a flat checklist: each row is one to-do
+-- item, done or not. No categories, priorities, dates, or on-track
+-- math — see planTaskProgress in src/lib/goals.ts.
+create table if not exists plan_tasks (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid references counseling_plans(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  title text not null,
+  is_done boolean not null default false,
+  created_at timestamptz default now()
+);
+create index if not exists idx_plan_tasks_plan on plan_tasks(plan_id);
+create index if not exists idx_plan_tasks_student on plan_tasks(student_id);
+
 -- ============================================================
 -- System Settings (Section: misc key/value state for background jobs)
 -- Right now just tracks the school-year label the grade auto-bump last

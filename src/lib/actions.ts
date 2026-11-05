@@ -1624,102 +1624,37 @@ export async function deleteCounselingPlan(studentId: string, planId: string) {
   revalidatePath(`/students/${studentId}`);
 }
 
-export async function addCounselingGoal(studentId: string, planId: string, formData: FormData) {
+// Replaces addCounselingGoal/updateCounselingGoal/deleteCounselingGoal and
+// addGoalMilestone/updateGoalMilestone/deleteGoalMilestone above (a
+// Counseling Plan's progress is now a flat to-do checklist, not a
+// Goal->Milestone hierarchy — see PlanTask in src/lib/types.ts and
+// planTaskProgress in src/lib/goals.ts).
+export async function addPlanTask(studentId: string, planId: string, formData: FormData) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const payload = {
-    plan_id: planId,
-    student_id: studentId,
-    title: str(formData, "title"),
-    category: str(formData, "category") ?? "Other",
-    description: str(formData, "description"),
-    start_date: str(formData, "start_date"),
-    target_completion_date: str(formData, "target_completion_date"),
-    priority: str(formData, "priority") ?? "Medium",
-    status: str(formData, "status") ?? "Not Started",
-    counselor_notes: str(formData, "counselor_notes"),
-  };
-  if (!payload.title) throw new Error("Goal Title은 필수예요.");
-  const { error } = await supabase!.from("counseling_goals").insert(payload);
+  const title = str(formData, "title");
+  if (!title) throw new Error("할 일 제목은 필수예요.");
+  const { error } = await supabase!.from("plan_tasks").insert({ plan_id: planId, student_id: studentId, title });
   if (error) throw new Error(`추가 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/goals`);
   revalidatePath(`/students/${studentId}`);
 }
 
-export async function updateCounselingGoal(studentId: string, goalId: string, formData: FormData) {
+export async function togglePlanTask(studentId: string, taskId: string) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const trackOverride = str(formData, "track_override");
-  const payload = {
-    title: str(formData, "title"),
-    category: str(formData, "category") ?? "Other",
-    description: str(formData, "description"),
-    start_date: str(formData, "start_date"),
-    target_completion_date: str(formData, "target_completion_date"),
-    priority: str(formData, "priority") ?? "Medium",
-    status: str(formData, "status") ?? "Not Started",
-    counselor_notes: str(formData, "counselor_notes"),
-    track_override: trackOverride, // null clears back to auto-computed
-  };
-  if (!payload.title) throw new Error("Goal Title은 필수예요.");
-  const { error } = await supabase!.from("counseling_goals").update(payload).eq("id", goalId);
+  const { data: current, error: readError } = await supabase!.from("plan_tasks").select("is_done").eq("id", taskId).maybeSingle();
+  if (readError) throw new Error(`조회 실패: ${readError.message}`);
+  const { error } = await supabase!.from("plan_tasks").update({ is_done: !current?.is_done }).eq("id", taskId);
   if (error) throw new Error(`저장 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/goals`);
   revalidatePath(`/students/${studentId}`);
 }
 
-export async function deleteCounselingGoal(studentId: string, goalId: string) {
+export async function deletePlanTask(studentId: string, taskId: string) {
   await assertStudentAccess(studentId);
   if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const { error } = await supabase!.from("counseling_goals").delete().eq("id", goalId);
-  if (error) throw new Error(`삭제 실패: ${error.message}`);
-  revalidatePath(`/students/${studentId}/goals`);
-  revalidatePath(`/students/${studentId}`);
-}
-
-export async function addGoalMilestone(studentId: string, goalId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
-  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const payload = {
-    goal_id: goalId,
-    student_id: studentId,
-    title: str(formData, "title"),
-    due_date: str(formData, "due_date"),
-    status: str(formData, "status") ?? "Not Started",
-    completion_date: str(formData, "completion_date"),
-    notes: str(formData, "notes"),
-  };
-  if (!payload.title) throw new Error("Milestone Title은 필수예요.");
-  const { error } = await supabase!.from("goal_milestones").insert(payload);
-  if (error) throw new Error(`추가 실패: ${error.message}`);
-  revalidatePath(`/students/${studentId}/goals`);
-  revalidatePath(`/students/${studentId}`);
-}
-
-export async function updateGoalMilestone(studentId: string, milestoneId: string, formData: FormData) {
-  await assertStudentAccess(studentId);
-  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const status = str(formData, "status") ?? "Not Started";
-  const payload = {
-    title: str(formData, "title"),
-    due_date: str(formData, "due_date"),
-    status,
-    // Auto-stamp completion_date the first time a milestone is marked
-    // Completed, unless the counselor already gave one explicitly.
-    completion_date: str(formData, "completion_date") ?? (status === "Completed" ? new Date().toISOString().slice(0, 10) : null),
-    notes: str(formData, "notes"),
-  };
-  if (!payload.title) throw new Error("Milestone Title은 필수예요.");
-  const { error } = await supabase!.from("goal_milestones").update(payload).eq("id", milestoneId);
-  if (error) throw new Error(`저장 실패: ${error.message}`);
-  revalidatePath(`/students/${studentId}/goals`);
-  revalidatePath(`/students/${studentId}`);
-}
-
-export async function deleteGoalMilestone(studentId: string, milestoneId: string) {
-  await assertStudentAccess(studentId);
-  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
-  const { error } = await supabase!.from("goal_milestones").delete().eq("id", milestoneId);
+  const { error } = await supabase!.from("plan_tasks").delete().eq("id", taskId);
   if (error) throw new Error(`삭제 실패: ${error.message}`);
   revalidatePath(`/students/${studentId}/goals`);
   revalidatePath(`/students/${studentId}`);

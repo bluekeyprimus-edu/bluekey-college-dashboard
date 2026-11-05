@@ -24,11 +24,10 @@ import {
   getCurrentMajorGoal,
   getTargetColleges,
   getCounselingPlans,
-  getCounselingGoals,
-  getGoalMilestones,
+  getPlanTasks,
 } from "@/lib/data";
 import { computeCourseLevelCounts, computeGradeGpa, computeTermGpa, computeCumulativeGpa, computeGpaTrendFromGrades, isLowGrade } from "@/lib/gpa";
-import { overallGoalProgress, progressByCategory, monthlyRoadmap, monthLabelKorean } from "@/lib/goals";
+import { planTaskProgress } from "@/lib/goals";
 import { Attachment } from "@/lib/types";
 import { buildActivityFeed, relativeKorean, type ActivityItem } from "@/lib/activity";
 
@@ -49,7 +48,6 @@ import {
   TASK_STATUS_LABEL,
   SUBJECT_CATEGORY_LABEL,
   TERM_NOUN,
-  GOAL_CATEGORY_LABEL,
 } from "@/lib/labels";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -135,10 +133,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   // most recent plan (by created_at) stands in for "current year".
   const isGoalSettingGrade = student.current_grade <= 11;
   const currentPlan = counselingPlans[0] ?? null;
-  const [counselingGoals, allGoalMilestones] = currentPlan
-    ? await Promise.all([getCounselingGoals(currentPlan.id), getGoalMilestones(studentId)])
-    : [[], []];
-  const goalMilestones = allGoalMilestones.filter((m) => counselingGoals.some((g) => g.id === m.goal_id));
+  const planTasks = currentPlan ? await getPlanTasks(currentPlan.id) : [];
 
   const bestSat = sat.length ? Math.max(...sat.map((s) => s.total_score)) : null;
   const bestAct = act.length ? Math.max(...act.map((a) => a.composite)) : null;
@@ -867,12 +862,8 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
     </Card>
   );
 
-  const overallGoalPct = overallGoalProgress(counselingGoals, goalMilestones);
-  const goalCategoryBreakdown = progressByCategory(counselingGoals, goalMilestones);
-  const currentFocusGoals = counselingGoals.filter((g) => g.status === "In Progress" || g.status === "Not Started").slice(0, 5);
-  const fullRoadmap = monthlyRoadmap(counselingGoals, goalMilestones);
-  const thisMonth = new Date().toISOString().slice(0, 7);
-  const thisMonthRoadmap = fullRoadmap.find((r) => r.month === thisMonth);
+  const overallTaskPct = planTaskProgress(planTasks);
+  const remainingTasks = planTasks.filter((t) => !t.is_done).slice(0, 8);
 
   const goalsCard = isGoalSettingGrade ? (
     <Card>
@@ -899,54 +890,21 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         </div>
 
         {currentPlan && (
-          <>
-            <div className="border-t border-navy-100 pt-4">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">
-                Current Year Goals ({currentPlan.academic_year})
-              </div>
-              {goalCategoryBreakdown.length === 0 && <p className="text-sm text-navy-400">등록된 Goal이 아직 없어요.</p>}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {goalCategoryBreakdown.map((c) => (
-                  <div key={c.category}>
-                    <div className="mb-1 flex items-center justify-between text-xs text-navy-500">
-                      <span>{GOAL_CATEGORY_LABEL[c.category]}</span>
-                      <span>{c.progress}%</span>
-                    </div>
-                    <ProgressBar value={c.progress} size="sm" />
-                  </div>
-                ))}
-              </div>
-              {overallGoalPct !== null && (
-                <div className="mt-3 text-xs text-navy-500">Overall — {overallGoalPct}%</div>
-              )}
+          <div className="border-t border-navy-100 pt-4">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-navy-400">
+              <span>Current Year Plan ({currentPlan.academic_year})</span>
+              <span>{overallTaskPct === null ? "—" : `${overallTaskPct}%`}</span>
             </div>
-
-            {currentFocusGoals.length > 0 && (
-              <div className="border-t border-navy-100 pt-4">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">Current Focus</div>
-                <ul className="list-disc space-y-1 pl-4 text-sm text-navy-700">
-                  {currentFocusGoals.map((g) => (
-                    <li key={g.id}>{g.title}</li>
-                  ))}
-                </ul>
-              </div>
+            <ProgressBar value={overallTaskPct ?? 0} size="sm" />
+            {planTasks.length === 0 && <p className="mt-2 text-sm text-navy-400">등록된 할 일이 아직 없어요.</p>}
+            {remainingTasks.length > 0 && (
+              <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-navy-700">
+                {remainingTasks.map((t) => (
+                  <li key={t.id}>{t.title}</li>
+                ))}
+              </ul>
             )}
-
-            {thisMonthRoadmap && thisMonthRoadmap.items.length > 0 && (
-              <div className="border-t border-navy-100 pt-4">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-400">
-                  Monthly Roadmap · {monthLabelKorean(thisMonth)}
-                </div>
-                <ul className="space-y-1 text-sm text-navy-700">
-                  {thisMonthRoadmap.items.map(({ milestone }) => (
-                    <li key={milestone.id} className={milestone.status === "Completed" ? "text-navy-400 line-through" : undefined}>
-                      {milestone.title}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </CardBody>
     </Card>
