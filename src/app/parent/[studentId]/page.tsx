@@ -900,7 +900,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
               <div className="mt-3 space-y-2">
                 {planTasks.map((t) => (
                   <div key={t.id} className="flex items-center gap-3">
-                    <span className={`flex-1 text-sm ${t.is_done ? "text-navy-400 line-through" : "text-navy-900"}`}>{t.title}</span>
+                    <span className={`flex-1 text-sm ${t.is_done ? "text-navy-400" : "text-navy-900"}`}>{t.title}</span>
                     <div className="w-20">
                       <ProgressBar value={t.is_done ? 100 : 0} size="sm" />
                     </div>
