@@ -760,16 +760,18 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
       <CardBody className="space-y-3">
         {consultationNotes.length === 0 && <p className="text-sm text-navy-400">등록된 상담 기록이 아직 없어요.</p>}
         {consultationNotes.map((n) => (
-          <div key={n.id} className="border-b border-navy-100 pb-3 last:border-0 last:pb-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-medium text-navy-900">{n.meeting_date}</span>
-              <div className="flex items-center gap-2 text-xs text-navy-400">
-                {n.attendees && <span>{n.attendees}</span>}
-                {n.counselor_name && <span>{n.counselor_name}</span>}
+          <details key={n.id} className="rounded-lg border border-navy-100">
+            <summary className="cursor-pointer list-none rounded-lg px-3 py-2.5 hover:bg-navy-50">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm font-medium text-navy-900">{n.meeting_date}</span>
+                <div className="flex items-center gap-2 text-xs text-navy-400">
+                  {n.attendees && <span>{n.attendees}</span>}
+                  {n.counselor_name && <span>{n.counselor_name}</span>}
+                </div>
               </div>
-            </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-navy-600">{n.content}</p>
-          </div>
+            </summary>
+            <p className="whitespace-pre-wrap border-t border-navy-100 px-3 py-2.5 text-sm text-navy-600">{n.content}</p>
+          </details>
         ))}
       </CardBody>
     </Card>
