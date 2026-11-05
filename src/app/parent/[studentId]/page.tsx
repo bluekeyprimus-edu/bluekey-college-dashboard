@@ -863,12 +863,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   );
 
   const overallTaskPct = planTaskProgress(planTasks);
-  const remainingTasks = planTasks.filter((t) => !t.is_done).slice(0, 8);
 
   const goalsCard = isGoalSettingGrade ? (
     <Card>
       <CardHeader>
-        <CardTitle>Goals</CardTitle>
+        <CardTitle>Annual Counseling Plan</CardTitle>
       </CardHeader>
       <CardBody className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -897,12 +896,17 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
             </div>
             <ProgressBar value={overallTaskPct ?? 0} size="sm" />
             {planTasks.length === 0 && <p className="mt-2 text-sm text-navy-400">등록된 할 일이 아직 없어요.</p>}
-            {remainingTasks.length > 0 && (
-              <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-navy-700">
-                {remainingTasks.map((t) => (
-                  <li key={t.id}>{t.title}</li>
+            {planTasks.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {planTasks.map((t) => (
+                  <div key={t.id} className="flex items-center gap-3">
+                    <span className={`flex-1 text-sm ${t.is_done ? "text-navy-400 line-through" : "text-navy-900"}`}>{t.title}</span>
+                    <div className="w-20">
+                      <ProgressBar value={t.is_done ? 100 : 0} size="sm" />
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         )}
