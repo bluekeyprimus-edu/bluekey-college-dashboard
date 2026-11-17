@@ -1,6 +1,7 @@
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Student, Counselor } from "@/lib/types";
+import { SCHOOL_TYPE_OPTIONS } from "@/lib/labels";
 
 const inputClass =
   "w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 focus:border-gold-400 focus:outline-none";
@@ -70,7 +71,12 @@ export function StudentForm({
             <input name="school_country" defaultValue={d.school_country ?? ""} className={inputClass} />
           </Field>
           <Field label="학교 유형">
-            <input name="school_type" defaultValue={d.school_type ?? ""} placeholder="예: International, Public" className={inputClass} />
+            <select name="school_type" defaultValue={d.school_type ?? ""} className={inputClass}>
+              <option value="">선택 안 함</option>
+              {SCHOOL_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </Field>
           <Field label="커리큘럼 *">
             <select name="curriculum" required defaultValue={d.curriculum ?? ""} className={inputClass}>
