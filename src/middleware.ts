@@ -52,15 +52,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Parents can only see /parent/**; counselors can't wander into it either
-  // (keeps the two surfaces cleanly separated).
+  // Parents can only see /parent/**. Counselors are allowed into it too
+  // (as an admin-preview of what a parent sees — see getCurrentCounselor()
+  // in the /parent/[studentId] page itself); anyone else gets bounced out.
   const isParentArea = pathname.startsWith("/parent");
   if (role === "parent" && !isParentArea) {
     const url = request.nextUrl.clone();
     url.pathname = "/parent";
     return NextResponse.redirect(url);
   }
-  if (role !== "parent" && isParentArea) {
+  if (role !== "parent" && role !== "counselor" && isParentArea) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
