@@ -1,7 +1,7 @@
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Student, Counselor } from "@/lib/types";
-import { SCHOOL_TYPE_OPTIONS } from "@/lib/labels";
+import { SchoolTypeField } from "./SchoolTypeField";
 
 const inputClass =
   "w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 focus:border-gold-400 focus:outline-none";
@@ -71,18 +71,7 @@ export function StudentForm({
             <input name="school_country" defaultValue={d.school_country ?? ""} className={inputClass} />
           </Field>
           <Field label="학교 유형">
-            <input
-              name="school_type"
-              defaultValue={d.school_type ?? ""}
-              list="school-type-options"
-              placeholder="목록에서 선택하거나 직접 입력"
-              className={inputClass}
-            />
-            <datalist id="school-type-options">
-              {SCHOOL_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
+            <SchoolTypeField defaultValue={d.school_type ?? ""} className={inputClass} />
           </Field>
           <Field label="커리큘럼 *">
             <select name="curriculum" required defaultValue={d.curriculum ?? ""} className={inputClass}>
