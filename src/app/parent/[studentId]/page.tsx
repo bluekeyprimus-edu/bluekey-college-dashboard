@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isParentLinkedToStudent } from "@/lib/parent";
+import { getCurrentCounselor } from "@/lib/current-counselor";
 import {
   getStudent,
   getAcademicOverview,
@@ -100,8 +101,14 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const authorized = await isParentLinkedToStudent(user.id, studentId);
-  if (!authorized) redirect("/parent");
+  // A signed-in counselor (any counselor, not just admins — Jacob's call)
+  // can preview any student's parent page without needing a parent_accounts
+  // link of their own. Everyone else still needs the real parent link.
+  const previewingCounselor = await getCurrentCounselor();
+  if (!previewingCounselor) {
+    const authorized = await isParentLinkedToStudent(user.id, studentId);
+    if (!authorized) redirect("/parent");
+  }
 
   const student = await getStudent(studentId);
   if (!student) notFound();
@@ -194,10 +201,21 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Link href="/parent" className="text-xs font-medium text-navy-400 hover:text-navy-600">
-          다른 자녀 보기
-        </Link>
-        <LogoutButton />
+        {previewingCounselor ? (
+          <>
+            <Pill tone="gold">관리자 미리보기</Pill>
+            <Link href={`/students/${studentId}`} className="text-xs font-medium text-navy-400 hover:text-navy-600">
+              학생 페이지로 돌아가기
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/parent" className="text-xs font-medium text-navy-400 hover:text-navy-600">
+              다른 자녀 보기
+            </Link>
+            <LogoutButton />
+          </>
+        )}
       </div>
     </div>
   );

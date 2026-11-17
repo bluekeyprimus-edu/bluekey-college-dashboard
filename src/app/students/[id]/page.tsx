@@ -402,12 +402,20 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
       {canViewAll && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>학부모 계정</CardTitle>
+            <Link
+              href={`/parent/${student.id}`}
+              target="_blank"
+              className="text-xs font-medium text-gold-600 hover:text-gold-700"
+            >
+              학부모 화면 미리보기 →
+            </Link>
           </CardHeader>
           <CardBody className="space-y-4">
             <p className="text-xs text-navy-400">
-              학부모용 로그인 계정을 만들어 이 학생의 읽기 전용 현황 화면(카운슬러 전용 코멘트·평가 제외)을 보여줄 수 있어요.
+              학부모용 로그인 계정을 만들어 이 학생의 읽기 전용 현황 화면(카운슬러 전용 코멘트·평가 제외)을 보여줄 수 있어요. 계정을 만들지 않아도
+              위 &ldquo;학부모 화면 미리보기&rdquo;로 카운슬러 본인 로그인 상태에서 바로 확인할 수 있어요.
             </p>
 
             {parentAccounts.length === 0 && <p className="text-sm text-navy-400">연결된 학부모 계정이 아직 없어요.</p>}
