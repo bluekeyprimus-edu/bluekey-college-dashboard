@@ -71,12 +71,18 @@ export function StudentForm({
             <input name="school_country" defaultValue={d.school_country ?? ""} className={inputClass} />
           </Field>
           <Field label="학교 유형">
-            <select name="school_type" defaultValue={d.school_type ?? ""} className={inputClass}>
-              <option value="">선택 안 함</option>
+            <input
+              name="school_type"
+              defaultValue={d.school_type ?? ""}
+              list="school-type-options"
+              placeholder="목록에서 선택하거나 직접 입력"
+              className={inputClass}
+            />
+            <datalist id="school-type-options">
               {SCHOOL_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t} />
               ))}
-            </select>
+            </datalist>
           </Field>
           <Field label="커리큘럼 *">
             <select name="curriculum" required defaultValue={d.curriculum ?? ""} className={inputClass}>
