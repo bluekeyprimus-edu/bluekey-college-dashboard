@@ -37,7 +37,7 @@ export const CURRICULUM_LABEL: Record<string, string> = {
   Other: "기타",
 };
 
-export const SCHOOL_TYPE_OPTIONS = ["International", "Public", "Day", "Boarding", "미인가", "국내일반고", "기타"] as const;
+export const SCHOOL_TYPE_OPTIONS = ["International", "Public", "Private", "Day", "Boarding", "미인가", "국내일반고", "기타"] as const;
 
 export const SUBJECT_CATEGORY_OPTIONS = [
   "English",
