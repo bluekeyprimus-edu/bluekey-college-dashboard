@@ -42,3 +42,4 @@ next-env.d.ts
 
 # files delivered into chat by Claude land here on this machine — not part of the app
 /Claude outputs/
+/.next-stale-*/

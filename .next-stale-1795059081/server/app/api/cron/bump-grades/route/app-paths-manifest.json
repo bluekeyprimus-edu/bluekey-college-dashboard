@@ -1,3 +1,0 @@
-{
-  "/api/cron/bump-grades/route": "app/api/cron/bump-grades/route.js"
-}
