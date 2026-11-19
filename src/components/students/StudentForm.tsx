@@ -16,6 +16,45 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// A checkbox list instead of a <select> — more than one counselor can now
+// share a role on the same student (e.g. two general counselors, or two
+// EC co-leads), which a single-value dropdown can't express. Unchecked by
+// default means "unassigned"; the server also enforces editable
+// (canAssignCounselor), this just hides the control for a non-admin.
+function CounselorPicker({
+  name,
+  counselors,
+  selected,
+  editable,
+  emptyLabel,
+}: {
+  name: string;
+  counselors: Pick<Counselor, "id" | "name">[];
+  selected: string[];
+  editable: boolean;
+  emptyLabel: string;
+}) {
+  if (!editable) {
+    const names = counselors.filter((c) => selected.includes(c.id)).map((c) => c.name);
+    return (
+      <div className={`${inputClass} bg-navy-50 text-navy-500`}>
+        {names.length > 0 ? names.join(", ") : emptyLabel}
+        <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
+      </div>
+    );
+  }
+  return (
+    <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-navy-200 bg-white p-2.5">
+      {counselors.map((c) => (
+        <label key={c.id} className="flex items-center gap-2 text-sm text-navy-700">
+          <input type="checkbox" name={name} value={c.id} defaultChecked={selected.includes(c.id)} />
+          {c.name}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function StudentForm({
   action,
   defaultValues,
@@ -96,50 +135,32 @@ export function StudentForm({
               미국 시민권 보유
             </label>
           </div>
-          <Field label="담당 카운슬러 (전체)">
-            {canAssignCounselor ? (
-              <select name="counselor_id" defaultValue={d.counselor_id ?? ""} className={inputClass}>
-                <option value="">미배정</option>
-                {counselors.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            ) : (
-              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
-                {counselors.find((c) => c.id === d.counselor_id)?.name ?? "나에게 배정됨"}
-                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
-              </div>
-            )}
+          <Field label="담당 카운슬러 (전체) — 여러 명 가능">
+            <CounselorPicker
+              name="counselor_id"
+              counselors={counselors}
+              selected={d.counselor_id ?? []}
+              editable={canAssignCounselor}
+              emptyLabel="나에게 배정됨"
+            />
           </Field>
-          <Field label="원서 담당">
-            {canAssignCounselor ? (
-              <select name="application_counselor_id" defaultValue={d.application_counselor_id ?? ""} className={inputClass}>
-                <option value="">미배정</option>
-                {counselors.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            ) : (
-              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
-                {counselors.find((c) => c.id === d.application_counselor_id)?.name ?? "미배정"}
-                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
-              </div>
-            )}
+          <Field label="원서 담당 — 여러 명 가능">
+            <CounselorPicker
+              name="application_counselor_id"
+              counselors={counselors}
+              selected={d.application_counselor_id ?? []}
+              editable={canAssignCounselor}
+              emptyLabel="미배정"
+            />
           </Field>
-          <Field label="EC 담당">
-            {canAssignCounselor ? (
-              <select name="ec_counselor_id" defaultValue={d.ec_counselor_id ?? ""} className={inputClass}>
-                <option value="">미배정</option>
-                {counselors.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            ) : (
-              <div className={`${inputClass} bg-navy-50 text-navy-500`}>
-                {counselors.find((c) => c.id === d.ec_counselor_id)?.name ?? "미배정"}
-                <span className="ml-1.5 text-xs text-navy-400">(관리자만 변경 가능)</span>
-              </div>
-            )}
+          <Field label="EC 담당 — 여러 명 가능">
+            <CounselorPicker
+              name="ec_counselor_id"
+              counselors={counselors}
+              selected={d.ec_counselor_id ?? []}
+              editable={canAssignCounselor}
+              emptyLabel="미배정"
+            />
           </Field>
         </CardBody>
       </Card>

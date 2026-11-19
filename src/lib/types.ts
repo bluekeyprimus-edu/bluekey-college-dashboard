@@ -58,14 +58,14 @@ export interface Student {
   intended_major: string | null;
   secondary_major_interest: string | null;
   career_interest: string | null;
-  counselor_id: string | null;
+  // Arrays — any of these three roles can be held by more than one
+  // counselor at once (and the same person can hold more than one role).
+  // Empty array means unassigned, never null. counselor_name is a
+  // display-only, comma-joined list of the general counselor(s)' names.
+  counselor_id: string[];
   counselor_name?: string;
-  // Narrower assignments alongside the general counselor — see
-  // schema.sql. Either can be null (most students only have the one
-  // general counselor) and either can point at the same person as
-  // counselor_id or someone else.
-  application_counselor_id: string | null;
-  ec_counselor_id: string | null;
+  application_counselor_id: string[];
+  ec_counselor_id: string[];
   status: "active" | "inactive" | "graduated";
   photo_url: string | null;
   // Free-text, counselor-set "what to do next for this student" shown on

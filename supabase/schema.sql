@@ -37,14 +37,16 @@ create table if not exists students (
   intended_major text,
   secondary_major_interest text,
   career_interest text,
-  counselor_id uuid references counselors(id) on delete set null,
-  -- Two optional, narrower assignments alongside the general counselor
-  -- above: an application lead (college list / essays / recommendations)
-  -- and an EC coordinator (extracurriculars / awards). Either can be the
-  -- same person as counselor_id or someone else entirely; both are
-  -- nullable since most students just have the one general counselor.
-  application_counselor_id uuid references counselors(id) on delete set null,
-  ec_counselor_id uuid references counselors(id) on delete set null,
+  -- All three of these are arrays so more than one counselor can share a
+  -- role on the same student (e.g. two general counselors, or two EC
+  -- co-leads) — empty array means unassigned, never null. The two below
+  -- are narrower assignments alongside the general counselor(s) above: an
+  -- application lead (college list / essays / recommendations) and an EC
+  -- coordinator (extracurriculars / awards). Any of the three can overlap
+  -- with any other — the same person can hold more than one role.
+  counselor_id uuid[] not null default '{}',
+  application_counselor_id uuid[] not null default '{}',
+  ec_counselor_id uuid[] not null default '{}',
   status text default 'active' check (status in ('active','inactive','graduated')),
   photo_url text,
   -- Counselor-set free text: "what to do next" for this student, shown on
@@ -53,9 +55,9 @@ create table if not exists students (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-create index if not exists idx_students_counselor on students(counselor_id);
-create index if not exists idx_students_application_counselor on students(application_counselor_id);
-create index if not exists idx_students_ec_counselor on students(ec_counselor_id);
+create index if not exists idx_students_counselor on students using gin(counselor_id);
+create index if not exists idx_students_application_counselor on students using gin(application_counselor_id);
+create index if not exists idx_students_ec_counselor on students using gin(ec_counselor_id);
 
 -- Overall progress breakdown (Section 1) — stored per category so counselors
 -- can set/override until automatic calculation is wired up later.

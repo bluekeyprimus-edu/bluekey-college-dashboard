@@ -26,8 +26,9 @@ export default async function CounselorSettingsPage() {
   ]);
   const assignedCountByCounselor = new Map<string, number>();
   for (const s of students) {
-    if (!s.counselor_id) continue;
-    assignedCountByCounselor.set(s.counselor_id, (assignedCountByCounselor.get(s.counselor_id) ?? 0) + 1);
+    for (const cid of s.counselor_id) {
+      assignedCountByCounselor.set(cid, (assignedCountByCounselor.get(cid) ?? 0) + 1);
+    }
   }
 
   return (

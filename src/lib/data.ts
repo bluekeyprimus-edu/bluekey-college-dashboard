@@ -38,10 +38,6 @@ import {
 // otherwise it falls back to mock-data.ts so the UI never blocks on Supabase
 // being configured.
 
-type StudentRow = Omit<Student, "counselor_name"> & {
-  counselors: { name: string } | null;
-};
-
 export async function getStudents(): Promise<Student[]> {
   // Non-admin counselors only ever see students they hold SOME role on —
   // general counselor, application lead, or EC coordinator. This is the
@@ -57,34 +53,44 @@ export async function getStudents(): Promise<Student[]> {
     return restrictToCounselorId
       ? rows.filter(
           (s) =>
-            s.counselor_id === restrictToCounselorId ||
-            s.application_counselor_id === restrictToCounselorId ||
-            s.ec_counselor_id === restrictToCounselorId
+            s.counselor_id.includes(restrictToCounselorId) ||
+            s.application_counselor_id.includes(restrictToCounselorId) ||
+            s.ec_counselor_id.includes(restrictToCounselorId)
         )
       : rows;
   }
-  // counselors!counselor_id(...) disambiguates which of the three student->counselors
-  // foreign keys (counselor_id / application_counselor_id / ec_counselor_id) this embed
-  // means — with all three pointing at the same table, a plain "counselors(name)" is an
-  // ambiguous embed that PostgREST rejects, which silently fell back to mock data below.
-  let query = supabase!.from("students").select("*, counselors!counselor_id(name)").order("student_name");
-  if (restrictToCounselorId) {
-    query = query.or(
-      `counselor_id.eq.${restrictToCounselorId},application_counselor_id.eq.${restrictToCounselorId},ec_counselor_id.eq.${restrictToCounselorId}`
-    );
-  }
-  const { data, error } = await query;
+  // counselor_id/application_counselor_id/ec_counselor_id are uuid[] arrays
+  // now (more than one counselor can share a role), so a PostgREST embed
+  // can't resolve a single related counselor row the way it could when
+  // these were plain foreign keys — counselor_name is built by hand below
+  // from a separate counselors fetch instead. Filtering by the acting
+  // counselor also moves client-side for the same reason (keeps this to
+  // one simple, obviously-correct path instead of relying on the exact
+  // PostgREST array-contains "or" syntax, which this layer can't exercise
+  // against the real database to double-check).
+  const [{ data, error }, counselors] = await Promise.all([
+    supabase!.from("students").select("*").order("student_name"),
+    getCounselors(),
+  ]);
   // A real Supabase/PostgREST error used to fall back to mock data here —
-  // which is how the ambiguous-embed bug above went unnoticed: the roster
+  // which is how a past ambiguous-embed bug went unnoticed: the roster
   // silently became 5 fake students instead of failing loudly. Any error
   // this configured-Supabase branch hits now is a real one, so it throws
   // and surfaces in src/app/error.tsx instead of being hidden as mock data.
   if (error) throw new Error(`학생 목록을 불러오지 못했어요: ${error.message}`);
   if (!data) throw new Error("학생 목록을 불러오지 못했어요: 알 수 없는 오류");
-  return (data as unknown as StudentRow[]).map((row) => ({
+  const nameById = new Map(counselors.map((c) => [c.id, c.name]));
+  const rows = (data as unknown as Student[]).map((row) => ({
     ...row,
-    counselor_name: row.counselors?.name,
-  })) as Student[];
+    counselor_name: (row.counselor_id ?? []).map((id) => nameById.get(id)).filter(Boolean).join(", ") || undefined,
+  }));
+  if (!restrictToCounselorId) return rows;
+  return rows.filter(
+    (s) =>
+      s.counselor_id.includes(restrictToCounselorId) ||
+      s.application_counselor_id.includes(restrictToCounselorId) ||
+      s.ec_counselor_id.includes(restrictToCounselorId)
+  );
 }
 
 export async function getStudent(id: string): Promise<Student | null> {
@@ -109,9 +115,9 @@ export async function getStudentAccess(studentId: string): Promise<StudentAccess
   if (!isSupabaseConfigured) {
     const row = mock.mockStudents.find((s) => s.id === studentId);
     if (!row) return null;
-    const canViewAll = row.counselor_id === actingCounselor.id;
-    const canViewEc = canViewAll || row.ec_counselor_id === actingCounselor.id;
-    const canViewApplication = canViewAll || row.application_counselor_id === actingCounselor.id;
+    const canViewAll = row.counselor_id.includes(actingCounselor.id);
+    const canViewEc = canViewAll || row.ec_counselor_id.includes(actingCounselor.id);
+    const canViewApplication = canViewAll || row.application_counselor_id.includes(actingCounselor.id);
     if (!canViewAll && !canViewEc && !canViewApplication) return null;
     return { canViewAll, canViewEc, canViewApplication };
   }
@@ -122,9 +128,9 @@ export async function getStudentAccess(studentId: string): Promise<StudentAccess
     .eq("id", studentId)
     .maybeSingle();
   if (!data) return null;
-  const canViewAll = data.counselor_id === actingCounselor.id;
-  const canViewEc = canViewAll || data.ec_counselor_id === actingCounselor.id;
-  const canViewApplication = canViewAll || data.application_counselor_id === actingCounselor.id;
+  const canViewAll = (data.counselor_id ?? []).includes(actingCounselor.id);
+  const canViewEc = canViewAll || (data.ec_counselor_id ?? []).includes(actingCounselor.id);
+  const canViewApplication = canViewAll || (data.application_counselor_id ?? []).includes(actingCounselor.id);
   if (!canViewAll && !canViewEc && !canViewApplication) return null;
   return { canViewAll, canViewEc, canViewApplication };
 }
@@ -299,7 +305,7 @@ export async function getAllTasks(): Promise<TaskItem[]> {
   if (!isSupabaseConfigured) {
     if (!restrictToCounselorId) return mock.mockTasks;
     const allowedIds = new Set(
-      mock.mockStudents.filter((s) => s.counselor_id === restrictToCounselorId).map((s) => s.id)
+      mock.mockStudents.filter((s) => s.counselor_id.includes(restrictToCounselorId)).map((s) => s.id)
     );
     return mock.mockTasks.filter((t) => allowedIds.has(t.student_id));
   }

@@ -44,6 +44,13 @@ function num(formData: FormData, key: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
+// Multi-select helper for the counselor_id / application_counselor_id /
+// ec_counselor_id checkbox groups — getAll picks up every checked box
+// sharing that name, empty array when none are checked (never null).
+function strArray(formData: FormData, key: string): string[] {
+  return formData.getAll(key).filter((v): v is string => typeof v === "string" && v.trim() !== "");
+}
+
 function studentPayload(formData: FormData) {
   return {
     student_name: str(formData, "student_name"),
@@ -60,7 +67,7 @@ function studentPayload(formData: FormData) {
     intended_major: str(formData, "intended_major"),
     secondary_major_interest: str(formData, "secondary_major_interest"),
     career_interest: str(formData, "career_interest"),
-    counselor_id: str(formData, "counselor_id"),
+    counselor_id: strArray(formData, "counselor_id"),
   };
 }
 
@@ -70,8 +77,8 @@ function studentPayload(formData: FormData) {
 // touch who the application lead / EC coordinator is.
 function roleAssignmentPayload(formData: FormData) {
   return {
-    application_counselor_id: str(formData, "application_counselor_id"),
-    ec_counselor_id: str(formData, "ec_counselor_id"),
+    application_counselor_id: strArray(formData, "application_counselor_id"),
+    ec_counselor_id: strArray(formData, "ec_counselor_id"),
   };
 }
 
@@ -92,7 +99,7 @@ export async function createStudent(formData: FormData) {
   const actingCounselor = await getCurrentCounselor();
   const isAdmin = actingCounselor?.isAdmin ?? false;
   if (actingCounselor && !isAdmin) {
-    payload.counselor_id = actingCounselor.id;
+    payload.counselor_id = [actingCounselor.id];
   }
   const insertPayload = isAdmin ? { ...payload, ...roleAssignmentPayload(formData) } : payload;
 
@@ -174,7 +181,13 @@ export async function updateStudent(studentId: string, formData: FormData) {
   const actingCounselor = await getCurrentCounselor();
   const isAdmin = actingCounselor?.isAdmin ?? false;
   if (actingCounselor && !isAdmin) {
-    payload.counselor_id = actingCounselor.id;
+    // Non-admins never submit this field (the UI hides the picker for
+    // them) and the choke point above already guarantees they only reach
+    // this action for a student they hold some role on — so just leave
+    // counselor_id out of the update entirely rather than forcing it to
+    // [themselves], which would silently drop any other counselor(s)
+    // sharing the role that this non-admin can't even see in their form.
+    delete (payload as { counselor_id?: string[] }).counselor_id;
   }
   const updatePayload = isAdmin ? { ...payload, ...roleAssignmentPayload(formData) } : payload;
 
