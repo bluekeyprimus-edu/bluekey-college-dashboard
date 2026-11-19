@@ -16,10 +16,13 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // The parent portal (and its login page) has no counselor sidebar/nav —
-  // it's a separate, read-only surface for parents.
+  // The parent portal (and its login page), and the public e-signature
+  // page, have no counselor sidebar/nav — they're separate, standalone
+  // surfaces meant to be opened by people with no dashboard login
+  // (parents, instructors) via a shared link.
   const isParentSurface = pathname === "/login" || pathname?.startsWith("/parent");
-  if (isParentSurface) {
+  const isPublicSignSurface = pathname?.startsWith("/sign/");
+  if (isParentSurface || isPublicSignSurface) {
     return <div className="min-h-screen bg-background">{children}</div>;
   }
 
