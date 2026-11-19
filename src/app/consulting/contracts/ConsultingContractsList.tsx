@@ -118,12 +118,20 @@ export function ConsultingContractsList() {
             전자 계약서 발송 및 서명 현황 <span className="text-navy-300">(날짜는 한국시간 기준)</span>
           </p>
         </div>
-        <button
-          onClick={() => router.push("/consulting/contracts/new")}
-          className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
-        >
-          + 새 계약서 작성
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push("/consulting/contracts/past/new")}
+            className="rounded-lg border border-navy-200 bg-white px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50"
+          >
+            + 과거 계약서 등록
+          </button>
+          <button
+            onClick={() => router.push("/consulting/contracts/new")}
+            className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+          >
+            + 새 계약서 작성
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -147,7 +155,10 @@ export function ConsultingContractsList() {
                   <div className="font-serif text-base font-semibold text-navy-900">{c.student_name}</div>
                   <div className="text-xs text-navy-400">{c.student_grade}</div>
                 </div>
-                <Pill tone={CONTRACT_STATUS_TONE[c.status]}>{CONTRACT_STATUS_LABEL[c.status] ?? c.status}</Pill>
+                <div className="flex items-center gap-1.5">
+                  {c.pdf_url && <Pill tone="neutral">과거계약</Pill>}
+                  <Pill tone={CONTRACT_STATUS_TONE[c.status]}>{CONTRACT_STATUS_LABEL[c.status] ?? c.status}</Pill>
+                </div>
               </div>
               <div className="mb-3 grid grid-cols-2 gap-1.5 text-xs text-navy-600">
                 <div>
@@ -214,12 +225,20 @@ export function ConsultingContractsList() {
                     </button>
                   </>
                 )}
-                {(c.status === "signed" || c.status === "terminated") && (
+                {(c.status === "signed" || c.status === "terminated") && !c.pdf_url && (
                   <button
                     onClick={() => window.open(`/sign/${c.token}`)}
                     className={`${btnClass} border-emerald-200 bg-emerald-50 text-emerald-700`}
                   >
                     계약서 보기
+                  </button>
+                )}
+                {c.pdf_url && (
+                  <button
+                    onClick={() => window.open(c.pdf_url!, "_blank")}
+                    className={`${btnClass} border-emerald-200 bg-emerald-50 text-emerald-700`}
+                  >
+                    PDF 보기
                   </button>
                 )}
                 {(c.status === "signed" || c.status === "terminated") && (

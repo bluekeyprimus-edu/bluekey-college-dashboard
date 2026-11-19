@@ -994,6 +994,96 @@ export async function deleteAttachment(
 }
 
 // ============================================================
+// 과거(기존) 계약서 등록 — 이 전자계약 기능이 생기기 전에 종이로 서명됐던
+// 컨설팅 계약서를 스캔 PDF로 올려서 "서명 완료" 상태의 계약 기록으로
+// 남겨요. student_id를 연결하면 그 학생의 student_finances.consulting_fee
+// 에 금액이 "더해져요" (기존에 수동으로 입력된 금액을 덮어쓰지 않기 위해).
+// 연결하지 않으면 계약서 기록만 남고 재무 통계에는 반영되지 않아요.
+// 파일 업로드는 uploadAttachment와 동일하게 supabaseAdmin(서비스 롤)을
+// 써서 attachments 버킷의 "contracts/" 경로에 저장해요.
+// ============================================================
+const PAST_CONTRACT_MAX_BYTES = 20 * 1024 * 1024; // 20MB
+
+export async function createPastConsultingContract(formData: FormData) {
+  if (!isAdminConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 과거 계약서를 등록할 수 있어요.");
+  }
+
+  const studentName = str(formData, "student_name");
+  if (!studentName) throw new Error("학생 이름을 입력해주세요.");
+
+  const file = formData.get("pdf");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("계약서 PDF 파일을 선택해주세요.");
+  }
+  if (file.size > PAST_CONTRACT_MAX_BYTES) {
+    throw new Error("파일 크기는 20MB 이하만 가능해요.");
+  }
+
+  const safeName = file.name.replace(/[^\w.\-가-힣 ]/g, "_");
+  const path = `contracts/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabaseAdmin!.storage
+    .from(ATTACHMENTS_BUCKET)
+    .upload(path, file, { contentType: file.type || "application/pdf" });
+  if (uploadError) throw new Error(`업로드 실패: ${uploadError.message}`);
+
+  const { data: publicUrlData } = supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).getPublicUrl(path);
+
+  const studentId = str(formData, "student_id");
+  const amountRaw = str(formData, "amount");
+  const signedDate = str(formData, "signed_date");
+
+  const { error: insertError } = await supabaseAdmin!.from("contracts").insert({
+    contract_type: str(formData, "contract_type") ?? "standard",
+    status: "signed",
+    student_name: studentName,
+    student_grade: str(formData, "student_grade"),
+    student_school: str(formData, "student_school"),
+    parent_name: str(formData, "parent_name"),
+    parent_phone: str(formData, "parent_phone"),
+    parent_address: str(formData, "parent_address"),
+    num_schools: str(formData, "num_schools"),
+    amount: amountRaw,
+    start_date: str(formData, "start_date"),
+    end_date: str(formData, "end_date"),
+    special_terms: str(formData, "special_terms"),
+    signed_at: signedDate ? new Date(signedDate).toISOString() : new Date().toISOString(),
+    student_id: studentId,
+    pdf_url: publicUrlData.publicUrl,
+    pdf_storage_path: path,
+  });
+  if (insertError) {
+    await supabaseAdmin!.storage.from(ATTACHMENTS_BUCKET).remove([path]);
+    throw new Error(`저장 실패: ${insertError.message}`);
+  }
+
+  if (studentId) {
+    const addedFee = Number((amountRaw ?? "0").replace(/[^0-9]/g, "")) || 0;
+    if (addedFee > 0) {
+      const { data: existing } = await supabaseAdmin!
+        .from("student_finances")
+        .select("consulting_fee")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      const newFee = (existing?.consulting_fee ?? 0) + addedFee;
+      const { error: financeError } = await supabaseAdmin!.from("student_finances").upsert({
+        student_id: studentId,
+        consulting_fee: newFee,
+        updated_at: new Date().toISOString(),
+      });
+      if (financeError) throw new Error(`재무 통계 반영 실패: ${financeError.message}`);
+    }
+    revalidatePath("/finance");
+    revalidatePath(`/students/${studentId}`);
+  }
+
+  revalidatePath("/consulting/contracts");
+}
+
+// ============================================================
 // Consultation Notes — student/parent meeting logs. counselor_id is always
 // the acting counselor, never a form field, so a note can't be misattributed.
 // ============================================================

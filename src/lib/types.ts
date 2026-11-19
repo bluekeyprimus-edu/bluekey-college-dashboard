@@ -501,5 +501,8 @@ export interface Contract {
   termination_date: string | null;
   termination_fee: number | null;
   termination_reason: string | null;
+  student_id: string | null;
+  pdf_url: string | null;
+  pdf_storage_path: string | null;
   created_at: string;
 }

@@ -655,10 +655,21 @@ create table if not exists contracts (
   termination_date date,
   termination_fee numeric default 0,
   termination_reason text,
+  -- Optional link to a real students(id) row, and a scanned PDF of the
+  -- physical contract — used only by the "기존(과거) 계약서 등록" import
+  -- flow for contracts that were already signed on paper before this
+  -- e-signature feature existed. student_id, when set, is also what lets
+  -- that contract's amount get added into student_finances.consulting_fee
+  -- so it shows up in the existing /finance stats; most contracts (the
+  -- normal e-signed ones) leave both null, same as before.
+  student_id uuid references students(id) on delete set null,
+  pdf_url text,
+  pdf_storage_path text,
   created_at timestamptz default now()
 );
 create unique index if not exists idx_contracts_token on contracts(token);
 create index if not exists idx_contracts_type on contracts(contract_type);
+create index if not exists idx_contracts_student on contracts(student_id);
 alter table contracts disable row level security;
 
 -- ============================================================
