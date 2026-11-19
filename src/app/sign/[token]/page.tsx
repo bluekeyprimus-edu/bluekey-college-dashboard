@@ -254,7 +254,7 @@ function DirectorSignature() {
     <img
       src="/images/signature_eunju_lee.png"
       alt="대표 서명"
-      style={{ height: "48px", width: "auto", objectFit: "contain" }}
+      style={{ height: "68px", width: "auto", objectFit: "contain" }}
     />
   );
 }
@@ -571,7 +571,7 @@ export default function SignPage() {
                       <div style={{ display: "flex", gap: "8px", marginBottom: "4px" }}><span style={{ color: "#aaa", width: "48px" }}>대표</span><span>강요셉, 이은주</span></div>
                       <div style={{ display: "flex", gap: "8px" }}><span style={{ color: "#aaa", width: "48px" }}>사업자</span><span>885-88-01373</span></div>
                     </div>
-                    <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid #eee", minHeight: "90px" }}>
+                    <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "center", borderTop: "1px solid #eee", minHeight: "90px" }}>
                       <DirectorSignature />
                     </div>
                   </div>
@@ -855,7 +855,7 @@ export default function SignPage() {
                       <div style={{ display: "flex", gap: "8px", marginBottom: "4px" }}><span style={{ color: "#aaa", width: "48px" }}>대표</span><span>이 은 주</span></div>
                       <div style={{ display: "flex", gap: "8px" }}><span style={{ color: "#aaa", width: "48px" }}>사업자</span><span>887-85-02270</span></div>
                     </div>
-                    <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid #eee", minHeight: "90px" }}>
+                    <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "center", borderTop: "1px solid #eee", minHeight: "90px" }}>
                       <DirectorSignature />
                     </div>
                   </div>
@@ -934,7 +934,7 @@ export default function SignPage() {
                     <div style={{ display: "flex", gap: "8px", marginBottom: "4px" }}><span style={{ color: "#aaa", width: "48px" }}>대표</span><span>이 은 주</span></div>
                     <div style={{ display: "flex", gap: "8px" }}><span style={{ color: "#aaa", width: "48px" }}>사업자</span><span>887-85-02270</span></div>
                   </div>
-                  <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderTop: "1px solid #eee", minHeight: "90px" }}>
+                  <div style={{ padding: "20px", display: "flex", alignItems: "center", justifyContent: "center", borderTop: "1px solid #eee", minHeight: "90px" }}>
                     <DirectorSignature />
                   </div>
                 </div>

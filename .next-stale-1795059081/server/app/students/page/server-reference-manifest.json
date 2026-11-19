@@ -1,0 +1,16 @@
+{
+  "node": {
+    "407efce379a0dd23d694e494452a8f7c89024a1645": {
+      "workers": {
+        "app/students/page": {
+          "moduleId": 99960,
+          "async": false,
+          "codeHash": null
+        }
+      },
+      "exportedName": "deleteStudent",
+      "filename": "src/lib/actions.ts"
+    }
+  },
+  "edge": {}
+}
