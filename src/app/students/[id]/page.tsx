@@ -194,6 +194,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               <ProfileField label="커리큘럼" value={student.curriculum} />
               <ProfileField label="국적" value={student.citizenship} />
               <ProfileField label="미국 영주권" value={student.us_permanent_resident ? "있음" : "없음"} />
+              <ProfileField label="미국 시민권" value={student.us_citizen ? "있음" : "없음"} />
               <ProfileField label="희망 전공" value={student.intended_major} />
               <ProfileField label="관심 부전공" value={student.secondary_major_interest} />
               <ProfileField label="희망 진로" value={student.career_interest} />

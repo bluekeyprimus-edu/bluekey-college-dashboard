@@ -90,6 +90,12 @@ export function StudentForm({
               미국 영주권 보유
             </label>
           </div>
+          <div className="flex items-end pb-2">
+            <label className="flex items-center gap-2 text-sm text-navy-700">
+              <input type="checkbox" name="us_citizen" defaultChecked={d.us_citizen} />
+              미국 시민권 보유
+            </label>
+          </div>
           <Field label="담당 카운슬러 (전체)">
             {canAssignCounselor ? (
               <select name="counselor_id" defaultValue={d.counselor_id ?? ""} className={inputClass}>

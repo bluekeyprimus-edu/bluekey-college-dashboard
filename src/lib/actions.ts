@@ -56,6 +56,7 @@ function studentPayload(formData: FormData) {
     curriculum: str(formData, "curriculum"),
     citizenship: str(formData, "citizenship"),
     us_permanent_resident: formData.get("us_permanent_resident") === "on",
+    us_citizen: formData.get("us_citizen") === "on",
     intended_major: str(formData, "intended_major"),
     secondary_major_interest: str(formData, "secondary_major_interest"),
     career_interest: str(formData, "career_interest"),

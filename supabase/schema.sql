@@ -33,6 +33,7 @@ create table if not exists students (
   curriculum text check (curriculum in ('AP','IB','A-Level','Korean','Other')),
   citizenship text,
   us_permanent_resident boolean default false,
+  us_citizen boolean default false,
   intended_major text,
   secondary_major_interest text,
   career_interest text,

@@ -54,6 +54,7 @@ export interface Student {
   curriculum: Curriculum;
   citizenship: string | null;
   us_permanent_resident: boolean;
+  us_citizen: boolean;
   intended_major: string | null;
   secondary_major_interest: string | null;
   career_interest: string | null;
