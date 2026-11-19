@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatAmountInput } from "@/lib/format";
 
 const inputClass =
   "w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-900 focus:border-gold-400 focus:outline-none";
@@ -39,8 +40,10 @@ export function NewInstructorContract() {
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState<Form>(EMPTY);
 
-  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: name === "amount" ? formatAmountInput(value) : value });
+  };
 
   async function submit() {
     if (!supabase) return;

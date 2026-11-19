@@ -247,11 +247,16 @@ const featureList = [
   ] },
 ];
 
-// 원장님(대표) 서명 이미지 — 아직 전달받지 못해 비워둠. 이미지 파일을 받으면
-// public/images/signature_v3_final.png 로 넣고 아래 두 곳(DirectorSignature)의
-// 플레이스홀더를 <img src="/images/signature_v3_final.png" .../>로 바꾸면 됩니다.
+// 원장님(대표) 서명 이미지 — public/images/signature_eunju_lee.png
 function DirectorSignature() {
-  return <span style={{ fontSize: "12px", color: "#bbb", fontStyle: "italic" }}>(서명 이미지 추가 예정)</span>;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/images/signature_eunju_lee.png"
+      alt="대표 서명"
+      style={{ height: "48px", width: "auto", objectFit: "contain" }}
+    />
+  );
 }
 
 export default function SignPage() {
