@@ -140,9 +140,12 @@ export function BulkPastContractImport({ students }: { students: Student[] }) {
   }
 
   async function runAll() {
-    const missing = RECORDS.map((_, i) => i).filter((i) => !fileRefs.current[i]?.files?.[0] && statuses[i] !== "done");
-    if (missing.length > 0) {
-      alert(`${missing.map((i) => RECORDS[i].student_name).join(", ")} 학생의 PDF가 첨부되지 않았어요.`);
+    // 아직 PDF가 첨부되지 않은 줄은 건너뛰고, 첨부된 줄만 먼저 등록해요.
+    // 나머지는 PDF 첨부한 다음 "전체 등록"을 다시 누르면 그때 처리돼요.
+    const skipped = RECORDS.map((_, i) => i).filter((i) => !fileRefs.current[i]?.files?.[0] && statuses[i] !== "done");
+    const toRun = RECORDS.map((_, i) => i).filter((i) => !skipped.includes(i) && statuses[i] !== "done");
+    if (toRun.length === 0) {
+      alert("첨부된 PDF가 없어요. 먼저 PDF를 첨부해주세요.");
       return;
     }
     setRunning(true);
@@ -183,6 +186,11 @@ export function BulkPastContractImport({ students }: { students: Student[] }) {
       setErrors([...nextErrors]);
     }
     setRunning(false);
+    if (skipped.length > 0) {
+      alert(
+        `${skipped.map((i) => RECORDS[i].student_name).join(", ")} 학생은 PDF가 아직 첨부되지 않아 건너뛰었어요. 첨부 후 "전체 등록"을 다시 눌러주세요.`
+      );
+    }
   }
 
   return (
