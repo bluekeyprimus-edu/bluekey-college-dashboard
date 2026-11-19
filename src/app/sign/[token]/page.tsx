@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatAmountInput } from "@/lib/format";
 import type { Contract } from "@/lib/types";
 
 const CONTRACT_TITLES: Record<string, string> = {
@@ -381,7 +382,7 @@ export default function SignPage() {
   if (contract?.contract_type === "instructor") {
     const dateKor = formatKorDate(contract.start_date);
     const endKor = formatKorDate(contract.end_date);
-    const amount = contract.amount || "별도 협의";
+    const amount = contract.amount ? formatAmountInput(contract.amount) : "별도 협의";
     const name = contract.student_name || "";
     const ssn = contract.student_school || "";
     const address = contract.parent_address || "";
@@ -702,7 +703,7 @@ export default function SignPage() {
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ color: "#f2d17e", fontSize: "18px", fontWeight: 700 }}>{contract?.amount || "별도 문의"}</div>
+            <div style={{ color: "#f2d17e", fontSize: "18px", fontWeight: 700 }}>{contract?.amount ? formatAmountInput(contract.amount) : "별도 문의"}</div>
             <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", marginTop: "3px" }}>컨설팅 서비스 비용</div>
           </div>
         </div>
