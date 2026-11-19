@@ -350,6 +350,24 @@ export default function SignPage() {
       setSubmitting(false);
       return;
     }
+    // 서명 완료 알림 메일 — 실패해도 서명 자체는 이미 끝난 상태이므로 조용히 무시.
+    if (contract) {
+      fetch("/api/contract-signed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contractType: contract.contract_type,
+          studentName: contract.student_name,
+          studentGrade: contract.student_grade,
+          parentName: contract.parent_name,
+          parentPhone: contract.parent_phone,
+          amount: contract.amount,
+          startDate: contract.start_date,
+          endDate: contract.end_date,
+          signedAt,
+        }),
+      }).catch(() => {});
+    }
     setDone(true);
   }
 
