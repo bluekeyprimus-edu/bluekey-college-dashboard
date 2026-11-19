@@ -469,3 +469,37 @@ export interface PlanTask {
   is_done: boolean;
   created_at: string;
 }
+
+// ============================================================
+// Contracts — consulting (학부모 e-sign) + instructor (강사 e-sign)
+// Ported from a standalone contracts tool; see supabase/schema.sql for
+// why this stays one generic table with free-text fields instead of a
+// students(id) foreign key.
+// ============================================================
+export type ContractType = "standard" | "application" | "premium" | "instructor";
+export type ContractStatus = "pending" | "signed" | "cancelled" | "terminated";
+
+export interface Contract {
+  id: string;
+  token: string;
+  contract_type: ContractType;
+  status: ContractStatus;
+  student_name: string | null;
+  student_grade: string | null;
+  student_school: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+  parent_address: string | null;
+  package_type: string | null;
+  num_schools: string | null;
+  amount: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  special_terms: string | null;
+  signature_data: string | null;
+  signed_at: string | null;
+  termination_date: string | null;
+  termination_fee: number | null;
+  termination_reason: string | null;
+  created_at: string;
+}

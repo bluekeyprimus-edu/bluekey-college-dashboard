@@ -206,3 +206,36 @@ export const GOAL_PRIORITY_LABEL: Record<string, string> = {
   Low: "낮음",
 };
 
+// ============================================================
+// Contracts (컨설팅 계약서 / 강사 계약서)
+// ============================================================
+
+export const CONTRACT_STATUS_LABEL: Record<string, string> = {
+  pending: "서명 대기",
+  signed: "서명 완료",
+  cancelled: "취소됨",
+  terminated: "계약 해지",
+};
+
+export const CONTRACT_STATUS_TONE: Record<string, "amber" | "green" | "red" | "neutral"> = {
+  pending: "amber",
+  signed: "green",
+  cancelled: "red",
+  terminated: "neutral",
+};
+
+// contract_type doubles as "which consulting package" for a consulting
+// contract (standard/application/premium) and as the instructor-contract
+// marker ('instructor') — see supabase/schema.sql.
+export const CONSULTING_CONTRACT_TYPE_OPTIONS = [
+  { value: "standard", label: "Standard", sub: "EC+Academic Management", grade: "9–11학년" },
+  { value: "application", label: "Application", sub: "College App.", grade: "11–12학년" },
+  { value: "premium", label: "Premium", sub: "All-Inclusive Consulting EC+Academic+College App.", grade: "9–12학년" },
+] as const;
+
+export const CONTRACT_TITLE_LABEL: Record<string, string> = {
+  standard: "[EC] 미국 대학 입시 컨설팅 서비스 계약서",
+  premium: "[Premium] 미국 대학 입시 통합 컨설팅 회원 가입서",
+  application: "미국 대학 컨설팅 회원 가입서",
+  instructor: "강사 위촉 계약서",
+};

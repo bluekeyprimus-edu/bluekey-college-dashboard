@@ -623,6 +623,45 @@ create table if not exists system_settings (
 );
 
 -- ============================================================
+-- Contracts (consulting + instructor e-signature contracts)
+-- Ported from a standalone contracts tool: one generic table covers both
+-- "컨설팅 계약서" (contract_type standard/application/premium — the value
+-- doubles as the package selected) and "강사 계약서" (contract_type
+-- 'instructor'). Free-text student/parent/instructor fields rather than a
+-- foreign key to students(id) — these contracts aren't necessarily tied to
+-- an existing student row (instructor contracts never are), matching how
+-- the original tool worked. Parents/instructors sign at /sign/[token]
+-- without logging in, so RLS stays off and the token itself is the secret.
+-- ============================================================
+create table if not exists contracts (
+  id uuid primary key default gen_random_uuid(),
+  token uuid not null default gen_random_uuid(),
+  contract_type text not null default 'standard' check (contract_type in ('standard', 'application', 'premium', 'instructor')),
+  status text not null default 'pending' check (status in ('pending', 'signed', 'cancelled', 'terminated')),
+  student_name text,
+  student_grade text,
+  student_school text,
+  parent_name text,
+  parent_phone text,
+  parent_address text,
+  package_type text,
+  num_schools text,
+  amount text,
+  start_date date,
+  end_date date,
+  special_terms text,
+  signature_data text,
+  signed_at timestamptz,
+  termination_date date,
+  termination_fee numeric default 0,
+  termination_reason text,
+  created_at timestamptz default now()
+);
+create unique index if not exists idx_contracts_token on contracts(token);
+create index if not exists idx_contracts_type on contracts(contract_type);
+alter table contracts disable row level security;
+
+-- ============================================================
 -- Seed a couple of counselors + one sample student so the UI has something
 -- to render immediately. Safe to delete once real data is entered.
 -- ============================================================

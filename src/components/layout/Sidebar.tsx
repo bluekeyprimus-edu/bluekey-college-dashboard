@@ -10,6 +10,8 @@ import {
   Database,
   Settings,
   TrendingUp,
+  FileSignature,
+  FileCheck2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -21,12 +23,14 @@ const NAV = [
   { href: "/tasks", label: "할일", icon: CheckSquare },
   { href: "/admissions-data", label: "입시 데이터", icon: Database },
   { href: "/finance", label: "통계", icon: TrendingUp },
+  { href: "/consulting/contracts", label: "컨설팅 계약서", icon: FileSignature },
+  { href: "/instructor-contracts", label: "강사 계약서", icon: FileCheck2 },
   { href: "/settings/counselors", label: "카운슬러 계정", icon: Settings },
 ];
 
 // Admin-only tabs — hidden entirely for a non-admin counselor, same
 // restriction the pages themselves enforce with a redirect.
-const ADMIN_ONLY_HREFS = ["/finance", "/settings/counselors"];
+const ADMIN_ONLY_HREFS = ["/finance", "/settings/counselors", "/consulting/contracts", "/instructor-contracts"];
 
 export function Sidebar({
   open,
