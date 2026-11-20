@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCounselors, getLastGradeBumpYear, getStudents } from "@/lib/data";
-import { createCounselorAccount, unlinkCounselorAccount, addCounselor, setCounselorAdmin, runGradeBumpNow } from "@/lib/actions";
+import { createCounselorAccount, unlinkCounselorAccount, updateCounselorPassword, addCounselor, setCounselorAdmin, runGradeBumpNow } from "@/lib/actions";
 import { getCurrentCounselor } from "@/lib/current-counselor";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
@@ -72,18 +72,35 @@ export default async function CounselorSettingsPage() {
               )}
 
               {c.auth_user_id ? (
-                <div className="mt-2 flex items-center justify-end gap-3">
-                  {actingCounselor.id !== c.id && (
-                    <DeleteCounselorButton
-                      counselorId={c.id}
-                      counselorName={c.name}
-                      assignedStudentCount={assignedCountByCounselor.get(c.id) ?? 0}
-                    />
-                  )}
-                  <form action={unlinkCounselorAccount.bind(null, c.id)}>
-                    <SubmitButton label="로그인 연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
-                  </form>
-                </div>
+                <>
+                  <details className="mt-3">
+                    <summary className="cursor-pointer list-none text-xs font-medium text-gold-600 hover:text-gold-700">
+                      + 비밀번호 변경
+                    </summary>
+                    <form
+                      action={updateCounselorPassword.bind(null, c.auth_user_id)}
+                      className="mt-2 flex flex-wrap items-end gap-3 border-t border-navy-100 pt-3"
+                    >
+                      <div className="flex-1" style={{ minWidth: "12rem" }}>
+                        <label className={labelClass}>새 비밀번호 *</label>
+                        <input type="text" name="password" required minLength={6} className={inputClass} />
+                      </div>
+                      <SubmitButton label="비밀번호 변경" toastMessage="변경되었습니다" />
+                    </form>
+                  </details>
+                  <div className="mt-2 flex items-center justify-end gap-3">
+                    {actingCounselor.id !== c.id && (
+                      <DeleteCounselorButton
+                        counselorId={c.id}
+                        counselorName={c.name}
+                        assignedStudentCount={assignedCountByCounselor.get(c.id) ?? 0}
+                      />
+                    )}
+                    <form action={unlinkCounselorAccount.bind(null, c.id)}>
+                      <SubmitButton label="로그인 연결 해제" variant="ghost-danger" toastMessage="해제되었습니다" />
+                    </form>
+                  </div>
+                </>
               ) : (
                 <details className="mt-3">
                   <summary className="cursor-pointer list-none text-xs font-medium text-gold-600 hover:text-gold-700">

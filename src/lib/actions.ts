@@ -1508,6 +1508,28 @@ export async function unlinkCounselorAccount(counselorId: string) {
   revalidatePath("/settings/counselors");
 }
 
+// Admin resets a counselor's login password directly (e.g. they forgot it,
+// or it should just be rotated) — bypasses the normal "forgot password"
+// email flow entirely via the service role, same as account creation above.
+export async function updateCounselorPassword(authUserId: string, formData: FormData) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 비밀번호를 변경할 수 있어요.");
+  }
+  if (!isAdminConfigured) {
+    throw new Error("Service Role Key가 아직 설정되지 않았어요.");
+  }
+
+  const password = str(formData, "password");
+  if (!password) throw new Error("새 비밀번호를 입력해주세요.");
+  if (password.length < 6) throw new Error("비밀번호는 6자 이상이어야 해요.");
+
+  const { error } = await supabaseAdmin!.auth.admin.updateUserById(authUserId, { password });
+  if (error) throw new Error(`비밀번호 변경 실패: ${error.message}`);
+
+  revalidatePath("/settings/counselors");
+}
+
 export async function addCounselor(formData: FormData) {
   const actingCounselor = await getCurrentCounselor();
   if (!actingCounselor?.isAdmin) {
