@@ -804,7 +804,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
           <div key={t.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-navy-900">{t.task}</span>
-              <Pill tone={t.priority === "High" ? "red" : t.priority === "Medium" ? "amber" : "neutral"}>
+              <Pill tone={t.priority === "High" ? "red" : t.priority === "Medium" ? "amber" : "green"}>
                 {TASK_PRIORITY_LABEL[t.priority] ?? t.priority}
               </Pill>
             </div>

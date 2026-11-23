@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import * as mock from "./mock-data";
 import { getCounselorRestriction, getCurrentCounselor } from "./current-counselor";
+import { derivePriorityFromDeadline } from "./progress";
 import {
   Student,
   StudentProgress,
@@ -293,31 +294,42 @@ export async function getCollegeList(studentId: string): Promise<CollegeListEntr
   return rows.map((r) => ({ ...r, checklist: byId.get(r.id) }));
 }
 
+// Applies Jacob's "deadline closes in → priority auto-escalates" rule to
+// every task coming out of this layer, so every caller (task board,
+// dashboard panel, student profile card, parent view) sees the same
+// already-correct priority without recomputing it — no cron job, no DB
+// write needed: it's just derived fresh from today's date and the
+// deadline on every read. A task with no deadline keeps its manually-set
+// priority untouched.
+function withAutoPriority(tasks: TaskItem[]): TaskItem[] {
+  return tasks.map((t) => ({ ...t, priority: derivePriorityFromDeadline(t.deadline, t.priority) }));
+}
+
 export async function getTasks(studentId: string): Promise<TaskItem[]> {
-  if (!isSupabaseConfigured) return mock.mockTasks.filter((t) => t.student_id === studentId);
+  if (!isSupabaseConfigured) return withAutoPriority(mock.mockTasks.filter((t) => t.student_id === studentId));
   const { data } = await supabase!.from("tasks").select("*").eq("student_id", studentId).order("deadline");
-  return (data as TaskItem[]) ?? [];
+  return withAutoPriority((data as TaskItem[]) ?? []);
 }
 
 export async function getAllTasks(): Promise<TaskItem[]> {
   const restrictToCounselorId = await getCounselorRestriction();
 
   if (!isSupabaseConfigured) {
-    if (!restrictToCounselorId) return mock.mockTasks;
+    if (!restrictToCounselorId) return withAutoPriority(mock.mockTasks);
     const allowedIds = new Set(
       mock.mockStudents.filter((s) => s.counselor_id.includes(restrictToCounselorId)).map((s) => s.id)
     );
-    return mock.mockTasks.filter((t) => allowedIds.has(t.student_id));
+    return withAutoPriority(mock.mockTasks.filter((t) => allowedIds.has(t.student_id)));
   }
 
   const { data } = await supabase!.from("tasks").select("*").order("deadline");
   const tasks = (data as TaskItem[]) ?? [];
-  if (!restrictToCounselorId) return tasks;
+  if (!restrictToCounselorId) return withAutoPriority(tasks);
 
   // Tasks aren't tagged with a counselor directly — scope them through the
   // (already-scoped) student list instead of a second restricted query.
   const allowedIds = new Set((await getStudents()).map((s) => s.id));
-  return tasks.filter((t) => allowedIds.has(t.student_id));
+  return withAutoPriority(tasks.filter((t) => allowedIds.has(t.student_id)));
 }
 
 export interface RosterRow {

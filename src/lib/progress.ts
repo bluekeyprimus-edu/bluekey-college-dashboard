@@ -1,4 +1,4 @@
-import { StudentProgress, TrackStatus, TaskItem, CollegeListEntry, ApplicationChecklist } from "./types";
+import { StudentProgress, TrackStatus, TaskItem, TaskPriority, CollegeListEntry, ApplicationChecklist } from "./types";
 
 type ProgressCategory = keyof Omit<StudentProgress, "student_id">;
 
@@ -124,6 +124,19 @@ export function nextDeadline(colleges: CollegeListEntry[]): { name: string; date
 
 export function pendingTaskCount(tasks: TaskItem[]): number {
   return tasks.filter((t) => t.status !== "Completed").length;
+}
+
+// Auto-priority from how close the deadline is — Jacob's rule: 10 days
+// or less left is 높음(High), under 6 months is 보통(Medium), 6 months
+// (180 days) or more is 낮음(Low). An overdue deadline (negative days)
+// is obviously still High. Tasks with no deadline can't be computed
+// this way, so they keep whatever priority was set by hand.
+export function derivePriorityFromDeadline(deadline: string | null, fallback: TaskPriority): TaskPriority {
+  const days = daysUntil(deadline);
+  if (days === null) return fallback;
+  if (days <= 10) return "High";
+  if (days < 180) return "Medium";
+  return "Low";
 }
 
 // ============================================================

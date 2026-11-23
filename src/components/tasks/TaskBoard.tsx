@@ -18,7 +18,7 @@ export interface TaskWithStudent extends TaskItem {
 
 const STATUSES: TaskStatus[] = ["Not Started", "In Progress", "Waiting", "Completed"];
 const PRIORITY_WEIGHT: Record<TaskPriority, number> = { High: 3, Medium: 2, Low: 1 };
-const PRIORITY_TONE: Record<TaskPriority, "red" | "amber" | "neutral"> = { High: "red", Medium: "amber", Low: "neutral" };
+const PRIORITY_TONE: Record<TaskPriority, "red" | "amber" | "green"> = { High: "red", Medium: "amber", Low: "green" };
 
 const inputClass =
   "w-full rounded-lg border border-navy-200 bg-white px-2 py-1 text-xs text-navy-900 focus:border-gold-400 focus:outline-none";
@@ -114,6 +114,7 @@ function TaskCard({
                   <option key={p} value={p}>{TASK_PRIORITY_LABEL[p]}</option>
                 ))}
               </select>
+              <p className="mt-0.5 text-[11px] text-navy-400">마감일 기준 자동 계산됨 — 여기서 바꿔도 마감일이 있으면 다시 자동으로 돌아가요</p>
             </div>
             <div>
               <label className={labelClass}>상태</label>

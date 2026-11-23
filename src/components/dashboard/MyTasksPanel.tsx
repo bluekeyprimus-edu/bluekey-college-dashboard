@@ -6,7 +6,7 @@ import { TASK_PRIORITY_LABEL, TASK_STATUS_LABEL } from "@/lib/labels";
 import { TaskPriority } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
-const PRIORITY_TONE: Record<TaskPriority, "red" | "amber" | "neutral"> = { High: "red", Medium: "amber", Low: "neutral" };
+const PRIORITY_TONE: Record<TaskPriority, "red" | "amber" | "green"> = { High: "red", Medium: "amber", Low: "green" };
 
 // Already scoped to "my" tasks by the caller (getAllTasks() applies the
 // same counselor restriction as the roster — see data.ts), so this just

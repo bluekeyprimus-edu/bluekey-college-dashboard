@@ -112,6 +112,7 @@ export default async function TasksPage({
                   <option key={p} value={p}>{TASK_PRIORITY_LABEL[p]}</option>
                 ))}
               </select>
+              <p className="mt-0.5 text-[11px] text-navy-400">마감일을 입력하면 그에 맞춰 자동으로 바뀌어요</p>
             </div>
             <div>
               <label className={labelClass}>상태</label>
