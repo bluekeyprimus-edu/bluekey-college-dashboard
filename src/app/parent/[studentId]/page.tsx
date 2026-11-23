@@ -792,8 +792,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
 
   const tasksCard = (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between gap-2">
         <CardTitle>진행 중인 할일</CardTitle>
+        {pendingTasks.length > 0 && (
+          <span className="text-xs font-medium text-navy-400">우선순위</span>
+        )}
       </CardHeader>
       <CardBody className="space-y-3">
         {pendingTasks.length === 0 && <p className="text-sm text-navy-400">진행 중인 할일이 없어요.</p>}
