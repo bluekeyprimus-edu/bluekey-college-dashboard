@@ -1530,13 +1530,37 @@ export async function updateCounselorPassword(authUserId: string, formData: Form
   revalidatePath("/settings/counselors");
 }
 
+// Admin-only: sets the exact list of general counselors (counselor_id) on
+// one student — the write behind the roster table's inline "담당
+// 카운슬러" cell, so an admin can add/remove a counselor right from the
+// /students list without opening that student's Edit page. Replaces the
+// whole array with whatever the caller passes (the UI always passes the
+// full next list, add or remove), unlike bulkAssignCounselorToAllStudents
+// below, which is purely additive across every student.
+export async function setStudentCounselors(studentId: string, counselorIds: string[]) {
+  const actingCounselor = await getCurrentCounselor();
+  if (!actingCounselor?.isAdmin) {
+    throw new Error("권한이 없어요. 관리자 카운슬러만 담당 카운슬러를 변경할 수 있어요.");
+  }
+  if (!isSupabaseConfigured) throw new Error("Supabase가 아직 연결되지 않았어요.");
+
+  const { error } = await supabase!
+    .from("students")
+    .update({ counselor_id: counselorIds })
+    .eq("id", studentId);
+  if (error) throw new Error(`담당 카운슬러 변경 실패: ${error.message}`);
+
+  revalidatePath("/students");
+  revalidatePath("/");
+  revalidatePath(`/students/${studentId}`);
+}
+
 // Admin bulk-adds one counselor as general counselor (counselor_id) on
 // every student who doesn't already have them — a one-click alternative
 // to opening each student's Edit page and checking the box by hand, for
 // when a counselor needs to be added across the whole (or most of the)
 // roster at once. Purely additive: never removes anyone already assigned,
-// to any role, on any student. Returns how many students were actually
-// changed, so the UI can say so.
+// to any role, on any student.
 export async function bulkAssignCounselorToAllStudents(counselorId: string) {
   const actingCounselor = await getCurrentCounselor();
   if (!actingCounselor?.isAdmin) {

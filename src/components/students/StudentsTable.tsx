@@ -8,11 +8,27 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Pill } from "@/components/ui/Pill";
+import { InlineCounselorCell } from "@/components/students/InlineCounselorCell";
 import { cn } from "@/lib/cn";
 
 type SortKey = "name" | "grade" | "school" | "major" | "counselor" | "progress" | "deadline";
 
-export function StudentsTable({ rows, isAdmin = false }: { rows: RosterRow[]; isAdmin?: boolean }) {
+export function StudentsTable({
+  rows,
+  isAdmin = false,
+  allCounselors = [],
+}: {
+  rows: RosterRow[];
+  isAdmin?: boolean;
+  // Full counselor roster (id/name only) — feeds the inline "담당 카운슬러"
+  // picker in each row; empty array just falls back to the old read-only
+  // behavior (no "+추가" select rendered, since there's nothing to add).
+  // Named distinctly from the `counselors` filter-dropdown list derived
+  // below (that one is just the distinct counselor NAMES already present
+  // on this roster, for the "전체 카운슬러" filter — a different, smaller
+  // list than the full counselor roster this prop carries).
+  allCounselors?: { id: string; name: string }[];
+}) {
   const [search, setSearch] = useState("");
   const [counselor, setCounselor] = useState("all");
   const [gradeFilter, setGradeFilter] = useState("all");
@@ -148,7 +164,14 @@ export function StudentsTable({ rows, isAdmin = false }: { rows: RosterRow[]; is
                   {row.student.current_grade}학년 · {row.student.graduation_year}년 졸업
                 </td>
                 <td className="px-4 py-3 text-sm text-navy-600">{row.student.intended_major ?? "—"}</td>
-                <td className="px-4 py-3 text-sm text-navy-600">{row.student.counselor_name ?? "—"}</td>
+                <td className="px-4 py-3 text-sm">
+                  <InlineCounselorCell
+                    studentId={row.student.id}
+                    counselorIds={row.student.counselor_id}
+                    counselors={allCounselors}
+                    isAdmin={isAdmin}
+                  />
+                </td>
                 <td className="px-4 py-3">
                   <div className="w-32">
                     <ProgressBar value={row.progress} showLabel size="sm" />

@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { getRosterRows } from "@/lib/data";
+import { getRosterRows, getCounselors } from "@/lib/data";
 import { getCounselorRestriction, getCurrentCounselor } from "@/lib/current-counselor";
 import { StudentsTable } from "@/components/students/StudentsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage() {
-  const [rows, restricted, actingCounselor] = await Promise.all([
+  const [rows, restricted, actingCounselor, counselors] = await Promise.all([
     getRosterRows(),
     getCounselorRestriction(),
     getCurrentCounselor(),
+    getCounselors(),
   ]);
   return (
     <div className="space-y-6">
@@ -27,7 +28,11 @@ export default async function StudentsPage() {
           + 새 학생 추가
         </Link>
       </div>
-      <StudentsTable rows={rows} isAdmin={actingCounselor?.isAdmin ?? false} />
+      <StudentsTable
+        rows={rows}
+        isAdmin={actingCounselor?.isAdmin ?? false}
+        allCounselors={counselors.map((c) => ({ id: c.id, name: c.name }))}
+      />
     </div>
   );
 }
