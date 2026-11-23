@@ -799,6 +799,11 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
         )}
       </CardHeader>
       <CardBody className="space-y-3">
+        {pendingTasks.length > 0 && (
+          <p className="-mt-1 text-xs text-navy-400">
+            마감일이 가까워질수록 우선순위가 높음(빨강) → 보통(노랑) → 낮음(초록) 순으로 자동으로 바뀌어요.
+          </p>
+        )}
         {pendingTasks.length === 0 && <p className="text-sm text-navy-400">진행 중인 할일이 없어요.</p>}
         {pendingTasks.map((t) => (
           <div key={t.id} className="border-b border-navy-100 pb-2 last:border-0 last:pb-0">
