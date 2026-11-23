@@ -6,7 +6,6 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { DeleteCounselorButton } from "@/components/settings/DeleteCounselorButton";
-import { BulkAssignCounselorButton } from "@/components/settings/BulkAssignCounselorButton";
 
 export const dynamic = "force-dynamic";
 
@@ -26,17 +25,18 @@ export default async function CounselorSettingsPage() {
     getStudents(),
   ]);
   const assignedCountByCounselor = new Map<string, number>();
+  // 담당 학생 "누구누구"를 각 카운슬러 카드에 바로 보여주기 위한 이름 목록 —
+  // 담당 카운슬러(counselor_id)로 배정된 학생만 모아요 (EC/원서 담당은 별도).
+  const assignedNamesByCounselor = new Map<string, string[]>();
   for (const s of students) {
     for (const cid of s.counselor_id) {
       assignedCountByCounselor.set(cid, (assignedCountByCounselor.get(cid) ?? 0) + 1);
+      const names = assignedNamesByCounselor.get(cid) ?? [];
+      names.push(s.english_name ?? s.student_name);
+      assignedNamesByCounselor.set(cid, names);
     }
   }
-  // How many students DON'T yet have each counselor as general counselor —
-  // feeds the "전체 학생에 추가" button's count/confirm text below.
-  const missingCountByCounselor = new Map<string, number>();
-  for (const c of counselors) {
-    missingCountByCounselor.set(c.id, students.filter((s) => !s.counselor_id.includes(c.id)).length);
-  }
+  for (const names of assignedNamesByCounselor.values()) names.sort((a, b) => a.localeCompare(b));
 
   return (
     <div className="space-y-6">
@@ -66,13 +66,12 @@ export default async function CounselorSettingsPage() {
                 </div>
               </div>
 
-              <div className="mt-2 flex justify-end">
-                <BulkAssignCounselorButton
-                  counselorId={c.id}
-                  counselorName={c.name}
-                  missingCount={missingCountByCounselor.get(c.id) ?? 0}
-                />
-              </div>
+              {(assignedNamesByCounselor.get(c.id)?.length ?? 0) > 0 && (
+                <p className="mt-1.5 text-xs text-navy-500">
+                  <span className="font-medium text-navy-400">담당 학생: </span>
+                  {assignedNamesByCounselor.get(c.id)!.join(", ")}
+                </p>
+              )}
 
               {actingCounselor.id !== c.id && (
                 <div className="mt-2 flex justify-end">
