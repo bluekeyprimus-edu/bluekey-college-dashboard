@@ -792,7 +792,7 @@ export default async function ParentStudentPage({ params }: { params: Promise<{ 
 
   const tasksCard = (
     <Card>
-      <CardHeader className="flex items-center justify-between gap-2">
+      <CardHeader className="flex items-end justify-between gap-2">
         <CardTitle>진행 중인 할일</CardTitle>
         {pendingTasks.length > 0 && (
           <span className="text-xs font-medium text-navy-400">우선순위</span>

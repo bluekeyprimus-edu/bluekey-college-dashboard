@@ -187,6 +187,20 @@ function Column({
 
 export function TaskBoard({ initialTasks, todayISO }: { initialTasks: TaskWithStudent[]; todayISO: string }) {
   const [tasks, setTasks] = useState(initialTasks);
+  // useState(initialTasks) only reads the prop on first mount — without
+  // this, saving a task (the "저장" form below, a direct form action, not
+  // one of the optimistic setTasks calls like drag/delete) writes to the
+  // DB and revalidates just fine, but this board's own copy of `tasks`
+  // never heard about it, so the card kept showing the old priority/
+  // status/etc. until a full page reload. Re-sync whenever the server
+  // sends a fresh `initialTasks` (i.e. after that revalidation lands) —
+  // done during render (React's documented pattern for this), not in a
+  // useEffect, which would do the same thing one render late.
+  const [prevInitialTasks, setPrevInitialTasks] = useState(initialTasks);
+  if (initialTasks !== prevInitialTasks) {
+    setPrevInitialTasks(initialTasks);
+    setTasks(initialTasks);
+  }
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const { showToast } = useToast();
