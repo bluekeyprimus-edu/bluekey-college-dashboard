@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { DeleteCounselorButton } from "@/components/settings/DeleteCounselorButton";
+import { BulkAssignCounselorButton } from "@/components/settings/BulkAssignCounselorButton";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,12 @@ export default async function CounselorSettingsPage() {
     for (const cid of s.counselor_id) {
       assignedCountByCounselor.set(cid, (assignedCountByCounselor.get(cid) ?? 0) + 1);
     }
+  }
+  // How many students DON'T yet have each counselor as general counselor —
+  // feeds the "전체 학생에 추가" button's count/confirm text below.
+  const missingCountByCounselor = new Map<string, number>();
+  for (const c of counselors) {
+    missingCountByCounselor.set(c.id, students.filter((s) => !s.counselor_id.includes(c.id)).length);
   }
 
   return (
@@ -57,6 +64,14 @@ export default async function CounselorSettingsPage() {
                     <Pill tone="neutral">담당 학생 {assignedCountByCounselor.get(c.id)}명</Pill>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-2 flex justify-end">
+                <BulkAssignCounselorButton
+                  counselorId={c.id}
+                  counselorName={c.name}
+                  missingCount={missingCountByCounselor.get(c.id) ?? 0}
+                />
               </div>
 
               {actingCounselor.id !== c.id && (
