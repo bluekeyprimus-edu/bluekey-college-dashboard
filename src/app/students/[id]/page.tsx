@@ -275,7 +275,9 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
                   {t.notes && <p className="mt-0.5 line-clamp-1 text-xs text-navy-400">{t.notes}</p>}
                 </div>
               ))}
-              <Link href="/tasks" className="text-xs font-medium text-gold-600 hover:text-gold-700">전체 할일 보기 →</Link>
+              <Link href={`/tasks?student=${id}`} className="text-xs font-medium text-gold-600 hover:text-gold-700">
+                이 학생의 할일 관리 →
+              </Link>
             </CardBody>
           </Card>
         )}
